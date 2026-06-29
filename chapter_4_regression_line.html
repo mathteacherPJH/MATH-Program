@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>다기능 함수 추세선 분석 도구</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        h2 { color: #333; margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+        .main-container { 
+            display: flex; 
+            gap: 30px; 
+            width: 100%; 
+            max-width: 1300px; 
+            align-items: stretch; 
+        }
+        /* 왼쪽 입력창 테이블 스타일 */
+        .input-panel { 
+            flex: 1; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            display: flex;
+            flex-direction: column;
+        }
+        .variable-names {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .variable-names div {
+            flex: 1;
+        }
+        .variable-names label, .model-selector label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .variable-names input, .model-selector select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .model-selector {
+            margin-bottom: 15px;
+            background-color: #f1f3f4;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        /* 엑셀 붙여넣기 전용 박스 */
+        .paste-zone {
+            background-color: #e8f0fe;
+            border: 2px dashed #1a73e8;
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        .paste-zone input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            min-height: 250px;
+            max-height: 380px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+        }
+        .spreadsheet { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+        .spreadsheet th, .spreadsheet td { 
+            border: 1px solid #ccc; 
+            padding: 6px; 
+            text-align: center; 
+        }
+        .spreadsheet th { 
+            background-color: #f1f3f4; 
+            font-size: 13px; 
+            color: #5f6368; 
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .spreadsheet input { 
+            width: 100%; 
+            border: none; 
+            outline: none; 
+            text-align: center; 
+            font-size: 14px; 
+        }
+        .spreadsheet tr:hover { background-color: #f8f9fa; }
+        .btn-group { display: flex; gap: 10px; margin-top: auto; }
+        button { 
+            padding: 8px 14px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px; 
+        }
+        .btn-add { background-color: #e8f0fe; color: #1a73e8; }
+        .btn-add:hover { background-color: #d2e3fc; }
+        .btn-clear { background-color: #fce8e6; color: #c5221f; }
+        .btn-clear:hover { background-color: #fad2cf; }
+        .btn-draw { background-color: #1a73e8; color: white; flex: 1; font-size: 14px; }
+        .btn-draw:hover { background-color: #1557b0; }
+        
+        /* 오른쪽 그래프 스타일 */
+        .chart-panel { 
+            flex: 1.8; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .chart-container { width: 100%; height: 480px; }
+        .info-panel { 
+            margin-top: 15px; 
+            padding: 15px; 
+            background-color: #f1f3f4; 
+            border-radius: 6px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            font-size: 14px; 
+            line-height: 1.7; 
+        }
+        .delete-btn {
+            color: #d93025;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📈 다기능 함수 추세선 분석 도구</h2>
+    <div class="subtitle">데이터를 입력하고 원하는 함수 형태의 추세선을 자유롭게 그려보세요!</div>
+
+    <div class="main-container">
+        <div class="input-panel">
+            <div class="model-selector">
+                <label for="trendline-type">📈 추세선 유형 선택</label>
+                <select id="trendline-type" onchange="drawChart()">
+                    <option value="linear">선형 함수 (y = ax + b)</option>
+                    <option value="quadratic">이차 함수 (y = ax² + bx + c)</option>
+                    <option value="exponential">지수 함수 (y = a * e^(bx))</option>
+                    <option value="logarithmic">로그 함수 (y = a * ln(x) + b)</option>
+                </select>
+            </div>
+
+            <div class="variable-names">
+                <div>
+                    <label for="x-name">X축 변수명</label>
+                    <input type="text" id="x-name" value="독립변수 X">
+                </div>
+                <div>
+                    <label for="y-name">Y축 변수명</label>
+                    <input type="text" id="y-name" value="종속변수 Y">
+                </div>
+            </div>
+
+            <div class="paste-zone">
+                📋 엑셀 열 복사(Ctrl+C) 후 아래 칸에 붙여넣기(Ctrl+V) 가능
+                <input type="text" id="excel-paste-input" placeholder="여기를 클릭하고 Ctrl + V">
+            </div>
+
+            <div class="table-wrapper">
+                <table class="spreadsheet" id="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%">번호</th>
+                            <th style="width: 39%" id="th-x">X 데이터</th>
+                            <th style="width: 39%" id="th-y">Y 데이터</th>
+                            <th style="width: 10%">삭제</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr><td>1</td><td><input type="number" class="x-val" value="1"></td><td><input type="number" class="y-val" value="2.1"></td><td class="delete-btn" onclick="deleteRow(this)">×</td></tr>
+                        <tr><td>2</td><td><input type="number" class="x-val" value="2"></td><td><input type="number" class="y-val" value="3.9"></td><td class="delete-btn" onclick="deleteRow(this)">×</td></tr>
+                        <tr><td>3</td><td><input type="number" class="x-val" value="3"></td><td><input type="number" class="y-val" value="8.2"></td><td class="delete-btn" onclick="deleteRow(this)">×</td></tr>
+                        <tr><td>4</td><td><input type="number" class="x-val" value="4"></td><td><input type="number" class="y-val" value="15.8"></td><td class="delete-btn" onclick="deleteRow(this)">×</td></tr>
+                        <tr><td>5</td><td><input type="number" class="x-val" value="5"></td><td><input type="number" class="y-val" value="25.2"></td><td class="delete-btn" onclick="deleteRow(this)">×</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-add" type="button" onclick="addRow()">+ 행 추가</button>
+                <button class="btn-clear" type="button" onclick="clearTable()">전체 비우기</button>
+                <button class="btn-draw" type="button" onclick="drawChart()">추세선 업데이트</button>
+            </div>
+        </div>
+
+        <div class="chart-panel">
+            <div class="chart-container">
+                <canvas id="myChart"></canvas>
+            </div>
+            <div class="info-panel" id="regression-info">
+                추세선 버튼을 누르면 통계 분석 결과가 여기에 표시됩니다.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let myChart;
+
+        // 엑셀 붙여넣기 기능
+        document.getElementById('excel-paste-input').addEventListener('paste', function(e) {
+            e.preventDefault();
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const pastedData = clipboardData.getData('Text');
+            if (!pastedData) return;
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            const rows = pastedData.trim().split('\n');
+            let validRowCount = 0;
+
+            rows.forEach((row) => {
+                const cols = row.split('\t');
+                if (cols.length >= 2) {
+                    const xVal = cols[0].trim();
+                    const yVal = cols[1].trim();
+                    if (xVal !== '' && yVal !== '') {
+                        validRowCount++;
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${validRowCount}</td>
+                            <td><input type="number" class="x-val" value="${xVal}"></td>
+                            <td><input type="number" class="y-val" value="${yVal}"></td>
+                            <td class="delete-btn" onclick="deleteRow(this)">×</td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                }
+            });
+            this.value = '';
+            drawChart();
+        });
+
+        function addRow() {
+            const tbody = document.getElementById('table-body');
+            const rowCount = tbody.rows.length + 1;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${rowCount}</td>
+                <td><input type="number" class="x-val"></td>
+                <td><input type="number" class="y-val"></td>
+                <td class="delete-btn" onclick="deleteRow(this)">×</td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function deleteRow(btn) {
+            btn.parentNode.parentNode.removeChild(btn.parentNode);
+            reindexRows();
+        }
+
+        function clearTable() {
+            document.getElementById('table-body').innerHTML = '';
+        }
+
+        function reindexRows() {
+            document.querySelectorAll('#table-body tr').forEach((row, idx) => {
+                row.cells[0].innerText = idx + 1;
+            });
+        }
+
+        // --- 회귀분석 수학 엔진 수식 구현 ---
+        function regLinear(x, y) {
+            const n = x.length;
+            let sx = 0, sy = 0, sxy = 0, sx2 = 0, sy2 = 0;
+            for(let i=0; i<n; i++) {
+                sx += x[i]; sy += y[i]; sxy += x[i]*y[i]; sx2 += x[i]*x[i]; sy2 += y[i]*y[i];
+            }
+            const a = (n*sxy - sx*sy) / (n*sx2 - sx*sx);
+            const b = (sy - a*sx) / n;
+            
+            const meanY = sy / n;
+            let ssTot = 0, ssRes = 0;
+            for(let i=0; i<n; i++) {
+                ssTot += (y[i] - meanY) ** 2;
+                ssRes += (y[i] - (a*x[i] + b)) ** 2;
+            }
+            const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+            return { pred: (vx) => a*vx + b, eq: `y = ${a.toFixed(4)}x ${b>=0?'+':'-'} ${Math.abs(b).toFixed(4)}`, r2 };
+        }
+
+        function regQuadratic(x, y) {
+            const n = x.length;
+            let sx=0, sy=0, sx2=0, sx3=0, sx4=0, sxy=0, sx2y=0;
+            for(let i=0; i<n; i++) {
+                const x1 = x[i], x2 = x1*x1, x3 = x2*x1, x4 = x2*x2, y1 = y[i];
+                sx += x1; sy += y1; sx2 += x2; sx3 += x3; sx4 += x4; sxy += x1*y1; sx2y += x2*y1;
+            }
+            const D = n*(sx2*sx4 - sx3*sx3) - sx*(sx*sx4 - sx2*sx3) + sx2*(sx*sx3 - sx2*sx2);
+            if(D === 0) return { pred: () => 0, eq: "계산 불가", r2: 0 };
+
+            const Da = sy*(sx2*sx4 - sx3*sx3) - sx*(sxy*sx4 - sx2y*sx3) + sx2*(sxy*sx3 - sx2y*sx2);
+            const Db = n*(sxy*sx4 - sx2y*sx3) - sy*(sx*sx4 - sx2*sx3) + sx2*(sx*sx2y - sxy*sx2);
+            const Dc = n*(sx2*sx2y - sx3*sxy) - sx*(sx*sx2y - sx2*sxy) + sy*(sx*sx3 - sx2*sx2);
+
+            const a = Da / D, b = Db / D, c = Dc / D;
+            const meanY = sy / n;
+            let ssTot = 0, ssRes = 0;
+            for(let i=0; i<n; i++) {
+                ssTot += (y[i] - meanY) ** 2;
+                ssRes += (y[i] - (a*x[i]*x[i] + b*x[i] + c)) ** 2;
+            }
+            const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+            return { 
+                pred: (vx) => a*vx*vx + b*vx + c, 
+                eq: `y = ${a.toFixed(4)}x² ${b>=0?'+':'-'} ${Math.abs(b).toFixed(4)}x ${c>=0?'+':'-'} ${Math.abs(c).toFixed(4)}`, 
+                r2 
+            };
+        }
+
+        function regExponential(x, y) {
+            const validIdx = [];
+            for(let i=0; i<y.length; i++) { if(y[i] > 0) validIdx.push(i); }
+            if(validIdx.length < 2) return { pred: () => 0, eq: "오류: 지수함수는 모든 Y값이 양수여야 합니다.", r2: 0 };
+            
+            const n = validIdx.length;
+            let sx=0, sLnY=0, sX2=0, sXLnY=0, sy=0;
+            validIdx.forEach(i => {
+                sx += x[i]; sy += y[i]; sLnY += Math.log(y[i]); sX2 += x[i]*x[i]; sXLnY += x[i]*Math.log(y[i]);
+            });
+
+            const b = (n*sXLnY - sx*sLnY) / (n*sX2 - sx*sx);
+            const a = Math.exp((sLnY - b*sx) / n);
+
+            const meanY = sy / n;
+            let ssTot = 0, ssRes = 0;
+            validIdx.forEach(i => {
+                ssTot += (y[i] - meanY) ** 2;
+                ssRes += (y[i] - (a * Math.exp(b*x[i]))) ** 2;
+            });
+            const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+            return { pred: (vx) => a * Math.exp(b*vx), eq: `y = ${a.toFixed(4)} * e^(${b.toFixed(4)}x)`, r2 };
+        }
+
+        function regLogarithmic(x, y) {
+            const validIdx = [];
+            for(let i=0; i<x.length; i++) { if(x[i] > 0) validIdx.push(i); }
+            if(validIdx.length < 2) return { pred: () => 0, eq: "오류: 로그함수는 모든 X값이 양수여야 합니다.", r2: 0 };
+
+            const n = validIdx.length;
+            let sLnX=0, sy=0, sLnX_Y=0, sLnX2=0;
+            validIdx.forEach(i => {
+                const lnx = Math.log(x[i]);
+                sLnX += lnx; sy += y[i]; sLnX_Y += lnx*y[i]; sLnX2 += lnx*lnx;
+            });
+
+            const a = (n*sLnX_Y - sLnX*sy) / (n*sLnX2 - sLnX*sLnX);
+            const b = (sy - a*sLnX) / n;
+
+            const meanY = sy / n;
+            let ssTot = 0, ssRes = 0;
+            validIdx.forEach(i => {
+                ssTot += (y[i] - meanY) ** 2;
+                ssRes += (y[i] - (a * Math.log(x[i]) + b)) ** 2;
+            });
+            const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+            return { pred: (vx) => vx > 0 ? a * Math.log(vx) + b : null, eq: `y = ${a.toFixed(4)} * ln(x) ${b>=0?'+':'-'} ${Math.abs(b).toFixed(4)}`, r2 };
+        }
+
+        // 메인 차트 그리기
+        function drawChart() {
+            const type = document.getElementById('trendline-type').value;
+            const xName = document.getElementById('x-name').value || 'X축';
+            const yName = document.getElementById('y-name').value || 'Y축';
+            
+            document.getElementById('th-x').innerText = xName;
+            document.getElementById('th-y').innerText = yName;
+
+            const xInputs = document.querySelectorAll('.x-val');
+            const yInputs = document.querySelectorAll('.y-val');
+            const xData = [], yData = [];
+
+            for (let i = 0; i < xInputs.length; i++) {
+                const xVal = parseFloat(xInputs[i].value);
+                const yVal = parseFloat(yInputs[i].value);
+                if (!isNaN(xVal) && !isNaN(yVal)) { xData.push(xVal); yData.push(yVal); }
+            }
+
+            if (xData.length < 2) {
+                alert("데이터가 최소 2개 이상 필요합니다."); return;
+            }
+
+            let result;
+            if (type === 'linear') result = regLinear(xData, yData);
+            else if (type === 'quadratic') result = regQuadratic(xData, yData);
+            else if (type === 'exponential') result = regExponential(xData, yData);
+            else if (type === 'logarithmic') result = regLogarithmic(xData, yData);
+
+            // 축 범위 자동 스케일링 설정 (여백 15%)
+            const minX = Math.min(...xData), maxX = Math.max(...xData);
+            const minY = Math.min(...yData), maxY = Math.max(...yData);
+            const xRange = maxX - minX || 1, yRange = maxY - minY || 1;
+            const xPadding = xRange * 0.15, yPadding = yRange * 0.15;
+            const xStart = minX - xPadding, xEnd = maxX + xPadding;
+
+            // 곡선 추세선을 부드럽게 표현하기 위한 100개 포인트 생성
+            const trendlinePoints = [];
+            const step = (xEnd - xStart) / 100;
+            for(let i=0; i<=100; i++) {
+                const curX = xStart + step * i;
+                const curY = result.pred(curX);
+                if (curY !== null && !isNaN(curY) && isFinite(curY)) {
+                    trendlinePoints.push({ x: curX, y: curY });
+                }
+            }
+
+            if (myChart) myChart.destroy();
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '입력 데이터',
+                        data: xData.map((x, i) => ({ x: x, y: yData[i] })),
+                        backgroundColor: '#000000',
+                        pointRadius: 6,
+                        hoverRadius: 8
+                    }, {
+                        label: `${document.getElementById('trendline-type').options[document.getElementById('trendline-type').selectedIndex].text.split(' ')[0]} 추세선`,
+                        data: trendlinePoints,
+                        type: 'line',
+                        borderColor: '#1a73e8', /* 💡 추세선 색상을 빨간색에서 깔끔한 파란색으로 변경 */
+                        borderWidth: 3,
+                        fill: false,
+                        pointRadius: 0,
+                        showLine: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'linear', position: 'bottom', min: xStart, max: xEnd, title: { display: true, text: xName, font: { weight: 'bold', size: 13 } } },
+                        y: { type: 'linear', min: minY - yPadding, max: maxY + yPadding, title: { display: true, text: yName, font: { weight: 'bold', size: 13 } } }
+                    }
+                }
+            });
+
+            const typeNames = { linear: "선형 회귀", quadratic: "이차 다항 회귀", exponential: "지수 회귀", logarithmic: "로그 회귀" };
+            
+            /* 하단 공식 텍스트 컬러도 추세선과 맞춰서 파란색(#1a73e8)으로 변경했습니다. */
+            document.getElementById('regression-info').innerHTML = `
+                <strong>📊 모델 분석 결과 (${typeNames[type]})</strong><br>
+                • <strong>추세선 공식:</strong> <span style="color:#1a73e8; font-weight:bold; font-size:15px;">${result.eq}</span><br>
+                • <strong>결정계수 (R²):</strong> <span style="color:#000000; font-weight:bold; font-size:15px;">${result.r2.toFixed(4)}</span> ${(result.r2 * 100).toFixed(1)}%의 설명력을 가집니다.
+                ${(type==='exponential'||type==='logarithmic') ? '<br><small style="color:gray;">* 주의: 지수/로그 모델은 수학적 정의에 따라 데이터 조건(양수)을 만족하는 데이터만 계산에 반영됩니다.</small>':''}
+            `;
+        }
+
+        window.onload = function() { drawChart(); };
+    </script>
+</body>
+</html>
