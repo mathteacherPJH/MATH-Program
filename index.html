@@ -113,7 +113,6 @@
                 const doc = parser.parseFromString(text, 'text/html');
                 
                 const title = doc.querySelector('title') ? doc.querySelector('title').innerText : fileName;
-                
                 const metaDesc = doc.querySelector('meta[name="description"]');
                 const desc = metaDesc ? metaDesc.getAttribute('content') : '클릭하면 수학 공학 도구 화면으로 연결됩니다.';
                 
@@ -131,7 +130,6 @@
                 if (!response.ok) throw new Error('네트워크 문제 발생');
                 
                 const files = await response.json();
-                
                 const htmlFiles = files.filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html');
                 
                 loadingIndicator.style.display = 'none';
@@ -142,8 +140,7 @@
                 }
                 
                 for (const file of htmlFiles) {
-                    const pageUrl = `https://mathteacherPJH.github.io/MATH-Program/${file.name}`;
-                    
+                    const pageUrl = `https://${GITHUB_USERNAME}.github.io/${REPO_NAME}/${file.name}`;
                     const info = await fetchToolInfo(file.path, file.name);
                     
                     const aTag = document.createElement('a');
