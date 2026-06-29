@@ -98,30 +98,22 @@
     </div>
 
     <script>
-        // ==========================================================
-        // 💡 [설정] 본인의 깃허브 아이디와 생성하신 저장소 이름을 적어주세요!
-        // ==========================================================
         const GITHUB_USERNAME = 'mathteacherPJH'; 
         const REPO_NAME = 'MATH-Program'; 
-        // ==========================================================
 
         const menuBox = document.getElementById('menu-box');
         const loadingIndicator = document.getElementById('loading-indicator');
 
-        // 개별 HTML 파일의 내부에 적힌 Title과 Meta Description을 비동기로 캐치하는 함수
         async function fetchToolInfo(fileUrl, fileName) {
             try {
                 const response = await fetch(fileUrl);
                 const text = await response.text();
                 
-                // 가상 DOM 파싱을 통해 head 안의 정보를 읽음
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(text, 'text/html');
                 
                 const title = doc.querySelector('title') ? doc.querySelector('title').innerText : fileName;
                 
-                // 파일 내부의 메타 설명 태그 <meta name="description" content="설명문"> 을 읽어옵니다.
-                // 없으면 기본 텍스트 처리
                 const metaDesc = doc.querySelector('meta[name="description"]');
                 const desc = metaDesc ? metaDesc.getAttribute('content') : '클릭하면 수학 공학 도구 화면으로 연결됩니다.';
                 
@@ -140,7 +132,6 @@
                 
                 const files = await response.json();
                 
-                // index.html을 제외하고 확장자가 .html로 끝나는 파일들만 소팅
                 const htmlFiles = files.filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html');
                 
                 loadingIndicator.style.display = 'none';
@@ -150,12 +141,9 @@
                     return;
                 }
                 
-                // 감지된 파일 순회하며 엘리먼트 동적 생성
                 for (const file of htmlFiles) {
-                    // 실제 웹사이트 주소 맵핑
-                    const pageUrl = `https://${mathteacherPJH}.github.io/${MATH-Program}/${file.name}`;
+                    const pageUrl = `https://mathteacherPJH.github.io/MATH-Program/${file.name}`;
                     
-                    // 파일 내부 정보 수집
                     const info = await fetchToolInfo(file.path, file.name);
                     
                     const aTag = document.createElement('a');
@@ -176,7 +164,6 @@
             }
         }
 
-        // 페이지 로드 시 실시간 탐색 시작
         window.onload = loadMathTools;
     </script>
 </body>
