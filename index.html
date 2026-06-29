@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>📐 수학 탐구 공학 도구 모음집</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #1a73e8; margin-bottom: 5px; font-size: 26px; font-weight: 700; }
+        .subtitle { color: #5f6368; margin-bottom: 40px; font-size: 15px; }
+        
+        .menu-container {
+            width: 100%;
+            max-width: 850px;
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #888;
+            font-size: 16px;
+            padding: 40px;
+        }
+        
+        .menu-item {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+            margin-bottom: 20px;
+            border-left: 5px solid #1a73e8;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: block;
+            position: relative;
+        }
+        .menu-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+        
+        .menu-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #202124;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .menu-desc {
+            font-size: 14px;
+            color: #5f6368;
+            line-height: 1.6;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+        .file-name {
+            font-size: 11px;
+            color: #dadce0;
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+        }
+        .no-tools {
+            text-align: center;
+            padding: 40px;
+            background: #fff;
+            border-radius: 8px;
+            color: #999;
+            border: 2px dashed #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📐 수학 탐구 공학 도구 모음집</h1>
+    <div class="subtitle">수업, 수행평가 및 수학적 모델링을 위한 공학 도구 저장소입니다.</div>
+
+    <div class="menu-container" id="menu-box">
+        <div class="loading" id="loading-indicator">저장소에서 수학 도구 목록을 실시간으로 불러오는 중입니다...</div>
+    </div>
+
+    <script>
+        // ==========================================================
+        // 💡 [설정] 본인의 깃허브 아이디와 생성하신 저장소 이름을 적어주세요!
+        // ==========================================================
+        const GITHUB_USERNAME = '설정하신_깃허브_아이디'; 
+        const REPO_NAME = '설정하신_저장소_이름'; 
+        // ==========================================================
+
+        const menuBox = document.getElementById('menu-box');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        // 개별 HTML 파일의 내부에 적힌 Title과 Meta Description을 비동기로 캐치하는 함수
+        async function fetchToolInfo(fileUrl, fileName) {
+            try {
+                const response = await fetch(fileUrl);
+                const text = await response.text();
+                
+                // 가상 DOM 파싱을 통해 head 안의 정보를 읽음
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                
+                const title = doc.querySelector('title') ? doc.querySelector('title').innerText : fileName;
+                
+                // 파일 내부의 메타 설명 태그 <meta name="description" content="설명문"> 을 읽어옵니다.
+                // 없으면 기본 텍스트 처리
+                const metaDesc = doc.querySelector('meta[name="description"]');
+                const desc = metaDesc ? metaDesc.getAttribute('content') : '클릭하면 수학 공학 도구 화면으로 연결됩니다.';
+                
+                return { title, desc };
+            } catch (e) {
+                return { title: fileName, desc: '클릭하면 수학 공학 도구 화면으로 연결됩니다.' };
+            }
+        }
+
+        async function loadMathTools() {
+            const apiUrl = `https://api.github.io/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('네트워크 문제 발생');
+                
+                const files = await response.json();
+                
+                // index.html을 제외하고 확장자가 .html로 끝나는 파일들만 소팅
+                const htmlFiles = files.filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html');
+                
+                loadingIndicator.style.display = 'none';
+                
+                if (htmlFiles.length === 0) {
+                    menuBox.innerHTML = '<div class="no-tools">📂 현재 저장소에 업로드된 추가 수학 도구 파일(.html)이 없습니다.</div>';
+                    return;
+                }
+                
+                // 감지된 파일 순회하며 엘리먼트 동적 생성
+                for (const file of htmlFiles) {
+                    // 실제 웹사이트 주소 맵핑
+                    const pageUrl = `https://${mathteacherPJH}.github.io/${MATH-Program}/${file.name}`;
+                    
+                    // 파일 내부 정보 수집
+                    const info = await fetchToolInfo(file.path, file.name);
+                    
+                    const aTag = document.createElement('a');
+                    aTag.href = pageUrl;
+                    aTag.className = 'menu-item';
+                    aTag.innerHTML = `
+                        <div class="menu-title">${info.title} <span class="tag">도구 실행</span></div>
+                        <div class="menu-desc">${info.desc}</div>
+                        <div class="file-name">${file.name}</div>
+                    `;
+                    menuBox.appendChild(aTag);
+                }
+                
+            } catch (error) {
+                loadingIndicator.style.display = 'none';
+                menuBox.innerHTML = '<div class="no-tools" style="color:red; border-color:red;">❌ 목록을 불러오지 못했습니다. GITHUB_USERNAME 또는 REPO_NAME 설정을 다시 확인해 주세요.</div>';
+                console.error(error);
+            }
+        }
+
+        // 페이지 로드 시 실시간 탐색 시작
+        window.onload = loadMathTools;
+    </script>
+</body>
+</html>
