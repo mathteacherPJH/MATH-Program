@@ -18,7 +18,7 @@
         
         .tab-container {
             display: flex;
-            justify-content: center; /* 💡 탭 메뉴들을 화면 가운데로 정렬 */
+            justify-content: center;
             gap: 10px;
             margin-bottom: 30px;
             width: 100%;
@@ -159,10 +159,8 @@
             const buttons = document.querySelectorAll('.tab-button');
             buttons.forEach(btn => btn.classList.remove('active'));
             
-            if (window.event) {
+            if (window.event && window.event.target) {
                 window.event.target.classList.add('active');
-            } else if (event) {
-                event.target.classList.add('active');
             }
 
             const items = document.querySelectorAll('.menu-item');
