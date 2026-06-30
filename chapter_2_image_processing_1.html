@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>이미지 데이터의 처리 1 - 밝기 조절과 흑백 변환</title>
+    <style>
+        :root {
+            --c-bg-main: #F9F9FB;
+            --c-bg-card: #FFFFFF;
+            --c-text-main: #37352F;
+            --c-text-muted: #787774;
+            --c-border: #E2E2E6;
+            --c-tab-active: #EFEFED;
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-save-bg: #E28523;
+            --c-save-hover: #C9741B;
+            --c-reset-bg: #EB5757;
+            --c-reset-hover: #D14343;
+        }
+
+        body {
+            font-family: "Malgun Gothic", -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* 메인 레이아웃 (반반 분할) */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0; 
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 15px;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        /* 왼쪽: 이미지 업로드 및 뷰어 */
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--c-border);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+        }
+        .drop-zone.hover {
+            border-color: var(--c-accent);
+            background: #f0f7ff;
+        }
+        .drop-zone canvas {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            cursor: crosshair;
+        }
+        .info-text {
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .resolution-bar {
+            font-size: 13px;
+            color: var(--c-text-muted);
+            margin: 10px 0 6px 0;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn {
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-upload { background-color: var(--c-accent); }
+        .btn-upload:hover { background-color: var(--c-accent-hover); }
+        .btn-save { background-color: var(--c-save-bg); }
+        .btn-save:hover { background-color: var(--c-save-hover); }
+
+        /* 오른쪽: 행렬 분석기 */
+        .nav-group {
+            display: flex;
+            gap: 4px;
+            background: var(--c-bg-main);
+            padding: 4px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid var(--c-border);
+        }
+        .nav-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .nav-btn.active {
+            background: var(--c-bg-card);
+            color: var(--c-text-main);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .matrix-container {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+        #matrixCanvas {
+            width: 100%;
+            height: 100%;
+            background: var(--c-bg-card);
+        }
+
+        /* 하단 제어판 */
+        .bottom-panel {
+            display: flex;
+            gap: 20px;
+            height: 140px;
+        }
+        .control-card-left {
+            flex: 3;
+        }
+        .control-card-right {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .panel-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .btn-inline-reset {
+            background: var(--c-tab-active);
+            border: 1px solid var(--c-border);
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .btn-inline-reset:hover { background: var(--c-border); }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: auto auto 1fr;
+            align-items: center;
+            row-gap: 8px;
+            column-gap: 15px;
+        }
+        .control-label {
+            font-size: 13px;
+            width: 100px;
+        }
+        .input-box {
+            width: 60px;
+            height: 26px;
+            text-align: center;
+            font-family: "Consolas", monospace;
+            font-weight: bold;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .filter-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: calc(100% - 30px);
+        }
+        .btn-filter {
+            flex: 1;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-gray { background-color: var(--c-text-main); }
+        .btn-gray:hover { background-color: #4a4a4a; }
+        .btn-color { background-color: var(--c-reset-bg); }
+        .btn-color:hover { background-color: var(--c-reset-hover); }
+
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="card">
+            <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <div id="dropPrompt" class="info-text">
+                    📄 여기에 이미지 블록을 추가하세요<br>
+                    클릭하거나 파일을 드래그 앤 드롭 하세요.
+                </div>
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            <div id="resolutionLabel" class="resolution-bar">현재 이미지 해상도 : --- x ---</div>
+            <div class="btn-grid">
+                <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">➕ 이미지 파일 가져오기</button>
+                <button class="btn btn-save" onclick="saveProcessedImage()">💾 이미지 파일 저장하기</button>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        </div>
+
+        <div class="card">
+            <div class="nav-group">
+                <button id="mTab_이미지" class="nav-btn active" onclick="changeMatrixView('이미지')">이미지</button>
+                <button id="mTab_R채널" class="nav-btn" onclick="changeMatrixView('R채널')">R채널</button>
+                <button id="mTab_G채널" class="nav-btn" onclick="changeMatrixView('G채널')">G채널</button>
+                <button id="mTab_B채널" class="nav-btn" onclick="changeMatrixView('B채널')">B채널</button>
+            </div>
+            <div class="nav-group">
+                <button id="sTab_색깔" class="nav-btn" onclick="changeSubMode('색깔')">색깔</button>
+                <button id="sTab_숫자" class="nav-btn" onclick="changeSubMode('숫자')">숫자</button>
+                <button id="sTab_모두" class="nav-btn active" onclick="changeSubMode('모두')">모두</button>
+            </div>
+            <div class="matrix-container">
+                <canvas id="matrixCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-panel">
+        <div class="card control-card-left">
+            <div class="panel-header">
+                <span class="panel-title">💡 밝기 및 명암비 조절</span>
+                <button class="btn-inline-reset" onclick="resetBrightness()">원래대로</button>
+            </div>
+            <div class="control-grid">
+                <span class="control-label">행렬 실수배 (a)</span>
+                <input type="text" id="entryA" class="input-box" value="1.00" onchange="onEntryAChanged()">
+                <input type="range" id="sliderA" class="slider" min="0.0" max="3.0" step="0.01" value="1.00" oninput="onSliderAMove(this.value)">
+
+                <span class="control-label">전행렬 합·차 (b)</span>
+                <input type="text" id="entryB" class="input-box" value="0" onchange="onEntryBChanged()">
+                <input type="range" id="sliderB" class="slider" min="-255" max="255" step="1" value="0" oninput="onSliderBMove(this.value)">
+            </div>
+        </div>
+
+        <div class="card control-card-right">
+            <span class="panel-title" style="margin-bottom:10px; display:block;">🎬 흑백 변환 필터</span>
+            <div class="filter-btn-group">
+                <button class="btn-filter btn-gray" onclick="triggerGrayscale()">흑백 이미지 변환</button>
+                <button class="btn-filter btn-color" onclick="triggerResetColor()">컬러 이미지 변환</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let originalImage = null;   
+    let offscreenCanvas = null; 
+    let offscreenCtx = null;
+    
+    let scaleFactor = 1.0;
+    let padX = 0, padY = 0;
+    let newW = 0, newH = 0;
+
+    let selectedOrigX = null;
+    let selectedOrigY = null;
+
+    let matrixViewMode = "이미지";
+    let displaySubMode = "모두";
+    let isGrayscaleMode = false;
+
+    const dropZone = document.getElementById('dropZone');
+    const dropPrompt = document.getElementById('dropPrompt');
+    const imageCanvas = document.getElementById('imageCanvas');
+    const imageCtx = imageCanvas.getContext('2d');
+    const matrixCanvas = document.getElementById('matrixCanvas');
+    const matrixCtx = matrixCanvas.getContext('2d');
+    
+    const sliderA = document.getElementById('sliderA');
+    const entryA = document.getElementById('entryA');
+    const sliderB = document.getElementById('sliderB');
+    const entryB = document.getElementById('entryB');
+    const resLabel = document.getElementById('resolutionLabel');
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('hover'); }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('hover'); }, false);
+    });
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            loadImageFile(files[0]);
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (!originalImage || selectedOrigX === null) return;
+        let dx = 0, dy = 0;
+        if (e.key === "ArrowUp") dy = -1;
+        else if (e.key === "ArrowDown") dy = 1;
+        else if (e.key === "ArrowLeft") dx = -1;
+        else if (e.key === "ArrowRight") dx = 1;
+        else return;
+
+        e.preventDefault();
+        selectedOrigX = Math.max(0, Math.min(originalImage.width - 1, selectedOrigX + dx));
+        selectedOrigY = Math.max(0, Math.min(originalImage.height - 1, selectedOrigY + dy));
+        applyLinearMatrixOperation();
+    });
+
+    window.addEventListener('resize', () => {
+        if (originalImage) {
+            calculateStaticRatios();
+            applyLinearMatrixOperation();
+        }
+    });
+
+    function handleFileSelect(e) {
+        if (e.target.files.length > 0) loadImageFile(e.target.files[0]);
+    }
+
+    function loadImageFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            originalImage = new Image();
+            originalImage.onload = function() {
+                resLabel.innerText = `현재 이미지 해상도 : ${originalImage.width} x ${originalImage.height}`;
+                dropPrompt.style.display = 'none';
+                
+                offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = originalImage.width;
+                offscreenCanvas.height = originalImage.height;
+                offscreenCtx = offscreenCanvas.getContext('2d');
+
+                selectedOrigX = Math.floor(originalImage.width / 2);
+                selectedOrigY = Math.floor(originalImage.height / 2);
+                
+                calculateStaticRatios();
+                applyLinearMatrixOperation();
+            }
+            originalImage.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function calculateStaticRatios() {
+        if (!originalImage) return;
+        const containerW = dropZone.clientWidth;
+        const containerH = dropZone.clientHeight;
+
+        scaleFactor = Math.min(containerW / originalImage.width, containerH / originalImage.height);
+        newW = originalImage.width * scaleFactor;
+        newH = originalImage.height * scaleFactor;
+        padX = (containerW - newW) / 2;
+        padY = (containerH - newH) / 2;
+
+        imageCanvas.width = containerW;
+        imageCanvas.height = containerH;
+    }
+
+    function handleMouseAction(e) {
+        if (!originalImage) return;
+        const rect = imageCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - padX;
+        const mouseY = e.clientY - rect.top - padY;
+
+        if (mouseX >= 0 && mouseX < newW && mouseY >= 0 && mouseY < newH) {
+            selectedOrigX = Math.floor(mouseX / scaleFactor);
+            selectedOrigY = Math.floor(mouseY / scaleFactor);
+            applyLinearMatrixOperation();
+        }
+    }
+    imageCanvas.addEventListener('mousedown', (e) => {
+        handleMouseAction(e);
+        const onMouseMove = (moveEvent) => handleMouseAction(moveEvent);
+        const onMouseUp = () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    });
+
+    function applyLinearMatrixOperation() {
+        if (!originalImage) return;
+
+        const a = parseFloat(sliderA.value);
+        const b = parseInt(sliderB.value);
+
+        offscreenCtx.drawImage(originalImage, 0, 0);
+        const imgData = offscreenCtx.getImageData(0, 0, originalImage.width, originalImage.height);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            let r = data[i];
+            let g = data[i+1];
+            let bVal = data[i+2];
+
+            if (isGrayscaleMode) {
+                let gray = (r + g + bVal) / 3;
+                r = g = bVal = gray;
+            }
+
+            data[i]   = Math.max(0, Math.min(255, r * a + b));
+            data[i+1] = Math.max(0, Math.min(255, g * a + b));
+            data[i+2] = Math.max(0, Math.min(255, bVal * a + b));
+        }
+        offscreenCtx.putImageData(imgData, 0, 0);
+
+        imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+        imageCtx.drawImage(offscreenCanvas, padX, padY, newW, newH);
+
+        if (selectedOrigX !== null && selectedOrigY !== null) {
+            const w = originalImage.width;
+            const h = originalImage.height;
+            
+            let x1 = Math.max(0, selectedOrigX - 7);
+            let y1 = Math.max(0, selectedOrigY - 7);
+            let x2 = Math.min(w, x1 + 15);
+            let y2 = Math.min(h, y1 + 15);
+
+            if (x2 - x1 < 15) x1 = Math.max(0, x2 - 15);
+            if (y2 - y1 < 15) y1 = Math.max(0, y2 - 15);
+
+            const dispX1 = padX + (x1 * scaleFactor);
+            const dispY1 = padY + (y1 * scaleFactor);
+            const dispX2 = padX + (x2 * scaleFactor);
+            const dispY2 = padY + (y2 * scaleFactor);
+
+            imageCtx.strokeStyle = "#E28323";
+            imageCtx.lineWidth = 2;
+            imageCtx.strokeRect(dispX1, dispY1, dispX2 - dispX1, dispY2 - dispY1);
+
+            renderMatrixGrid(x1, y1, x2, y2);
+        }
+    }
+
+    function renderMatrixGrid(x1, y1, x2, y2) {
+        const canvW = matrixCanvas.clientWidth;
+        const canvH = matrixCanvas.clientHeight;
+        matrixCanvas.width = canvW;
+        matrixCanvas.height = canvH;
+
+        const sampleW = x2 - x1;
+        const sampleH = y2 - y1;
+
+        const startX = 45;
+        const startY = 45;
+        const availableW = canvW - startX - 10;
+        const availableH = canvH - startY - 10;
+
+        const cellW = availableW / sampleW;
+        const cellH = availableH / sampleH;
+
+        matrixCtx.fillStyle = "#37352F";
+        matrixCtx.font = "bold 13px Malgun Gothic";
+        matrixCtx.fillText(`📁 탐색 데이터: X(${x1}~${x2}), Y(${y1}~${y2}) | 뷰포트: ${matrixViewMode} -> [${displaySubMode}]`, 10, 20);
+
+        const imgData = offscreenCtx.getImageData(x1, y1, sampleW, sampleH);
+        const data = imgData.data;
+
+        matrixCtx.font = "10px Malgun Gothic";
+        matrixCtx.fillStyle = "#787774";
+        matrixCtx.textAlign = "center";
+        for (let c = 0; c < sampleW; c++) {
+            matrixCtx.fillText(`${c + 1}열`, startX + (c * cellW) + (cellW / 2), startY - 10);
+        }
+        matrixCtx.textAlign = "right";
+        for (let r = 0; r < sampleH; r++) {
+            matrixCtx.fillText(`${r + 1}행`, startX - 8, startY + (r * cellH) + (cellH / 2) + 4);
+        }
+
+        for (let r = 0; r < sampleH; r++) {
+            for (let c = 0; c < sampleW; c++) {
+                const idx = (r * sampleW + c) * 4;
+                const R = data[idx];
+                const G = data[idx+1];
+                const B = data[idx+2];
+
+                let bgStyle = "#FFFFFF";
+                let textStyle = "#37352F";
+                let pixelText = "";
+
+                if (displaySubMode === "색깔" || displaySubMode === "모두") {
+                    if (matrixViewMode === "이미지") {
+                        bgStyle = `rgb(${R},${G},${B})`;
+                    } else if (matrixViewMode === "R채널") {
+                        bgStyle = `rgb(${R},0,0)`;
+                    } else if (matrixViewMode === "G채널") {
+                        bgStyle = `rgb(0,${G},0)`;
+                    } else if (matrixViewMode === "B채널") {
+                        bgStyle = `rgb(0,0,${B})`;
+                    }
+                }
+
+                if (displaySubMode === "모두" || displaySubMode === "색깔") {
+                    let brightness = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+                    if (matrixViewMode === "R채널") brightness = R * 0.2126;
+                    if (matrixViewMode === "G채널") brightness = G * 0.7152;
+                    if (matrixViewMode === "B채널") brightness = B * 0.0722;
+                    textStyle = brightness < 110 ? "#FFFFFF" : "#000000";
+                }
+
+                if (displaySubMode === "숫자" || displaySubMode === "모두") {
+                    if (matrixViewMode === "이미지") {
+                        pixelText = `${R},${G},${B}`;
+                    } else if (matrixViewMode === "R채널") pixelText = R;
+                    else if (matrixViewMode === "G채널") pixelText = G;
+                    else if (matrixViewMode === "B채널") pixelText = B;
+                }
+
+                const cellX = startX + (c * cellW);
+                const cellY = startY + (r * cellH);
+
+                matrixCtx.fillStyle = bgStyle;
+                matrixCtx.fillRect(cellX, cellY, cellW, cellH);
+                matrixCtx.strokeStyle = "#E2E2E6";
+                matrixCtx.lineWidth = 1;
+                matrixCtx.strokeRect(cellX, cellY, cellW, cellH);
+
+                if (pixelText !== "") {
+                    matrixCtx.fillStyle = textStyle;
+                    const fontSize = matrixViewMode === "이미지" ? Math.max(8, cellW * 0.16) : Math.max(10, cellW * 0.3);
+                    matrixCtx.font = `bold ${fontSize}px Consolas, Malgun Gothic`;
+                    matrixCtx.textAlign = "center";
+                    matrixCtx.textBaseline = "middle";
+                    matrixCtx.fillText(pixelText, cellX + (cellW / 2), cellY + (cellH / 2));
+                }
+            }
+        }
+    }
+
+    function onSliderAMove(val) {
+        entryA.value = parseFloat(val).toFixed(2);
+        applyLinearMatrixOperation();
+    }
+    function onSliderBMove(val) {
+        entryB.value = parseInt(val);
+        applyLinearMatrixOperation();
+    }
+    function onEntryAChanged() {
+        let val = parseFloat(entryA.value);
+        if (isNaN(val) || val < 0.0 || val > 3.0) {
+            alert("실수배(a)는 0.0에서 3.0 사이의 숫자여야 합니다.");
+            entryA.value = parseFloat(sliderA.value).toFixed(2);
+        } else {
+            sliderA.value = val;
+            applyLinearMatrixOperation();
+        }
+    }
+    function onEntryBChanged() {
+        let val = parseInt(entryB.value);
+        if (isNaN(val) || val < -255 || val > 255) {
+            alert("합·차(b)는 -255에서 255 사이의 정수여야 합니다.");
+            entryB.value = sliderB.value;
+        } else {
+            sliderB.value = val;
+            applyLinearMatrixOperation();
+        }
+    }
+
+    function changeMatrixView(mode) {
+        matrixViewMode = mode;
+        updateTabUI('mTab', ['이미지', 'R채널', 'G채널', 'B채널'], mode);
+        if (originalImage) applyLinearMatrixOperation();
+    }
+    function changeSubMode(mode) {
+        displaySubMode = mode;
+        updateTabUI('sTab', ['색깔', '숫자', '모두'], mode);
+        if (originalImage) applyLinearMatrixOperation();
+    }
+    function updateTabUI(prefix, allModes, activeMode) {
+        allModes.forEach(m => {
+            document.getElementById(`${prefix}_${m}`).classList.remove('active');
+        });
+        document.getElementById(`${prefix}_${activeMode}`).classList.add('active');
+    }
+
+    function resetBrightness() {
+        sliderA.value = 1.00;
+        entryA.value = "1.00";
+        sliderB.value = 0;
+        entryB.value = "0";
+        applyLinearMatrixOperation();
+    }
+
+    document.title = "이미지 데이터의 처리 1 - 밝기 조절과 흑백 변환";
+
+    function triggerGrayscale() {
+        isGrayscaleMode = true;
+        applyLinearMatrixOperation();
+    }
+    function triggerResetColor() {
+        isGrayscaleMode = false;
+        applyLinearMatrixOperation();
+    }
+
+    // 파일 이름 요구사항 적용 (chapter_2_image_processing_1.png)
+    function saveProcessedImage() {
+        if (!originalImage) {
+            alert("저장할 이미지가 없습니다. 먼저 이미지를 열어 주세요.");
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'chapter_2_image_processing_1.png';
+        link.href = offscreenCanvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+
+</body>
+</html>
