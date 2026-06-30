@@ -4,55 +4,61 @@
     <meta charset="UTF-8">
     <title>이미지 데이터의 표현</title>
     <style>
-        /* 기본 스타일 초기화 및 PyQt6 인터페이스 느낌 재현 */
+        /* 큰 화면에 맞게 기본 폰트 크기 및 여백 조정 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-size: 12px;
+            font-size: 16px; /* 글자 크기 확대 */
             background-color: #f0f0f0;
             margin: 0;
-            padding: 5px;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             user-select: none;
+            box-sizing: border-box;
         }
 
-        /* 전체 고정 크기 컨테이너 */
+        /* 크기를 키운 메인 컨테이너 (너비 900px, 높이 400px 수준으로 확대) */
         .app-container {
-            width: 520px;
-            height: 220px;
+            width: 100%;
+            max-width: 900px;
+            height: 420px;
             background: #f0f0f0;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 화면에서 잘 보이도록 그림자 추가 */
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-        /* 탭 내비게이션 */
+        /* 탭 내비게이션 크기 확대 */
         .tab-header {
             display: flex;
-            border-bottom: 1px solid #c0c0c0;
+            border-bottom: 2px solid #c0c0c0;
             background: #e1e1e1;
         }
         .tab-btn {
-            padding: 6px 16px;
+            padding: 14px 28px;
             border: 1px solid transparent;
             border-bottom: none;
             background: transparent;
-            font-size: 12px;
+            font-size: 16px; /* 탭 글자 크기 변경 */
             cursor: pointer;
             outline: none;
-            margin-bottom: -1px;
+            margin-bottom: -2px;
+            transition: background 0.2s;
         }
         .tab-btn.active {
             background: #f0f0f0;
             border-color: #c0c0c0;
-            border-top-left-radius: 2px;
-            border-top-right-radius: 2px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
             font-weight: bold;
         }
 
-        /* 탭 콘텐츠 영역 */
+        /* 탭 콘텐츠 영역 여백 확대 */
         .tab-content {
             flex: 1;
             display: none;
@@ -65,17 +71,19 @@
         /* 1번 탭: RGB 색상 확인 */
         .rgb-tab-inner {
             width: 100%;
-            padding: 20px 25px;
+            padding: 30px 40px;
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 45px;
             box-sizing: border-box;
         }
+        /* 색상 미리보기 상자 대폭 확대 (130px -> 240px) */
         .preview-box {
-            width: 130px;
-            height: 130px;
+            width: 240px;
+            height: 240px;
             background-color: #FFFFFF;
-            border: 1px solid #000;
+            border: 2px solid #000;
+            border-radius: 4px;
             flex-shrink: 0;
         }
         .rgb-controls {
@@ -83,16 +91,20 @@
             display: grid;
             grid-template-columns: auto 1fr auto;
             align-items: center;
-            row-gap: 8px;
-            column-gap: 8px;
+            row-gap: 20px; /* 줄 간격 대폭 확대 */
+            column-gap: 15px;
         }
         .rgb-label {
-            width: 20px;
+            width: 25px;
+            font-size: 18px;
+            font-weight: bold;
         }
+        /* 슬라이더 바 두께 확대 */
         .rgb-slider {
             width: 100%;
             margin: 0;
             cursor: pointer;
+            height: 8px;
         }
         
         /* 커스텀 숫자 증감 컨테이너 */
@@ -101,25 +113,27 @@
             align-items: center;
         }
         .num-input {
-            width: 45px;
-            height: 20px;
+            width: 65px;
+            height: 34px;
             text-align: center;
             font-weight: bold;
+            font-size: 16px;
             border: 1px solid #B0B0B0;
             background-color: white;
             box-sizing: border-box;
             outline: none;
+            border-radius: 4px 0 0 4px;
         }
         .spin-btns {
             display: flex;
             flex-direction: column;
-            margin-left: 1px;
+            margin-left: -1px;
         }
         .spin-btn {
-            width: 19px;
-            height: 10px;
-            font-size: 6px;
-            line-height: 8px;
+            width: 24px;
+            height: 17px;
+            font-size: 10px;
+            line-height: 15px;
             text-align: center;
             border: 1px solid #C0C0C0;
             background-color: #EFEFEF;
@@ -128,103 +142,111 @@
             padding: 0;
         }
         .spin-btn:active { background-color: #dcdcdc; }
-        .spin-btn.down { margin-top: 0px; }
 
         /* Hex 및 스포이드 레이아웃 */
         .hex-row {
             grid-column: span 3;
             display: flex;
             align-items: center;
-            margin-top: 5px;
+            margin-top: 15px;
+            gap: 10px;
         }
-        .hex-label { width: 30px; }
-        .hex-value { font-weight: bold; font-size: 13px; }
+        .hex-label { font-size: 16px; font-weight: bold; }
+        .hex-value { font-weight: bold; font-size: 20px; color: #333; }
         .dropper-btn {
             margin-left: auto;
-            width: 85px;
-            height: 26px;
+            width: 120px;
+            height: 38px;
             background: #e1e1e1;
             border: 1px solid #acacac;
-            border-radius: 2px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 15px;
+            font-weight: bold;
         }
         .dropper-btn:active { background: #cbcbcb; }
 
-        /* 2번 탭: 이미지 행렬화 */
+        /* 2번 탭: 이미지 행렬화 (크기 대폭 확대) */
         .matrix-tab-inner {
             width: 100%;
-            padding: 10px 15px;
+            padding: 20px 30px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 40px;
             box-sizing: border-box;
             justify-content: center;
         }
+        /* 2x2 컬러 셀 색상판 확대 (65px -> 120px) */
         .matrix-left-grid {
             display: grid;
-            grid-template-columns: repeat(2, 65px);
-            grid-template-rows: repeat(2, 65px);
-            gap: 4px;
+            grid-template-columns: repeat(2, 120px);
+            grid-template-rows: repeat(2, 120px);
+            gap: 8px;
         }
         .matrix-cell {
-            width: 65px;
-            height: 65px;
+            width: 120px;
+            height: 120px;
             background-color: #FFFFFF;
-            border: 1px solid #000;
+            border: 2px solid #000;
+            border-radius: 4px;
         }
+        /* 2x2 입력 그리드 제어판 확대 */
         .matrix-right-grid {
             display: grid;
-            grid-template-columns: repeat(2, 165px);
-            grid-template-rows: repeat(2, 65px);
-            gap: 6px;
+            grid-template-columns: repeat(2, 250px);
+            grid-template-rows: repeat(2, 120px);
+            gap: 12px;
         }
         .matrix-input-container {
-            width: 165px;
-            height: 65px;
+            width: 250px;
+            height: 120px;
             border: 1px solid #C0C0C0;
-            border-radius: 2px;
+            border-radius: 6px;
             background-color: #FAFAFA;
             box-sizing: border-box;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 4px;
+            gap: 12px;
+            padding: 10px;
         }
         .matrix-sub-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            gap: 4px;
         }
         .matrix-num-input {
-            width: 40px;
-            height: 20px;
+            width: 55px;
+            height: 30px;
             text-align: center;
             font-weight: bold;
+            font-size: 15px;
             border: 1px solid #B0B0B0;
             background-color: white;
             box-sizing: border-box;
             outline: none;
+            border-radius: 4px;
         }
-        .matrix-num-input.r { color: red; }
-        .matrix-num-input.g { color: green; }
-        .matrix-num-input.b { color: blue; }
+        .matrix-num-input.r { color: red; border-color: #ffcccc; }
+        .matrix-num-input.g { color: green; border-color: #ccffcc; }
+        .matrix-num-input.b { color: blue; border-color: #ccccff; }
+        
         .matrix-spin-btns {
             display: flex;
-            gap: 2px;
+            gap: 4px;
         }
         .matrix-spin-btn {
-            width: 19px;
-            height: 14px;
-            font-size: 7px;
-            line-height: 12px;
+            width: 24px;
+            height: 22px;
+            font-size: 10px;
+            line-height: 20px;
             text-align: center;
             border: 1px solid #C0C0C0;
             background-color: #EFEFEF;
             cursor: pointer;
             padding: 0;
+            border-radius: 3px;
         }
         .matrix-spin-btn:active { background-color: #dcdcdc; }
     </style>
@@ -247,7 +269,7 @@
                     <input type="text" id="rEdit" class="num-input" value="255">
                     <div class="spin-btns">
                         <button class="spin-btn" onclick="stepRgb('r', 1)">▲</button>
-                        <button class="spin-btn down" onclick="stepRgb('r', -1)">▼</button>
+                        <button class="spin-btn" onclick="stepRgb('r', -1)">▼</button>
                     </div>
                 </div>
 
@@ -257,7 +279,7 @@
                     <input type="text" id="gEdit" class="num-input" value="255">
                     <div class="spin-btns">
                         <button class="spin-btn" onclick="stepRgb('g', 1)">▲</button>
-                        <button class="spin-btn down" onclick="stepRgb('g', -1)">▼</button>
+                        <button class="spin-btn" onclick="stepRgb('g', -1)">▼</button>
                     </div>
                 </div>
 
@@ -267,7 +289,7 @@
                     <input type="text" id="bEdit" class="num-input" value="255">
                     <div class="spin-btns">
                         <button class="spin-btn" onclick="stepRgb('b', 1)">▲</button>
-                        <button class="spin-btn down" onclick="stepRgb('b', -1)">▼</button>
+                        <button class="spin-btn" onclick="stepRgb('b', -1)">▼</button>
                     </div>
                 </div>
 
@@ -463,8 +485,7 @@
     [rSlider, gSlider, bSlider].forEach(slider => slider.addEventListener('input', updateRgbFromSliders));
     [rEdit, gEdit, bEdit].forEach(edit => edit.addEventListener('input', updateRgbFromEdits));
 
-
-    // 웹 표준 EyeDropper API를 활용한 스포이드 기능
+    // 스포이드 기능
     async function triggerDropper() {
         if (!window.EyeDropper) {
             alert('이 브라우저는 스포이드 기능을 지원하지 않습니다. 크롬, 엣지, 웨일 브라우저를 사용해 주세요.');
@@ -476,7 +497,6 @@
         const eyeDropper = new EyeDropper();
         try {
             const result = await eyeDropper.open();
-            // result.sRGBHex 형태로 #RRGGBB 반환됨
             const hex = result.sRGBHex.toUpperCase();
             
             const r = parseInt(hex.substring(1, 3), 16);
@@ -488,7 +508,6 @@
             bEdit.value = b;
             updateRgbFromEdits();
         } catch (e) {
-            // 선택을 취소했을 때 처리
         } finally {
             dropperBtn.innerText = "스포이드";
         }
@@ -517,7 +536,7 @@
         updateMatrixCell(row, col);
     }
 
-    // 초기 실행 시 화면 세팅 데이터 채우기
+    // 초기 실행 세팅
     updateRgbFromSliders();
     for(let r=0; r<2; r++){
         for(let c=0; c<2; c++){
