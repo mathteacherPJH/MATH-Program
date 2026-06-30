@@ -14,14 +14,46 @@
             align-items: center;
         }
         h1 { color: #1a73e8; margin-bottom: 5px; font-size: 26px; font-weight: 700; }
-        .subtitle { color: #5f6368; margin-bottom: 40px; font-size: 15px; }
+        .subtitle { color: #5f6368; margin-bottom: 30px; font-size: 15px; }
         
+        /* 💡 단원 선택 탭 스타일 */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 850px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 20px;
+            color: #5f6368;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-button:hover {
+            background-color: #f1f3f4;
+        }
+        .tab-button.active {
+            background-color: #1a73e8;
+            border-color: #1a73e8;
+            color: #fff;
+        }
+
         .menu-container {
             width: 100%;
             max-width: 850px;
             display: block;
         }
         
+        /* 💡 탭 전환 시 부드럽게 보이도록 설정 */
         .menu-item {
             background: white;
             padding: 24px;
@@ -32,7 +64,7 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
-            display: block;
+            display: none; /* 기본은 숨김, 자바스크립트로 제어 */
             position: relative;
         }
         .menu-item:hover {
@@ -71,6 +103,15 @@
             bottom: 10px;
             right: 15px;
         }
+        .no-tools-msg {
+            text-align: center;
+            padding: 50px;
+            background: #fff;
+            border-radius: 8px;
+            color: #999;
+            border: 2px dashed #ddd;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -78,15 +119,58 @@
     <h1>📐 수학 탐구 공학 도구 모음집</h1>
     <div class="subtitle">수업, 수행평가 및 수학적 모델링을 위한 공학 도구 저장소입니다.</div>
 
-    <div class="menu-container">
+    <div class="tab-container">
+        <button class="tab-button active" onclick="filterChapter('all')">전체보기</button>
+        <button class="tab-button" onclick="filterChapter('ch1')">1단원</button>
+        <button class="tab-button" onclick="filterChapter('ch2')">2단원</button>
+        <button class="tab-button" onclick="filterChapter('ch3')">3단원</button>
+        <button class="tab-button" onclick="filterChapter('ch4')">4단원</button>
+        <button class="tab-button" onclick="filterChapter('ch5')">5단원</button>
+    </div>
+
+    <div class="menu-container" id="menu-box">
         
-        <a href="chapter_4_regression_line.html" class="menu-item">
+        <a href="chapter_4_regression_line.html" class="menu-item" data-chapter="ch4">
             <div class="menu-title">📈 다기능 함수 추세선 분석 도구 <span class="tag">도구 실행</span></div>
             <div class="menu-desc">데이터(X, Y)를 입력하거나 엑셀에서 복사해 붙여넣어 선형, 이차, 지수, 로그 함수 형태의 추세선 공식과 결정계수(R²)를 실시간으로 분석합니다.</div>
             <div class="file-name">chapter_4_regression_line.html</div>
         </a>
 
+        <div class="no-tools-msg" id="empty-message">📂 해당 단원에 업로드된 수학 공학 도구가 아직 없습니다. (준비 중)</div>
     </div>
 
+    <script>
+        function filterChapter(ch) {
+            // 탭 버튼 활성화 스타일 제어
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const items = document.querySelectorAll('.menu-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                if (ch === 'all' || item.getAttribute('data-chapter') === ch) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // 해당 단원에 파일이 하나도 없으면 준비중 메시지 표시
+            const emptyMsg = document.getElementById('empty-message');
+            if (visibleCount === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+        }
+
+        // 첫 페이지 로드 시 전체 도구 보여주기
+        window.onload = function() {
+            filterChapter('all');
+        };
+    </script>
 </body>
 </html>
