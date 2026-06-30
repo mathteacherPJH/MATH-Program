@@ -63,7 +63,7 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
-            display: block; /* 💡 기본 출력 방식을 안전하게 block으로 변경 */
+            display: block;
             position: relative;
         }
         .menu-item:hover {
@@ -85,13 +85,11 @@
             line-height: 1.6;
         }
         
+        /* 💡 파일명 텍스트 출력 영역을 완전히 제거(display: none) 처리 */
         .file-name {
-            font-size: 11px;
-            color: #dadce0;
-            position: absolute;
-            bottom: 10px;
-            right: 15px;
+            display: none;
         }
+        
         .no-tools-msg {
             text-align: center;
             padding: 50px;
@@ -143,11 +141,9 @@
 
     <script>
         function filterChapter(ch, element) {
-            // 모든 버튼에서 active 클래스 제거
             const buttons = document.querySelectorAll('.tab-button');
             buttons.forEach(btn => btn.classList.remove('active'));
             
-            // 클릭된 버튼에 active 추가 (안전한 매개변수 방식)
             if (element) {
                 element.classList.add('active');
             }
@@ -172,7 +168,6 @@
             }
         }
 
-        // 첫 로드 시 전체 항목 출력 실행
         window.onload = function() {
             filterChapter('all', document.getElementById('btn-all'));
         };
