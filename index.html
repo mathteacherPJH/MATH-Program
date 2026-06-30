@@ -63,7 +63,7 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
-            display: none;
+            display: block; /* 💡 기본 출력 방식을 안전하게 block으로 변경 */
             position: relative;
         }
         .menu-item:hover {
@@ -109,13 +109,13 @@
     <div class="subtitle">수업, 수행평가 및 수학적 모델링을 위한 공학 도구 저장소입니다.</div>
 
     <div class="tab-container">
-        <button class="tab-button active" onclick="filterChapter('all')">전체보기</button>
-        <button class="tab-button" onclick="filterChapter('ch1')">1단원</button>
-        <button class="tab-button" onclick="filterChapter('ch2')">2단원</button>
-        <button class="tab-button" onclick="filterChapter('ch3')">3단원</button>
-        <button class="tab-button" onclick="filterChapter('ch4')">4단원</button>
-        <button class="tab-button" onclick="filterChapter('ch5')">5단원</button>
-        <button class="tab-button" onclick="filterChapter('download')">📋 파일 다운로드</button>
+        <button id="btn-all" class="tab-button active" onclick="filterChapter('all', this)">전체보기</button>
+        <button id="btn-ch1" class="tab-button" onclick="filterChapter('ch1', this)">1단원</button>
+        <button id="btn-ch2" class="tab-button" onclick="filterChapter('ch2', this)">2단원</button>
+        <button id="btn-ch3" class="tab-button" onclick="filterChapter('ch3', this)">3단원</button>
+        <button id="btn-ch4" class="tab-button" onclick="filterChapter('ch4', this)">4단원</button>
+        <button id="btn-ch5" class="tab-button" onclick="filterChapter('ch5', this)">5단원</button>
+        <button id="btn-download" class="tab-button" onclick="filterChapter('download', this)">📋 파일 다운로드</button>
     </div>
 
     <div class="menu-container" id="menu-box">
@@ -142,12 +142,14 @@
     </div>
 
     <script>
-        function filterChapter(ch) {
+        function filterChapter(ch, element) {
+            // 모든 버튼에서 active 클래스 제거
             const buttons = document.querySelectorAll('.tab-button');
             buttons.forEach(btn => btn.classList.remove('active'));
             
-            if (window.event && window.event.target) {
-                window.event.target.classList.add('active');
+            // 클릭된 버튼에 active 추가 (안전한 매개변수 방식)
+            if (element) {
+                element.classList.add('active');
             }
 
             const items = document.querySelectorAll('.menu-item');
@@ -170,8 +172,9 @@
             }
         }
 
+        // 첫 로드 시 전체 항목 출력 실행
         window.onload = function() {
-            filterChapter('all');
+            filterChapter('all', document.getElementById('btn-all'));
         };
     </script>
 </body>
