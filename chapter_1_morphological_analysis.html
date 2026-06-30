@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어집합 구성 프로그램</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; margin: 30px; background-color: #f9f9f9; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 100px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+        
+        .main-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .main-header-flex h2 { margin: 0; }
+        .run-btn { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .run-btn:hover { background-color: #45a049; }
+        
+        .result-section { margin-top: 20px; }
+        
+        .result-box { 
+            background-color: #eee; 
+            padding: 15px; 
+            border-radius: 4px; 
+            min-height: 40px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: flex-start;
+            gap: 10px 1.2%; 
+            align-items: center;
+        }
+        
+        .tag { display: inline-block; background-color: #e0f7fa; color: #006064; padding: 6px 10px; border-radius: 4px; font-size: 14px; }
+        .removed { background-color: #ffebee; color: #c62828; text-decoration: line-through; }
+        
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+        .header-flex h3 { margin: 0; }
+        .add-section { display: flex; gap: 6px; align-items: center; }
+        .add-input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 140px; font-size: 14px; }
+        .add-btn { padding: 6px 12px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .add-btn:hover { background-color: #1e88e5; }
+
+        .editable-tag { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: space-between;
+            background-color: #e8f5e9; 
+            color: #2e7d32; 
+            padding: 6px 8px; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            border: 1px solid #a5d6a7; 
+            box-sizing: border-box;
+            width: 15.6%;
+            min-width: 110px;
+        }
+        .editable-tag input { 
+            border: none; 
+            background: transparent; 
+            color: #2e7d32; 
+            font-size: 14px; 
+            font-family: inherit; 
+            width: 100%;
+            text-align: center; 
+            font-weight: bold; 
+        }
+        .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
+        .delete-btn { margin-left: 4px; cursor: pointer; color: #c62828; font-weight: bold; font-size: 12px; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="main-header-flex">
+        <h2>📝 단어집합 구성 프로그램</h2>
+        <button class="run-btn" onclick="processNLP()">분석 및 변환 실행</button>
+    </div>
+    
+    <textarea id="inputText" placeholder="문장을 입력하세요. (예: 불편한 옷을 입으니 소중해질 기회가 사라져 무척 감동했습니다)"></textarea>
+
+    <div class="result-section">
+        <h3>1. 형태소 분석</h3>
+        <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
+    </div>
+
+    <div class="result-section">
+        <h3>2. 불용어 제거</h3>
+        <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
+    </div>
+
+    <div class="result-section">
+        <h3>3. 기본형 만들기</h3>
+        <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
+    </div>
+
+    <div class="result-section">
+        <div class="header-flex">
+            <h3>4. 사용자 수정</h3>
+            <div class="add-section">
+                <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
+                <button class="add-btn" onclick="addToken()">단어 추가</button>
+            </div>
+        </div>
+        <div class="result-box" id="editorContainer">
+            분석을 실행하면 편집 가능한 토큰이 여기에 생성됩니다.
+        </div>
+    </div>
+</div>
+
+<script>
+const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
+let finalTokens = [];
+
+function tokenizeKorean(text) {
+    const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
+    const tokens = [];
+
+    words.forEach(word => {
+        if (!word) return;
+
+        const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지)$/;
+        const matchJosa = word.match(josaRegex);
+
+        if (matchJosa && word.length > matchJosa[0].length) {
+            const stem = word.replace(josaRegex, "");
+            const josa = matchJosa[0];
+            tokens.push({ text: stem, pos: "명사/어근", lemma: stem });
+            tokens.push({ text: josa, pos: "조사", lemma: josa });
+            return;
+        }
+
+        if (word.endsWith("했습니다") || word.endsWith("합니다") || word.endsWith("하였다") || word.endsWith("했다") || word.endsWith("한다")) {
+            const stem = word.replace(/(했습니다|합니다|하였다|했다|한다)$/, "");
+            tokens.push({ text: word, pos: "용언(하다)", lemma: stem + "하다" });
+            return;
+        }
+
+        if (/[가-힣]+해(질|요|서|도|지|면|유|용|야)/.test(word) || /[가-힣]+해졌다/.test(word) || word.endsWith("해질")) {
+            const stem = word.replace(/(해질|해요|해서|해도|해지|하면|해|해졌다)$/, "");
+            tokens.push({ text: word, pos: "용언(하다)", lemma: stem + "하다" });
+            return;
+        }
+
+        if ((word.endsWith("한") || word.endsWith("할")) && word.length > 1) {
+            const stem = word.slice(0, -1);
+            tokens.push({ text: word, pos: "용언(하다)", lemma: stem + "하다" });
+            return;
+        }
+
+        if (word.endsWith("았습니다") || word.endsWith("었습니다") || word.endsWith("습니다")) {
+            let stem = word.replace(/(았습니다|었습니다|습니다)$/, "");
+            if (stem.endsWith("었") || stem.endsWith("았")) { stem = stem.slice(0, -1); }
+            if (stem.endsWith("들")) stem = stem.slice(0, -1) + "듣";
+            if (stem.endsWith("불렀")) stem = "부르";
+            if (stem.endsWith("골랐")) stem = "고르";
+            if (stem.endsWith("달랐")) stem = "다르";
+            
+            tokens.push({ text: word, pos: "용언", lemma: stem + "다" });
+            return;
+        }
+
+        const eomiRegex = /(다|고|며|니|어|아|게|지|던|은|는|을|인|으려|려고|으니|었더니|았더니)$/;
+        const matchEomi = word.match(eomiRegex);
+
+        if (matchEomi && word.length > matchEomi[0].length) {
+            let stem = word.replace(eomiRegex, "");
+            if (stem.endsWith("었") || stem.endsWith("았")) { stem = stem.slice(0, -1); }
+
+            if (word.endsWith("러") || word.endsWith("라")) {
+                if (stem.endsWith("불")) stem = "부르";
+                if (stem.endsWith("골")) stem = "고르";
+                if (stem.endsWith("달")) stem = "다르";
+                if (stem.endsWith("잘")) stem = "자르";
+            }
+            if (word.endsWith("른") || word.endsWith("를")) { stem = stem + "르"; }
+            if (word.endsWith("쁜")) { stem = stem + "쁘"; }
+            if (word.includes("들으니") || word.includes("들어")) { if (stem === "들") stem = "듣"; }
+            if (word.endsWith("운") && stem.length > 0) { stem = stem + "ㅂ"; }
+            if (word.endsWith("워") || word.endsWith("워서") || word.endsWith("워요")) {
+                stem = stem.replace(/(word|워서|워요)$/, "") + "ㅂ";
+            }
+
+            tokens.push({ text: word, pos: "용언", lemma: stem + "다" });
+        } else {
+            if (word === "불러" || word === "불렀어") { tokens.push({ text: word, pos: "용언", lemma: "부르다" }); return; }
+            if (word === "골라" || word === "골랐어") { tokens.push({ text: word, pos: "용언", lemma: "고르다" }); return; }
+            if (word === "달라" || word === "달랐어") { tokens.push({ text: word, pos: "용언", lemma: "다르다" }); return; }
+            tokens.push({ text: word, pos: "일반단어", lemma: word });
+        }
+    });
+
+    return tokens;
+}
+
+function processNLP() {
+    const text = document.getElementById("inputText").value.trim();
+    if (!text) {
+        alert("문장을 입력해주세요!");
+        return;
+    }
+
+    const allTokens = tokenizeKorean(text);
+    let morphemeHtml = "";
+    let cleanHtml = "";
+    let lemmaHtml = "";
+    
+    finalTokens = [];
+    const uniqueLemmas = new Set();
+
+    allTokens.forEach(token => {
+        const isStopword = stopwords.has(token.text) || token.pos === "조사";
+
+        if (isStopword) {
+            morphemeHtml += `<span class="tag removed">${token.text}(${token.pos})</span>`;
+        } else {
+            morphemeHtml += `<span class="tag">${token.text}(${token.pos})</span>`;
+            cleanHtml += `<span class="tag" style="background-color: #fff9c4; color: #f57f17;">${token.text}</span>`;
+            
+            if (!uniqueLemmas.has(token.lemma)) {
+                uniqueLemmas.add(token.lemma);
+                lemmaHtml += `<span class="tag" style="background-color: #e8f5e9; color: #2e7d32;">${token.lemma}</span>`;
+                finalTokens.push(token.lemma);
+            }
+        }
+    });
+
+    document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
+    document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
+    document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
+    
+    renderEditor();
+}
+
+function renderEditor() {
+    const container = document.getElementById("editorContainer");
+    if (finalTokens.length === 0) {
+        container.innerHTML = "출력할 토큰이 없습니다.";
+        return;
+    }
+
+    let html = "";
+    finalTokens.forEach((token, index) => {
+        html += `
+            <span class="editable-tag">
+                <input type="text" value="${token}" onchange="updateToken(${index}, this.value)">
+                <span class="delete-btn" onclick="deleteToken(${index})">×</span>
+            </span>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function updateToken(index, newValue) {
+    finalTokens[index] = newValue.trim();
+}
+
+function deleteToken(index) {
+    finalTokens.splice(index, 1);
+    renderEditor();
+}
+
+function addToken() {
+    const input = document.getElementById("newWordInput");
+    const value = input.value.trim();
+    if (!value) {
+        alert("추가할 단어를 입력하세요!");
+        return;
+    }
+    if (!finalTokens.includes(value)) {
+        finalTokens.push(value);
+        renderEditor();
+    }
+    input.value = "";
+}
+</script>
+
+</body>
+</html>
