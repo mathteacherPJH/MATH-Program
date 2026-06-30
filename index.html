@@ -22,13 +22,6 @@
             display: block;
         }
         
-        .loading {
-            text-align: center;
-            color: #888;
-            font-size: 16px;
-            padding: 40px;
-        }
-        
         .menu-item {
             background: white;
             padding: 24px;
@@ -78,14 +71,6 @@
             bottom: 10px;
             right: 15px;
         }
-        .no-tools {
-            text-align: center;
-            padding: 40px;
-            background: #fff;
-            border-radius: 8px;
-            color: #999;
-            border: 2px dashed #ddd;
-        }
     </style>
 </head>
 <body>
@@ -93,75 +78,15 @@
     <h1>📐 수학 탐구 공학 도구 모음집</h1>
     <div class="subtitle">수업, 수행평가 및 수학적 모델링을 위한 공학 도구 저장소입니다.</div>
 
-    <div class="menu-container" id="menu-box">
-        <div class="loading" id="loading-indicator">저장소에서 수학 도구 목록을 실시간으로 불러오는 중입니다...</div>
+    <div class="menu-container">
+        
+        <a href="chapter_4_regression_line.html" class="menu-item">
+            <div class="menu-title">📈 다기능 함수 추세선 분석 도구 <span class="tag">도구 실행</span></div>
+            <div class="menu-desc">데이터(X, Y)를 입력하거나 엑셀에서 복사해 붙여넣어 선형, 이차, 지수, 로그 함수 형태의 추세선 공식과 결정계수(R²)를 실시간으로 분석합니다.</div>
+            <div class="file-name">chapter_4_regression_line.html</div>
+        </a>
+
     </div>
 
-    <script>
-        const GITHUB_USERNAME = 'mathteacherPJH'; 
-        const REPO_NAME = 'MATH-Program'; 
-
-        const menuBox = document.getElementById('menu-box');
-        const loadingIndicator = document.getElementById('loading-indicator');
-
-        async function fetchToolInfo(fileUrl, fileName) {
-            try {
-                const response = await fetch(fileUrl);
-                const text = await response.text();
-                
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                
-                const title = doc.querySelector('title') ? doc.querySelector('title').innerText : fileName;
-                const metaDesc = doc.querySelector('meta[name="description"]');
-                const desc = metaDesc ? metaDesc.getAttribute('content') : '클릭하면 수학 공학 도구 화면으로 연결됩니다.';
-                
-                return { title, desc };
-            } catch (e) {
-                return { title: fileName, desc: '클릭하면 수학 공학 도구 화면으로 연결됩니다.' };
-            }
-        }
-
-        async function loadMathTools() {
-            const apiUrl = `https://api.github.io/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/`;
-            
-            try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error('네트워크 문제 발생');
-                
-                const files = await response.json();
-                const htmlFiles = files.filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html');
-                
-                loadingIndicator.style.display = 'none';
-                
-                if (htmlFiles.length === 0) {
-                    menuBox.innerHTML = '<div class="no-tools">📂 현재 저장소에 업로드된 추가 수학 도구 파일(.html)이 없습니다.</div>';
-                    return;
-                }
-                
-                for (const file of htmlFiles) {
-                    const pageUrl = `https://${GITHUB_USERNAME}.github.io/${REPO_NAME}/${file.name}`;
-                    const info = await fetchToolInfo(file.path, file.name);
-                    
-                    const aTag = document.createElement('a');
-                    aTag.href = pageUrl;
-                    aTag.className = 'menu-item';
-                    aTag.innerHTML = `
-                        <div class="menu-title">${info.title} <span class="tag">도구 실행</span></div>
-                        <div class="menu-desc">${info.desc}</div>
-                        <div class="file-name">${file.name}</div>
-                    `;
-                    menuBox.appendChild(aTag);
-                }
-                
-            } catch (error) {
-                loadingIndicator.style.display = 'none';
-                menuBox.innerHTML = '<div class="no-tools" style="color:red; border-color:red;">❌ 목록을 불러오지 못했습니다. GITHUB_USERNAME 또는 REPO_NAME 설정을 다시 확인해 주세요.</div>';
-                console.error(error);
-            }
-        }
-
-        window.onload = loadMathTools;
-    </script>
 </body>
 </html>
