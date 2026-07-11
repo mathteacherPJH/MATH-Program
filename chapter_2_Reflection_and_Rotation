@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>이미지 데이터의 처리 2 - 대칭변환과 회전변환</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --c-bg-main: #F9F9FB;
+            --c-bg-card: #FFFFFF;
+            --c-text-main: #37352F;
+            --c-text-muted: #787774;
+            --c-border: #E2E2E6;
+            --c-tab-active: #EFEFED;
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-save-bg: #E28523;
+            --c-save-hover: #C9741B;
+            --c-reset-bg: #EB5757;
+            --c-reset-hover: #D14343;
+        }
+
+        body {
+            font-family: "Malgun Gothic", -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* 메인 레이아웃 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0; 
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 15px;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        /* 왼쪽: 이미지 뷰어 */
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--c-border);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+        }
+        .drop-zone.hover {
+            border-color: var(--c-accent);
+            background: #f0f7ff;
+        }
+        .drop-zone canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+        }
+        .info-text {
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.6;
+            pointer-events: none; 
+        }
+
+        .resolution-bar {
+            font-size: 13px;
+            color: var(--c-text-muted);
+            margin: 10px 0 6px 0;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn {
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-upload { background-color: var(--c-accent); }
+        .btn-upload:hover { background-color: var(--c-accent-hover); }
+        .btn-save { background-color: var(--c-save-bg); }
+        .btn-save:hover { background-color: var(--c-save-hover); }
+
+        /* 오른쪽: 행렬 분석기 */
+        .nav-group {
+            display: flex;
+            gap: 4px;
+            background: var(--c-bg-main);
+            padding: 4px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid var(--c-border);
+        }
+        .nav-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .nav-btn.active {
+            background: var(--c-bg-card);
+            color: var(--c-text-main);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .matrix-container {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+        #matrixCanvas {
+            width: 100%;
+            height: 100%;
+            background: var(--c-bg-card);
+        }
+
+        /* 단일 가로 통합형 하단 제어판 */
+        .bottom-panel {
+            display: flex;
+            gap: 15px;
+            height: 140px;
+        }
+        .bottom-full-card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            gap: 15px;
+            min-width: 0;
+        }
+
+        /* 1구역: 여백 배경색 조절 */
+        .area-bg-control {
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .bg-control-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: var(--c-text-main);
+            white-space: nowrap;
+        }
+        .bg-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .btn-bg-choice {
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            padding: 4px 0;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            background: var(--c-bg-main);
+            color: var(--c-text-main);
+            white-space: nowrap;
+        }
+        .btn-bg-choice.active-white {
+            background: #FFFFFF;
+            color: #000000;
+            border-color: var(--c-accent);
+            box-shadow: 0 0 4px rgba(35,131,226,0.3);
+        }
+        .btn-bg-choice.active-black {
+            background: #1E1E1E;
+            color: #FFFFFF;
+            border-color: var(--c-accent);
+            box-shadow: 0 0 4px rgba(35,131,226,0.5);
+        }
+
+        /* 수직 경계 구분선 */
+        .v-divider {
+            width: 1px;
+            background-color: var(--c-border);
+            height: 75%;
+            flex-shrink: 0;
+        }
+
+        /* 2구역: 변환 조작 슬라이더 센터 */
+        .area-sliders {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 14px;
+            min-width: 0;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+        .control-title-label {
+            font-size: 12px;
+            font-weight: bold;
+            width: 65px; 
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .toggle-btn {
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            background: var(--c-bg-main);
+            padding: 3px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            width: 75px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .toggle-btn.active {
+            background: var(--c-reset-bg);
+            color: white;
+            border-color: var(--c-reset-bg);
+        }
+        .control-label {
+            font-size: 11px;
+            width: 90px;
+            flex-shrink: 0;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .input-box {
+            width: 42px;
+            height: 22px;
+            text-align: center;
+            font-family: "Consolas", monospace;
+            font-weight: bold;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            outline: none;
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+        .slider {
+            flex: 1; 
+            cursor: pointer;
+            min-width: 50px;
+        }
+        .btn-inline-reset {
+            background: var(--c-tab-active);
+            border: 1px solid var(--c-border);
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .btn-inline-reset:hover { background: var(--c-border); }
+
+        /* 3구역: 수식 우측 존 */
+        .area-formulas {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+            width: 25%; 
+            min-width: 170px; 
+            max-width: 240px; 
+            flex-shrink: 1; 
+        }
+        .formula-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--c-bg-main);
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            height: 50px;
+            padding: 2px;
+            box-sizing: border-box;
+            width: 100%;
+            overflow-x: auto; 
+            overflow-y: hidden;
+        }
+        /* 요청대로 MathJax 수식 기본 렌더링 글자 크기를 10.5px로 지정 */
+        .formula-box mjx-container {
+            font-size: 10.5px !important; 
+            max-width: 100% !important;
+            overflow: hidden;
+        }
+
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="card">
+            <div id="dropZone" class="drop-zone">
+                <div id="dropPrompt" class="info-text">
+                    📄 여기에 이미지 블록을 추가하세요<br>
+                    클릭하거나 파일을 드래그 앤 드롭 하세요.
+                </div>
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            <div id="resolutionLabel" class="resolution-bar">현재 해상도 : --- x ---</div>
+            <div class="btn-grid">
+                <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">➕ 이미지 파일 가져오기</button>
+                <button class="btn btn-save" onclick="saveProcessedImage()">💾 이미지 파일 저장하기</button>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        </div>
+
+        <div class="card">
+            <div class="nav-group">
+                <button id="mTab_이미지" class="nav-btn active" onclick="changeMatrixView('이미지')">이미지</button>
+                <button id="mTab_R채널" class="nav-btn" onclick="changeMatrixView('R채널')">R채널</button>
+                <button id="mTab_G채널" class="nav-btn" onclick="changeMatrixView('G채널')">G채널</button>
+                <button id="mTab_B채널" class="nav-btn" onclick="changeMatrixView('B채널')">B채널</button>
+            </div>
+            <div class="nav-group">
+                <button id="sTab_색깔" class="nav-btn" onclick="changeSubMode('색깔')">색깔</button>
+                <button id="sTab_숫자" class="nav-btn" onclick="changeSubMode('숫자')">숫자</button>
+                <button id="sTab_모두" class="nav-btn active" onclick="changeSubMode('모두')">모두</button>
+            </div>
+            <div class="matrix-container">
+                <canvas id="matrixCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-panel">
+        <div class="bottom-full-card">
+            
+            <div class="area-bg-control">
+                <div class="bg-control-title">🔲 여백 배경색 조절</div>
+                <div class="bg-btn-group">
+                    <button id="btnBgWhite" class="btn-bg-choice active-white" onclick="setEmptySpaceBackground('white')">🤍 흰색 여백</button>
+                    <button id="btnBgBlack" class="btn-bg-choice" onclick="setEmptySpaceBackground('black')">🖤 검은 여백</button>
+                </div>
+            </div>
+
+            <div class="v-divider"></div>
+
+            <div class="area-sliders">
+                <div class="control-row">
+                    <span class="control-title-label">📐 대칭변환</span>
+                    <button id="btnFlipToggle" class="toggle-btn" onclick="toggleFlipActive()">대칭 활성화</button>
+                    <span class="control-label">대칭축 각도 (θ°)</span>
+                    <input type="text" id="entryFlipAngle" class="input-box" value="0" onchange="onEntryFlipChanged()">
+                    <input type="range" id="sliderFlipAngle" class="slider" min="0" max="180" step="1" value="0" oninput="onSliderFlipMove(this.value)">
+                    <button class="btn-inline-reset" onclick="resetTransforms('flip')">초기화</button>
+                </div>
+                
+                <div class="control-row">
+                    <span class="control-title-label">🔄 회전변환</span>
+                    <button id="btnRotToggle" class="toggle-btn" onclick="toggleRotActive()">회전 활성화</button>
+                    <span class="control-label">회전 각도 (φ°)</span>
+                    <input type="text" id="entryRotAngle" class="input-box" value="0" onchange="onEntryRotChanged()">
+                    <input type="range" id="sliderRotAngle" class="slider" min="0" max="360" step="1" value="0" oninput="onSliderRotMove(this.value)">
+                    <button class="btn-inline-reset" onclick="resetTransforms('rotate')">초기화</button>
+                </div>
+            </div>
+
+            <div class="v-divider"></div>
+
+            <div class="area-formulas">
+                <div id="flipFormula" class="formula-box">
+                    $$\begin{pmatrix} \cos 2\theta^\circ & \sin 2\theta^\circ \\ \sin 2\theta^\circ & -\cos 2\theta^\circ \end{pmatrix}$$
+                </div>
+                <div id="rotFormula" class="formula-box">
+                    $$\begin{pmatrix} \cos \phi^\circ & -\sin \phi^\circ \\ \sin \phi^\circ & \cos \phi^\circ \end{pmatrix}$$
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    let originalImage = null;   
+    let offscreenCanvas = null; 
+    let offscreenCtx = null;
+    
+    let scaleFactor = 1.0;
+    let padX = 0, padY = 0;
+    let newW = 0, newH = 0;
+
+    let selectedOrigX = null;
+    let selectedOrigY = null;
+
+    let matrixViewMode = "이미지";
+    let displaySubMode = "모두";
+    let isDragging = false;
+
+    let isFlipEnabled = false;
+    let flipAngle = 0;      
+    let isRotEnabled = false;
+    let rotationAngle = 0;  
+
+    let emptySpaceBgColor = "white";
+
+    const dropZone = document.getElementById('dropZone');
+    const dropPrompt = document.getElementById('dropPrompt');
+    const imageCanvas = document.getElementById('imageCanvas');
+    const imageCtx = imageCanvas.getContext('2d');
+    const matrixCanvas = document.getElementById('matrixCanvas');
+    const matrixCtx = matrixCanvas.getContext('2d');
+    
+    const sliderFlipAngle = document.getElementById('sliderFlipAngle');
+    const entryFlipAngle = document.getElementById('entryFlipAngle');
+    const sliderRotAngle = document.getElementById('sliderRotAngle');
+    const entryRotAngle = document.getElementById('entryRotAngle');
+    const resLabel = document.getElementById('resolutionLabel');
+
+    function handleInitialClick(e) {
+        if (!originalImage) document.getElementById('fileInput').click();
+    }
+    dropZone.addEventListener('click', handleInitialClick);
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('hover'); }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('hover'); }, false);
+    });
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) loadImageFile(files[0]);
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (!originalImage || selectedOrigX === null) return;
+        let dx = 0, dy = 0;
+        if (e.key === "ArrowUp") dy = -1;
+        else if (e.key === "ArrowDown") dy = 1;
+        else if (e.key === "ArrowLeft") dx = -1;
+        else if (e.key === "ArrowRight") dx = 1;
+        else return;
+
+        e.preventDefault();
+        selectedOrigX = Math.max(0, Math.min(offscreenCanvas.width - 1, selectedOrigX + dx));
+        selectedOrigY = Math.max(0, Math.min(offscreenCanvas.height - 1, selectedOrigY + dy));
+        applyGeometricTransform();
+    });
+
+    window.addEventListener('resize', () => {
+        if (originalImage) {
+            calculateStaticRatios();
+            applyGeometricTransform();
+        }
+    });
+
+    function handleFileSelect(e) {
+        if (e.target.files.length > 0) loadImageFile(e.target.files[0]);
+    }
+
+    function loadImageFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            originalImage = new Image();
+            originalImage.onload = function() {
+                dropPrompt.style.display = 'none';
+                dropZone.style.border = 'none';
+                dropZone.style.cursor = 'default';
+
+                isFlipEnabled = false;
+                flipAngle = 0;
+                isRotEnabled = false;
+                rotationAngle = 0;
+                updatePanelUI();
+
+                selectedOrigX = Math.floor(originalImage.width / 2);
+                selectedOrigY = Math.floor(originalImage.height / 2);
+                
+                calculateStaticRatios();
+                applyGeometricTransform();
+            }
+            originalImage.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function calculateStaticRatios() {
+        if (!originalImage) return;
+        const containerW = dropZone.clientWidth;
+        const containerH = dropZone.clientHeight;
+
+        const origW = originalImage.width;
+        const origH = originalImage.height;
+
+        const rad = isRotEnabled ? (rotationAngle * Math.PI) / 180 : 0;
+        
+        const transW = Math.ceil(Math.abs(origW * Math.cos(rad)) + Math.abs(origH * Math.sin(rad)));
+        const transH = Math.ceil(Math.abs(origW * Math.sin(rad)) + Math.abs(origH * Math.cos(rad)));
+
+        resLabel.innerText = `현재 해상도 : ${transW} x ${transH}`;
+
+        scaleFactor = Math.min(containerW / transW, containerH / transH);
+        newW = transW * scaleFactor;
+        newH = transH * scaleFactor;
+        padX = (containerW - newW) / 2;
+        padY = (containerH - newH) / 2;
+
+        imageCanvas.width = containerW;
+        imageCanvas.height = containerH;
+    }
+
+    function handleMouseAction(e) {
+        if (!originalImage) return;
+        const rect = imageCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - padX;
+        const mouseY = e.clientY - rect.top - padY;
+
+        if (mouseX >= 0 && mouseX < newW && mouseY >= 0 && mouseY < newH) {
+            selectedOrigX = Math.floor(mouseX / scaleFactor);
+            selectedOrigY = Math.floor(mouseY / scaleFactor);
+            applyGeometricTransform();
+        }
+    }
+    
+    imageCanvas.addEventListener('mousedown', (e) => {
+        e.stopPropagation(); 
+        isDragging = true;
+        handleMouseAction(e);
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.stopPropagation();
+        handleMouseAction(e);
+    });
+    window.addEventListener('mouseup', (e) => {
+        if (isDragging) {
+            e.stopPropagation();
+            isDragging = false;
+        }
+    });
+
+    function updateFormulaText() {
+        const fRad = (flipAngle * Math.PI) / 180;
+        const m11 = isFlipEnabled ? Math.cos(2 * fRad).toFixed(2) : "1.00";
+        const m12 = isFlipEnabled ? Math.sin(2 * fRad).toFixed(2) : "0.00";
+        const m21 = isFlipEnabled ? Math.sin(2 * fRad).toFixed(2) : "0.00";
+        const m22 = isFlipEnabled ? (-Math.cos(2 * fRad)).toFixed(2) : "-1.00";
+
+        const flipContainer = document.getElementById('flipFormula');
+        flipContainer.innerHTML = `$$\\begin{pmatrix} \\cos 2\\theta^\\circ & \\sin 2\\theta^\\circ \\\\ \\sin 2\\theta^\\circ & -\\cos 2\\theta^\\circ \\end{pmatrix} = \\begin{pmatrix} ${m11} & ${m21} \\\\ ${m12} & ${m22} \\end{pmatrix}$$`;
+
+        const rRad = (rotationAngle * Math.PI) / 180;
+        const r11 = isRotEnabled ? Math.cos(rRad).toFixed(2) : "1.00";
+        const r12 = isRotEnabled ? (-Math.sin(rRad)).toFixed(2) : "0.00";
+        const r21 = isRotEnabled ? Math.sin(rRad).toFixed(2) : "0.00";
+        const r22 = isRotEnabled ? Math.cos(rRad).toFixed(2) : "1.00";
+
+        const rotContainer = document.getElementById('rotFormula');
+        rotContainer.innerHTML = `$$\\begin{pmatrix} \\cos \\phi^\\circ & -\\sin \\phi^\\circ \\\\ \\sin \\phi^\\circ & \\cos \\phi^\\circ \\end{pmatrix} = \\begin{pmatrix} ${r11} & ${r12} \\\\ ${r21} & ${r22} \\end{pmatrix}$$`;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([flipContainer, rotContainer]);
+        }
+    }
+
+    function setEmptySpaceBackground(color) {
+        emptySpaceBgColor = color;
+        document.getElementById('btnBgWhite').classList.toggle('active-white', color === 'white');
+        document.getElementById('btnBgBlack').classList.toggle('active-black', color === 'black');
+        if (originalImage) applyGeometricTransform();
+    }
+
+    function applyGeometricTransform() {
+        if (!originalImage) return;
+
+        const origW = originalImage.width;
+        const origH = originalImage.height;
+        const radRot = isRotEnabled ? (rotationAngle * Math.PI) / 180 : 0;
+
+        const transW = Math.ceil(Math.abs(origW * Math.cos(radRot)) + Math.abs(origH * Math.sin(radRot)));
+        const transH = Math.ceil(Math.abs(origW * Math.sin(radRot)) + Math.abs(origH * Math.cos(radRot)));
+
+        offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = transW;
+        offscreenCanvas.height = transH;
+        offscreenCtx = offscreenCanvas.getContext('2d');
+
+        offscreenCtx.fillStyle = "rgba(0,0,0,0)";
+        offscreenCtx.fillRect(0, 0, transW, transH);
+
+        offscreenCtx.save();
+        offscreenCtx.translate(transW / 2, transH / 2);
+
+        if (isFlipEnabled) {
+            const radFlip = (-flipAngle * Math.PI) / 180;
+            offscreenCtx.rotate(radFlip);
+            offscreenCtx.scale(1, -1);
+            offscreenCtx.rotate(-radFlip);
+        }
+
+        if (isRotEnabled) {
+            offscreenCtx.rotate(-radRot);
+        }
+
+        offscreenCtx.drawImage(originalImage, -origW / 2, -origH / 2);
+        offscreenCtx.restore();
+
+        imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+        
+        if (emptySpaceBgColor === "black") {
+            imageCtx.fillStyle = "#000000";
+            imageCtx.fillRect(padX, padY, newW, newH);
+        } else {
+            imageCtx.fillStyle = "#FFFFFF";
+            imageCtx.fillRect(padX, padY, newW, newH);
+        }
+        imageCtx.drawImage(offscreenCanvas, padX, padY, newW, newH);
+
+        const centerX = padX + (transW / 2) * scaleFactor;
+        const centerY = padY + (transH / 2) * scaleFactor;
+
+        imageCtx.save();
+        imageCtx.strokeStyle = (emptySpaceBgColor === "black") ? "#FF6B6B" : "#EB5757";
+        imageCtx.lineWidth = 1.2;
+        imageCtx.setLineDash([4, 4]);
+
+        if (isRotEnabled) {
+            imageCtx.beginPath();
+            imageCtx.moveTo(padX, centerY);
+            imageCtx.lineTo(padX + newW, centerY);
+            imageCtx.stroke();
+
+            imageCtx.beginPath();
+            imageCtx.moveTo(centerX, padY);
+            imageCtx.lineTo(centerX, padY + newH);
+            imageCtx.stroke();
+
+            imageCtx.fillStyle = (emptySpaceBgColor === "black") ? "#FF6B6B" : "#EB5757";
+            imageCtx.setLineDash([]); 
+            imageCtx.beginPath();
+            imageCtx.arc(centerX, centerY, 3.5, 0, 2 * Math.PI);
+            imageCtx.fill();
+            imageCtx.setLineDash([4, 4]); 
+        }
+
+        if (isFlipEnabled) {
+            const radLine = (-flipAngle * Math.PI) / 180;
+            const lineLen = Math.max(imageCanvas.width, imageCanvas.height) * 1.5;
+            const xOffset = lineLen * Math.cos(radLine);
+            const yOffset = lineLen * Math.sin(radLine);
+
+            imageCtx.beginPath();
+            imageCtx.moveTo(centerX - xOffset, centerY - yOffset);
+            imageCtx.lineTo(centerX + xOffset, centerY + yOffset);
+            imageCtx.stroke();
+        }
+        imageCtx.restore();
+
+        updateFormulaText();
+
+        if (selectedOrigX !== null && selectedOrigY !== null) {
+            selectedOrigX = Math.max(0, Math.min(transW - 1, selectedOrigX));
+            selectedOrigY = Math.max(0, Math.min(transH - 1, selectedOrigY));
+
+            let x1 = Math.max(0, selectedOrigX - 7);
+            let y1 = Math.max(0, selectedOrigY - 7);
+            let x2 = Math.min(transW, x1 + 15);
+            let y2 = Math.min(transH, y1 + 15);
+
+            if (x2 - x1 < 15) x1 = Math.max(0, x2 - 15);
+            if (y2 - y1 < 15) y1 = Math.max(0, y2 - 15);
+
+            const dispX1 = padX + (x1 * scaleFactor);
+            const dispY1 = padY + (y1 * scaleFactor);
+            const dispX2 = padX + (x2 * scaleFactor);
+            const dispY2 = padY + (y2 * scaleFactor);
+
+            imageCtx.strokeStyle = "#E28323";
+            imageCtx.lineWidth = 2;
+            imageCtx.strokeRect(dispX1, dispY1, dispX2 - dispX1, dispY2 - dispY1);
+
+            renderMatrixGrid(x1, y1, x2, y2);
+        }
+    }
+
+    function renderMatrixGrid(x1, y1, x2, y2) {
+        const canvW = matrixCanvas.clientWidth;
+        const canvH = matrixCanvas.clientHeight;
+        matrixCanvas.width = canvW;
+        matrixCanvas.height = canvH;
+
+        const sampleW = x2 - x1;
+        const sampleH = y2 - y1;
+
+        const startX = 45;
+        const startY = 45;
+        const availableW = canvW - startX - 10;
+        const availableH = canvH - startY - 10;
+
+        const cellW = availableW / sampleW;
+        const cellH = availableH / sampleH;
+
+        matrixCtx.fillStyle = "#37352F";
+        matrixCtx.font = "bold 13px Malgun Gothic";
+        matrixCtx.fillText(`📁 변환 데이터: X(${Math.floor(x1)}~${Math.floor(x2)}), Y(${Math.floor(y1)}~${Math.floor(y2)}) | 뷰포트: ${matrixViewMode}`, 10, 20);
+
+        const imgData = offscreenCtx.getImageData(Math.floor(x1), Math.floor(y1), Math.floor(sampleW), Math.floor(sampleH));
+        const data = imgData.data;
+
+        matrixCtx.font = "10px Malgun Gothic";
+        matrixCtx.fillStyle = "#787774";
+        matrixCtx.textAlign = "center";
+        for (let c = 0; c < sampleW; c++) {
+            matrixCtx.fillText(`${c + 1}열`, startX + (c * cellW) + (cellW / 2), startY - 10);
+        }
+        matrixCtx.textAlign = "right";
+        for (let r = 0; r < sampleH; r++) {
+            matrixCtx.fillText(`${r + 1}행`, startX - 8, startY + (r * cellH) + (cellH / 2) + 4);
+        }
+
+        for (let r = 0; r < sampleH; r++) {
+            for (let c = 0; c < sampleW; c++) {
+                const idx = (r * sampleW + c) * 4;
+                let R = data[idx];
+                let G = data[idx+1];
+                let B = data[idx+2];
+                const A = data[idx+3]; 
+
+                let bgStyle = "#FFFFFF";
+                let textStyle = "#37352F";
+                let pixelText = "";
+
+                if (A === 0) {
+                    if (emptySpaceBgColor === "black") {
+                        R = G = B = 0;   
+                        bgStyle = "#000000";
+                        textStyle = "#FFFFFF";
+                    } else {
+                        R = G = B = 255; 
+                        bgStyle = "#FFFFFF";
+                        textStyle = "#37352F";
+                    }
+                } else {
+                    if (emptySpaceBgColor === "black") {
+                        bgStyle = "#000000";
+                        textStyle = "#FFFFFF";
+                    }
+                }
+
+                if (A > 0) {
+                    if (displaySubMode === "색깔" || displaySubMode === "모두") {
+                        if (matrixViewMode === "이미지") bgStyle = `rgb(${R},${G},${B})`;
+                        else if (matrixViewMode === "R채널") bgStyle = `rgb(${R},0,0)`;
+                        else if (matrixViewMode === "G채널") bgStyle = `rgb(0,${G},0)`;
+                        else if (matrixViewMode === "B채널") bgStyle = `rgb(0,0,${B})`;
+                    }
+
+                    if (displaySubMode === "모두" || displaySubMode === "색깔") {
+                        let brightness = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+                        if (matrixViewMode === "R채널") brightness = R * 0.2126;
+                        if (matrixViewMode === "G채널") brightness = G * 0.7152;
+                        if (matrixViewMode === "B채널") brightness = B * 0.0722;
+                        textStyle = brightness < 110 ? "#FFFFFF" : "#000000";
+                    }
+                }
+
+                if (displaySubMode === "숫자" || displaySubMode === "모두") {
+                    if (matrixViewMode === "이미지") pixelText = `${R},${G},${B}`;
+                    else if (matrixViewMode === "R채널") pixelText = R;
+                    else if (matrixViewMode === "G채널") pixelText = G;
+                    else if (matrixViewMode === "B채널") pixelText = B;
+                }
+
+                const cellX = startX + (c * cellW);
+                const cellY = startY + (r * cellH);
+
+                matrixCtx.fillStyle = bgStyle;
+                matrixCtx.fillRect(cellX, cellY, cellW, cellH);
+                matrixCtx.strokeStyle = "#E2E2E6";
+                matrixCtx.lineWidth = 1;
+                matrixCtx.strokeRect(cellX, cellY, cellW, cellH);
+
+                if (pixelText !== "") {
+                    matrixCtx.fillStyle = textStyle;
+                    const fontSize = matrixViewMode === "이미지" ? Math.max(8, cellW * 0.16) : Math.max(10, cellW * 0.3);
+                    matrixCtx.font = `bold ${fontSize}px Consolas, Malgun Gothic`;
+                    matrixCtx.textAlign = "center";
+                    matrixCtx.textBaseline = "middle";
+                    matrixCtx.fillText(pixelText, cellX + (cellW / 2), cellY + (cellH / 2));
+                }
+            }
+        }
+    }
+
+    function toggleFlipActive() {
+        isFlipEnabled = !isFlipEnabled;
+        const btn = document.getElementById('btnFlipToggle');
+        btn.innerText = isFlipEnabled ? "대칭 활성화" : "대칭 미적용";
+        btn.classList.toggle('active', isFlipEnabled);
+        if (originalImage) applyGeometricTransform();
+        else updateFormulaText();
+    }
+
+    // 슬라이더 조작
+    function onSliderFlipMove(val) {
+        flipAngle = parseInt(val);
+        entryFlipAngle.value = flipAngle;
+        if (!isFlipEnabled) toggleFlipActive();
+        else if (originalImage) applyGeometricTransform();
+        else updateFormulaText();
+    }
+    function onEntryFlipChanged() {
+        let val = parseInt(entryFlipAngle.value);
+        if (isNaN(val) || val < 0 || val > 180) {
+            alert("대칭축 각도는 0도에서 180도 사이의 정수여야 합니다.");
+            entryFlipAngle.value = sliderFlipAngle.value;
+        } else {
+            flipAngle = val;
+            sliderFlipAngle.value = val;
+            if (!isFlipEnabled) toggleFlipActive();
+            else if (originalImage) applyGeometricTransform();
+            else updateFormulaText();
+        }
+    }
+
+    function toggleRotActive() {
+        isRotEnabled = !isRotEnabled;
+        const btn = document.getElementById('btnRotToggle');
+        btn.innerText = isRotEnabled ? "회전 활성화" : "회전 미적용";
+        btn.classList.toggle('active', isRotEnabled);
+        if (originalImage) {
+            calculateStaticRatios();
+            applyGeometricTransform();
+        } else updateFormulaText();
+    }
+
+    function onSliderRotMove(val) {
+        rotationAngle = parseInt(val);
+        entryRotAngle.value = rotationAngle;
+        if (!isRotEnabled) {
+            toggleRotActive();
+        } else if (originalImage) {
+            calculateStaticRatios();
+            applyGeometricTransform();
+        } else updateFormulaText();
+    }
+    function onEntryRotChanged() {
+        let val = parseInt(entryRotAngle.value);
+        if (isNaN(val) || val < 0 || val > 360) {
+            alert("회전 각도는 0도에서 360도 사이의 정수여야 합니다.");
+            entryRotAngle.value = sliderRotAngle.value;
+        } else {
+            rotationAngle = val;
+            sliderRotAngle.value = val;
+            if (!isRotEnabled) {
+                toggleRotActive();
+            } else if (originalImage) {
+                calculateStaticRatios();
+                applyGeometricTransform();
+            } else updateFormulaText();
+        }
+    }
+
+    document.title = "이미지 데이터의 처리 2 - 대칭변환과 회전변환";
+
+    function resetTransforms(type) {
+        if (type === 'flip') {
+            isFlipEnabled = false;
+            flipAngle = 0;
+            const btn = document.getElementById('btnFlipToggle');
+            btn.innerText = "대칭 미적용";
+            btn.classList.remove('active');
+        }
+        if (type === 'rotate') {
+            isRotEnabled = false;
+            rotationAngle = 0;
+            const btn = document.getElementById('btnRotToggle');
+            btn.innerText = "회전 미적용";
+            btn.classList.remove('active');
+        }
+        updatePanelUI();
+        if (originalImage) {
+            calculateStaticRatios();
+            applyGeometricTransform();
+        } else updateFormulaText();
+    }
+
+    function updatePanelUI() {
+        sliderFlipAngle.value = flipAngle;
+        entryFlipAngle.value = flipAngle;
+        sliderRotAngle.value = rotationAngle;
+        entryRotAngle.value = rotationAngle;
+        
+        const flipBtn = document.getElementById('btnFlipToggle');
+        flipBtn.innerText = isFlipEnabled ? "대칭 활성화" : "대칭 미적용";
+        flipBtn.classList.toggle('active', isFlipEnabled);
+
+        const rotBtn = document.getElementById('btnRotToggle');
+        rotBtn.innerText = isRotEnabled ? "회전 활성화" : "회전 미적용";
+        rotBtn.classList.toggle('active', isRotEnabled);
+    }
+
+    function changeMatrixView(mode) {
+        matrixViewMode = mode;
+        updateTabUI('mTab', ['이미지', 'R채널', 'G채널', 'B채널'], mode);
+        if (originalImage) applyGeometricTransform();
+    }
+    function changeSubMode(mode) {
+        displaySubMode = mode;
+        updateTabUI('sTab', ['색깔', '숫자', '모두'], mode);
+        if (originalImage) applyGeometricTransform();
+    }
+    function updateTabUI(prefix, allModes, activeMode) {
+        allModes.forEach(m => {
+            document.getElementById(`${prefix}_${m}`).classList.remove('active');
+        });
+        document.getElementById(`${prefix}_${activeMode}`).classList.add('active');
+    }
+
+    function saveProcessedImage() {
+        if (!originalImage) {
+            alert("저장할 이미지가 없습니다. 먼저 이미지를 열어 주세요.");
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'chapter_2_image_processing_2_final.png';
+        link.href = offscreenCanvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+
+</body>
+</html>
