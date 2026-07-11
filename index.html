@@ -53,13 +53,13 @@
             display: block;
         }
         
+        /* 💡 기본 메뉴 아이템 스타일 (테두리는 각 단원 클래스에서 제어) */
         .menu-item {
             background: white;
             padding: 24px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.04);
             margin-bottom: 20px;
-            border-left: 5px solid #1a73e8;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
@@ -78,10 +78,10 @@
             margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 10px; /* 배지와 제목 사이 간격 */
+            gap: 10px;
         }
         
-        /* 💡 단원 배지(네모박스) 공통 스타일 */
+        /* 💡 단원 배지 공통 스타일 */
         .badge {
             font-size: 12px;
             font-weight: bold;
@@ -90,12 +90,22 @@
             border-radius: 4px;
             white-space: nowrap;
         }
-        /* 단원별 배지 색상 선언 */
-        .badge-ch1 { background-color: #e67e22; } /* 1단원: 주황 */
-        .badge-ch2 { background-color: #2ecc71; } /* 2단원: 초록 */
-        .badge-ch3 { background-color: #3498db; } /* 3단원: 파랑 */
-        .badge-ch4 { background-color: #9b59b6; } /* 4단원: 보라 */
-        .badge-ch5 { background-color: #e74c3c; } /* 5단원: 빨강 */
+        
+        /* 🎨 단원별 배지 및 왼쪽 테두리 색상 매칭 */
+        .ch1-style { border-left: 5px solid #34495e; } 
+        .badge-ch1 { background-color: #34495e; } /* 1단원: 다크그레이 */
+
+        .ch2-style { border-left: 5px solid #2ecc71; } 
+        .badge-ch2 { background-color: #2ecc71; } /* 2단원: 초록 계열 */
+
+        .ch3-style { border-left: 5px solid #e67e22; } 
+        .badge-ch3 { background-color: #e67e22; } /* 3단원: 주황 계열 변경 완료 */
+
+        .ch4-style { border-left: 5px solid #9b59b6; } 
+        .badge-ch4 { background-color: #9b59b6; } /* 4단원: 보라 계열 */
+
+        .ch5-style { border-left: 5px solid #e74c3c; } 
+        .badge-ch5 { background-color: #e74c3c; } /* 5단원: 빨강 계열 */
 
         .menu-desc {
             font-size: 14px;
@@ -135,7 +145,7 @@
 
     <div class="menu-container" id="menu-box">
         
-        <a href="chapter_1_morphological_analysis.html" class="menu-item" data-chapter="ch2">
+        <a href="chapter_1_morphological_analysis.html" class="menu-item ch2-style" data-chapter="ch2">
             <div class="menu-title">
                 <span class="badge badge-ch2">2단원</span>단어집합 구성 프로그램
             </div>
@@ -143,7 +153,7 @@
             <div class="file-name">chapter_1_morphological_analysis.html</div>
         </a>        
         
-        <a href="chapter_2_image_representation.html" class="menu-item" data-chapter="ch3">
+        <a href="chapter_2_image_representation.html" class="menu-item ch3-style" data-chapter="ch3">
             <div class="menu-title">
                 <span class="badge badge-ch3">3단원</span>이미지 데이터 표현 프로그램
             </div>
@@ -151,7 +161,7 @@
             <div class="file-name">chapter_2_image_representation.html</div>
         </a>
 
-        <a href="chapter_2_image_processing_1.html" class="menu-item" data-chapter="ch3">
+        <a href="chapter_2_image_processing_1.html" class="menu-item ch3-style" data-chapter="ch3">
             <div class="menu-title">
                 <span class="badge badge-ch3">3단원</span>이미지 데이터 밝기 및 흑백 변환
             </div>
@@ -159,7 +169,7 @@
             <div class="file-name">chapter_2_image_processing_1.html</div>
         </a>
 
-        <a href="chapter_2_reflection_and_rotation.html" class="menu-item" data-chapter="ch3">
+        <a href="chapter_2_reflection_and_rotation.html" class="menu-item ch3-style" data-chapter="ch3">
             <div class="menu-title">
                 <span class="badge badge-ch3">3단원</span>이미지 데이터 대칭 및 회전 변환
             </div>
@@ -167,7 +177,7 @@
             <div class="file-name">chapter_2_reflection_and_rotation.html</div>
         </a>
 
-        <a href="chapter_4_regression_line.html" class="menu-item" data-chapter="ch4">
+        <a href="chapter_4_regression_line.html" class="menu-item ch4-style" data-chapter="ch4">
             <div class="menu-title">
                 <span class="badge badge-ch4">4단원</span>산점도, 추세선 분석 프로그램
             </div>
