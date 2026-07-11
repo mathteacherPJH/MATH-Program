@@ -152,7 +152,7 @@
         
         <a href="chapter_3_image_representation.html" class="menu-item ch3-style" data-chapter="ch3">
             <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span> 이미지 데이터 표현 프로그램
+                <span class="badge badge-ch3">3단원</span>이미지 데이터 표현 프로그램
             </div>
             <div class="menu-desc">디지털 이미지가 행렬과 픽셀 데이터로 어떻게 표현되고 인공지능이 이를 어떻게 인식하는지 시각적으로 탐구합니다.</div>
             <div class="file-name">chapter_3_image_representation.html</div>
@@ -186,12 +186,12 @@
     </div>
 
     <script>
-        function filterChapter(ch, element) {
-            // 💡 다른 카드를 눌렀을 때는 탭 버튼 스타일 변경 로직이 작동하지 않도록 안전장치 마련
-            if (element && element.classList.contains('tab-button')) {
+        function filterChapter(ch, buttonElement) {
+            // 💡 오직 상단 탭 버튼(tab-button 클래스)을 눌렀을 때만 작동하도록 엄격하게 고립
+            if (buttonElement) {
                 const buttons = document.querySelectorAll('.tab-button');
                 buttons.forEach(btn => btn.classList.remove('active'));
-                element.classList.add('active');
+                buttonElement.classList.add('active');
             }
 
             const items = document.querySelectorAll('.menu-item');
@@ -214,8 +214,8 @@
             }
         }
 
+        // 초기 화면 설정 시 오작동 전면 차단
         window.onload = function() {
-            // 초기 타겟을 명확히 지정하여 오작동 차단
             filterChapter('all', document.getElementById('btn-all'));
         };
     </script>
