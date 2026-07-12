@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>블러와 샤프닝</title>
+    <style>
+        :root {
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.85); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-save-bg: #E28523;
+            --c-save-hover: #C9741B;
+            --c-reset-bg: #EB5757;
+            --c-reset-hover: #D14343;
+            --c-neural-green: rgba(27, 67, 50, 0.12); 
+        }
+
+        body {
+            font-family: "Malgun Gothic", -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+            overflow-x: hidden;
+            letter-spacing: 0.03em;
+        }
+
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0; 
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 10; 
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 12px; 
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            min-width: 0;
+            position: relative;
+            backdrop-filter: blur(8px); 
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
+        }
+
+        /* 왼쪽 이미지 영역 */
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed rgba(27, 67, 50, 0.2); 
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden; 
+            background: rgba(255, 255, 255, 0.6);
+        }
+        .drop-zone.hover {
+            border-color: #1B4332;
+            background: #F4F1EA;
+        }
+        .drop-zone canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .info-text {
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.6;
+            pointer-events: none; 
+        }
+
+        /* 마우스를 따라다니는 콤팩트한 정사각형 플로팅 현황판 */
+        .floating-analyzer {
+            position: absolute;
+            display: none; 
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(44, 42, 41, 0.15);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 20px rgba(27, 67, 50, 0.15);
+            pointer-events: none; 
+            z-index: 9999;
+            flex-direction: column; 
+            align-items: center;
+            width: 140px; 
+            box-sizing: border-box;
+            gap: 8px;
+        }
+        
+        .zoom-canvas-container {
+            width: 120px;
+            height: 120px;
+            border: 1px solid rgba(44, 42, 41, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        #zoomCanvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+        
+        .pixel-info-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .info-row {
+            font-size: 11px;
+            font-family: "Consolas", monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--c-text-main);
+            width: 100%;
+        }
+        .info-value {
+            font-weight: bold;
+            text-align: right;
+        }
+        .color-preview-box {
+            width: 10px;
+            height: 10px;
+            border: 1px solid rgba(44, 42, 41, 0.15);
+            border-radius: 2px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        .resolution-bar {
+            font-size: 13px;
+            color: var(--c-text-muted);
+            margin: 10px 0 6px 0;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn {
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-upload { background-color: var(--c-accent); }
+        .btn-upload:hover { background-color: var(--c-accent-hover); }
+        .btn-save { background-color: var(--c-save-bg); }
+        .btn-save:hover { background-color: var(--c-save-hover); }
+
+        /* 오른쪽 편집 영역 네비게이션 버튼 탭 */
+        .nav-group {
+            display: flex;
+            gap: 4px;
+            background: #F4F1EA; 
+            padding: 4px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(44, 42, 41, 0.05);
+        }
+        .nav-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .nav-btn.active {
+            background: #FFFFFF;
+            color: #1B4332; 
+            box-shadow: 0 2px 6px rgba(44,42,41,0.08);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin: 5px 0 8px 0;
+            color: #1B4332; 
+            letter-spacing: 0.05em;
+        }
+
+        /* 행렬 편집 헤더 구역 (버튼 우측 배치) */
+        .matrix-header-zone {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0 8px 0;
+        }
+        .matrix-btn-group {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-inline {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-inline:hover { opacity: 0.9; }
+
+        .matrix-wrapper {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #F4F1EA;
+            border: 1px dashed rgba(44, 42, 41, 0.15);
+            border-radius: 8px;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        .kernel-grid {
+            display: grid;
+            gap: 4px;
+            padding: 5px;
+            background: #fff;
+            border: 1px solid rgba(44, 42, 41, 0.1);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .kernel-input {
+            width: 60px;
+            height: 35px;
+            text-align: center;
+            font-family: "Consolas", monospace;
+            font-size: 11px;
+            border: 1px solid rgba(44, 42, 41, 0.15);
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .kernel-input:focus {
+            border-color: #1B4332;
+            background-color: #E9F5ED;
+        }
+        #fileInput { display: none; }
+
+        /* ⏳ 로딩 팝업 오버레이 스타일 */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(44, 42, 41, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 10000; 
+            display: none; 
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-alert-box {
+            background: #FFFFFF;
+            border: 1px solid var(--c-border);
+            border-radius: 12px;
+            padding: 20px 40px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(27,67,50,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid #F4F1EA;
+            border-top: 3px solid #1B4332;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1B4332;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="neural-canvas"></canvas>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-alert-box">
+            <div class="spinner"></div>
+            <div id="loadingText" class="loading-text">처리 중입니다...</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="card" id="leftCard">
+            <div id="floatingAnalyzer" class="floating-analyzer">
+                <div class="zoom-canvas-container">
+                    <canvas id="zoomCanvas" width="13" height="13"></canvas>
+                </div>
+                <div class="pixel-info-panel">
+                    <div class="info-row"><span style="color:var(--c-text-muted);">POS:</span><span id="lblCoords" class="info-value">-,-</span></div>
+                    <div class="info-row"><span style="color:var(--c-text-muted);">RGB:</span><span id="lblRGB" class="info-value">-,-,-</span></div>
+                    <div class="info-row">
+                        <span style="color:var(--c-text-muted);">HEX:</span>
+                        <span class="info-value">
+                            <span id="lblHex">-</span><div id="colorPreview" class="color-preview-box"></div>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dropZone" class="drop-zone">
+                <div id="dropPrompt" class="info-text">
+                    📄 여기에 이미지 블록을 추가하세요<br>
+                    클릭하거나 파일을 드래그 앤 드롭 하세요.<br>
+                    (이미지 로드 후 마우스를 가져다 대면 분석창이 출력됩니다)
+                </div>
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            <div id="resolutionLabel" class="resolution-bar">현재 이미지 해상도 : --- x ---</div>
+            <div class="btn-grid">
+                <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">➕ 이미지 파일 가져오기</button>
+                <button class="btn btn-save" onclick="saveProcessedImage()">💾 이미지 파일 저장하기</button>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        </div>
+
+        <div class="card">
+            <div class="nav-group">
+                <button id="tab_blur" class="nav-btn active" onclick="changeFilterMode('blur')">💧 블러 (Blur)</button>
+                <button id="tab_sharpen" class="nav-btn" onclick="changeFilterMode('sharpen')">✨ 샤프닝 (Sharpening)</button>
+            </div>
+
+            <div class="section-title">🧱 경계면 패딩(Padding) 설정</div>
+            <div class="nav-group">
+                <button id="pad_zero" class="nav-btn" onclick="changePaddingMode('zero')">제로 패딩</button>
+                <button id="pad_reflect" class="nav-btn active" onclick="changePaddingMode('reflect')">반사 패딩</button>
+                <button id="pad_replicate" class="nav-btn" onclick="changePaddingMode('replicate')">복사 패딩</button>
+            </div>
+
+            <div class="section-title">📐 필터 커널 크기 설정</div>
+            <div class="nav-group">
+                <button id="size_3" class="nav-btn active" onclick="changeKernelSize(3)">3 x 3</button>
+                <button id="size_5" class="nav-btn" onclick="changeKernelSize(5)">5 x 5</button>
+                <button id="size_7" class="nav-btn" onclick="changeKernelSize(7)">7 x 7</button>
+                <button id="size_9" class="nav-btn" onclick="changeKernelSize(9)">9 x 9</button>
+            </div>
+
+            <div class="section-title">🎁 기본 내장 프리셋 도구</div>
+            <div class="nav-group" id="presetGroup"></div>
+
+            <div class="matrix-header-zone">
+                <div class="section-title" style="margin:0;">✏️ 커널 행렬 성분 직접 편집</div>
+                <div class="matrix-btn-group">
+                    <button class="btn-inline" style="background-color: var(--c-accent);" onclick="triggerFilterWithOverlay()">⚡ 필터 연산 적용</button>
+                    <button class="btn-inline" style="background-color: var(--c-reset-bg);" onclick="triggerResetWithOverlay()">🔄 원본 초기화</button>
+                </div>
+            </div>
+            
+            <div class="matrix-wrapper">
+                <div id="kernelGridContainer" class="kernel-grid"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let originalImage = null;   
+    let offscreenCanvas = null; 
+    let offscreenCtx = null;
+    
+    let scaleFactor = 1.0;
+    let padX = 0, padY = 0;
+    let newW = 0, newH = 0;
+
+    let currentMode = "blur"; 
+    let paddingMode = "reflect"; 
+    let kernelSize = 3;       
+    let kernelMatrix = [];    
+
+    const leftCard = document.getElementById('leftCard');
+    const dropZone = document.getElementById('dropZone');
+    const dropPrompt = document.getElementById('dropPrompt');
+    const imageCanvas = document.getElementById('imageCanvas');
+    const imageCtx = imageCanvas.getContext('2d');
+    const resLabel = document.getElementById('resolutionLabel');
+    const gridContainer = document.getElementById('kernelGridContainer');
+    const presetGroup = document.getElementById('presetGroup');
+
+    const floatingAnalyzer = document.getElementById('floatingAnalyzer');
+    const zoomCanvas = document.getElementById('zoomCanvas');
+    const zoomCtx = zoomCanvas.getContext('2d');
+    const lblCoords = document.getElementById('lblCoords');
+    const lblRGB = document.getElementById('lblRGB');
+    const lblHex = document.getElementById('lblHex');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+
+    const bgCanvas = document.getElementById('neural-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: null, y: null, radius: 150 };
+
+    function resizeBgCanvas() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        initParticles();
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = (Math.random() - 0.5) * 0.35;
+            this.radius = Math.random() * 2 + 1;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < mouse.radius) {
+                const force = (mouse.radius - distance) / mouse.radius;
+                this.x -= dx * force * 0.03;
+                this.y -= dy * force * 0.03;
+            }
+        }
+        draw() {
+            bgCtx.beginPath();
+            bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.12)';
+            bgCtx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animateBg() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 110) {
+                    bgCtx.beginPath();
+                    bgCtx.moveTo(particles[i].x, particles[i].y);
+                    bgCtx.lineTo(particles[j].x, particles[j].y);
+                    bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.05 * (1 - dist / 110)})`;
+                    bgCtx.lineWidth = 0.8;
+                    bgCtx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateBg);
+    }
+
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+    window.addEventListener('resize', resizeBgCanvas);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        resizeBgCanvas();
+        animateBg();
+        updatePresetButtons();
+        loadDefaultPreset();
+    });
+
+    function handleInitialClick(e) { if (!originalImage) document.getElementById('fileInput').click(); }
+    dropZone.addEventListener('click', handleInitialClick);
+    ['dragenter', 'dragover'].forEach(name => dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('hover'); }, false));
+    ['dragleave', 'drop'].forEach(name => dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('hover'); }, false));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) loadImageFile(files[0]);
+    });
+    function handleFileSelect(e) { if (e.target.files.length > 0) loadImageFile(e.target.files[0]); }
+
+    // 🔥 수정: 이미지를 가져올 때는 '이미지를 첨부하는 중입니다' 문구가 뜨도록 최적화
+    function loadImageFile(file) {
+        loadingText.innerText = "이미지를 안전하게 첨부하는 중입니다...";
+        loadingOverlay.style.display = 'flex';
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            originalImage = new Image();
+            originalImage.onload = function() {
+                resLabel.innerText = `현재 이미지 해상도 : ${originalImage.width} x ${originalImage.height}`;
+                dropPrompt.style.display = 'none';
+                dropZone.style.border = 'none';
+                dropZone.style.cursor = 'crosshair';
+
+                offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = originalImage.width;
+                offscreenCanvas.height = originalImage.height;
+                offscreenCtx = offscreenCanvas.getContext('2d');
+
+                calculateStaticRatios();
+                
+                // 첨부 시 내부 렌더링 루프 가동
+                applySpatialFilter();
+                loadingOverlay.style.display = 'none';
+            }
+            originalImage.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function calculateStaticRatios() {
+        if (!originalImage) return;
+        const containerW = dropZone.clientWidth;
+        const containerH = dropZone.clientHeight;
+        scaleFactor = Math.min(containerW / originalImage.width, containerH / originalImage.height);
+        newW = originalImage.width * scaleFactor;
+        newH = originalImage.height * scaleFactor;
+        padX = (containerW - newW) / 2;
+        padY = (containerH - newH) / 2;
+        imageCanvas.width = containerW;
+        imageCanvas.height = containerH;
+    }
+
+    window.addEventListener('resize', () => {
+        if (originalImage) { calculateStaticRatios(); redrawCanvas(); }
+    });
+
+    dropZone.addEventListener('mousemove', (e) => {
+        if (!originalImage) {
+            floatingAnalyzer.style.display = 'none';
+            return;
+        }
+
+        const rect = imageCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - padX;
+        const mouseY = e.clientY - rect.top - padY;
+
+        if (mouseX >= 0 && mouseX < newW && mouseY >= 0 && mouseY < newH) {
+            const origX = Math.floor(mouseX / scaleFactor);
+            const origY = Math.floor(mouseY / scaleFactor);
+
+            updatePixelAnalysis(origX, origY);
+
+            floatingAnalyzer.style.display = 'flex';
+            
+            const cardRect = leftCard.getBoundingClientRect();
+            let posX = e.clientX - cardRect.left + 15;
+            let posY = e.clientY - cardRect.top + 15;
+
+            if (posX + 140 > cardRect.width) {
+                posX = e.clientX - cardRect.left - 155;
+            }
+            if (posY + 190 > cardRect.height) {
+                posY = cardRect.height - 200;
+            }
+
+            floatingAnalyzer.style.left = posX + 'px';
+            floatingAnalyzer.style.top = posY + 'px';
+        } else {
+            floatingAnalyzer.style.display = 'none';
+        }
+    });
+
+    dropZone.addEventListener('mouseleave', () => {
+        floatingAnalyzer.style.display = 'none';
+    });
+
+    function updatePixelAnalysis(x, y) {
+        const w = originalImage.width;
+        const h = originalImage.height;
+        if (x < 0 || x >= w || y < 0 || y >= h) return;
+
+        const zoomSize = 13;
+        const half = Math.floor(zoomSize / 2);
+        
+        zoomCtx.fillStyle = "#E2E2E6";
+        zoomCtx.fillRect(0, 0, zoomSize, zoomSize);
+
+        zoomCtx.drawImage(
+            offscreenCanvas, 
+            x - half, y - half, zoomSize, zoomSize, 
+            0, 0, zoomSize, zoomSize
+        );
+
+        zoomCtx.strokeStyle = "rgba(235, 87, 87, 0.9)"; 
+        zoomCtx.lineWidth = 0.5;
+        zoomCtx.strokeRect(half, half, 1, 1);
+
+        const pixData = offscreenCtx.getImageData(x, y, 1, 1).data;
+        const r = pixData[0];
+        const g = pixData[1];
+        const b = pixData[2];
+
+        lblCoords.innerText = `${x},${y}`;
+        lblRGB.innerText = `${r},${g},${b}`;
+        
+        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        lblHex.innerText = hex;
+        colorPreview.style.backgroundColor = hex;
+    }
+
+    function changeFilterMode(mode) {
+        currentMode = mode;
+        document.getElementById('tab_blur').classList.toggle('active', mode === 'blur');
+        document.getElementById('tab_sharpen').classList.toggle('active', mode === 'sharpen');
+        updatePresetButtons();
+        loadDefaultPreset();
+    }
+
+    function changePaddingMode(mode) {
+        paddingMode = mode;
+        document.getElementById('pad_zero').classList.toggle('active', mode === 'zero');
+        document.getElementById('pad_reflect').classList.toggle('active', mode === 'reflect');
+        document.getElementById('pad_replicate').classList.toggle('active', mode === 'replicate');
+        if (originalImage) triggerFilterWithOverlay();
+    }
+
+    function changeKernelSize(size) {
+        kernelSize = size;
+        [3, 5, 7, 9].forEach(s => {
+            const btn = document.getElementById(`size_${s}`);
+            if(btn) btn.classList.toggle('active', s === size);
+        });
+        loadDefaultPreset();
+    }
+
+    // 🔥 수정: 탭 전환 및 필터 적용 클릭 시 문구 동적 대입
+    function triggerFilterWithOverlay() {
+        if (!originalImage) return;
+        loadingText.innerText = "필터 연산을 안전하게 적용 중입니다...";
+        loadingOverlay.style.display = 'flex'; 
+        
+        setTimeout(() => {
+            applySpatialFilter();
+            loadingOverlay.style.display = 'none'; 
+        }, 50);
+    }
+
+    // 🔥 수정: 원본 초기화 시 문구 동적 대입
+    function triggerResetWithOverlay() {
+        if (!originalImage) return;
+        loadingText.innerText = "원본 이미지로 되돌리는 중입니다...";
+        loadingOverlay.style.display = 'flex';
+        
+        setTimeout(() => {
+            resetToOriginal();
+            loadingOverlay.style.display = 'none';
+        }, 50);
+    }
+
+    function updatePresetButtons() {
+        if (currentMode === 'blur') {
+            presetGroup.innerHTML = `
+                <button class="nav-btn active" id="pre_box" onclick="setPreset('box')">단순 평균 블러</button>
+                <button class="nav-btn" id="pre_gaussian" onclick="setPreset('gaussian')">가우시안 블러</button>
+            `;
+        } else {
+            presetGroup.innerHTML = `
+                <button class="nav-btn active" id="pre_sharp4" onclick="setPreset('sharp4')">4방향 샤프닝</button>
+                <button class="nav-btn" id="pre_sharp8" onclick="setPreset('sharp8')">8방향 샤프닝</button>
+            `;
+        }
+    }
+
+    function togglePresetTabActive(type) {
+        const buttons = presetGroup.querySelectorAll('.nav-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById('pre_' + type);
+        if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    function loadDefaultPreset() {
+        if (currentMode === 'blur') setPreset('box');
+        else setPreset('sharp4');
+    }
+
+    function setPreset(type) {
+        togglePresetTabActive(type);
+        const totalElements = kernelSize * kernelSize;
+        const center = Math.floor(kernelSize / 2);
+
+        if (type === 'box') {
+            const fractionStr = `1/${totalElements}`;
+            generateKernelGrid(fractionStr);
+        } 
+        else if (type === 'gaussian') {
+            let integerGrid = [];
+            let denominator = 0;
+
+            if (kernelSize === 3) {
+                integerGrid = [1, 2, 1, 2, 4, 2, 1, 2, 1];
+            } else if (kernelSize === 5) {
+                integerGrid = [
+                    1,  4,  7,  4, 1,
+                    4, 16, 26, 16, 4,
+                    7, 26, 41, 26, 7,
+                    4, 16, 26, 16, 4,
+                    1,  4,  7,  4, 1
+                ];
+            } else if (kernelSize === 7) {
+                integerGrid = [
+                    1,  4,  9, 12,  9,  4, 1,
+                    4, 17, 37, 48, 37, 17, 4,
+                    9, 37, 81,106, 81, 37, 9,
+                   12, 48,106,140,106, 48,12,
+                    9, 37, 81,106, 81, 37, 9,
+                    4, 17, 37, 48, 37, 17, 4,
+                    1,  4,  9, 12,  9,  4, 1
+                ];
+            } else if (kernelSize === 9) {
+                integerGrid = [
+                    1,  4,  8, 12, 14, 12,  8,  4, 1,
+                    4, 15, 30, 45, 50, 45, 30, 15, 4,
+                    8, 30, 60, 90,100, 90, 60, 30, 8,
+                   12, 45, 90,135,150,135, 90, 45, 12,
+                   14, 50,100,150,166,150,100, 50, 14,
+                   12, 45, 90,135,150,135, 90, 45, 12,
+                    8, 30, 60, 90,100, 90, 60, 30, 8,
+                    4, 15, 30, 45, 50, 45, 30, 15, 4,
+                    1,  4,  8, 12, 14, 12,  8,  4, 1
+                ];
+            }
+
+            denominator = integerGrid.reduce((sum, val) => sum + val, 0);
+            let stringArr = integerGrid.map(v => `${v}/${denominator}`);
+            generateKernelGrid(stringArr);
+        } 
+        else if (type === 'sharp4') {
+            let stringArr = new Array(totalElements).fill("0");
+            let negativeCount = 0;
+            for (let y = 0; y < kernelSize; y++) {
+                for (let x = 0; x < kernelSize; x++) {
+                    let idx = y * kernelSize + x;
+                    if (x === center && y === center) continue;
+                    if (x === center || y === center) { stringArr[idx] = "-1"; negativeCount++; }
+                }
+            }
+            stringArr[center * kernelSize + center] = String(negativeCount + 1);
+            generateKernelGrid(stringArr);
+        } 
+        else if (type === 'sharp8') {
+            let stringArr = new Array(totalElements).fill("-1");
+            stringArr[center * kernelSize + center] = String(totalElements);
+            generateKernelGrid(stringArr);
+        }
+    }
+
+    function generateKernelGrid(values = null) {
+        gridContainer.style.gridTemplateColumns = `repeat(${kernelSize}, 1fr)`;
+        gridContainer.innerHTML = '';
+
+        const total = kernelSize * kernelSize;
+        for (let i = 0; i < total; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'kernel-input';
+            input.dataset.index = i;
+
+            let valStr = "0";
+            if (values) {
+                if (Array.isArray(values)) valStr = values[i];
+                else valStr = values;
+            } else {
+                if (i === Math.floor(total / 2)) valStr = "1";
+            }
+
+            input.value = valStr;
+            
+            input.addEventListener('blur', (e) => {
+                parseInputValue(e.target);
+                triggerFilterWithOverlay(); 
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    parseInputValue(e.target);
+                    triggerFilterWithOverlay();
+                }
+            });
+
+            gridContainer.appendChild(input);
+        }
+        syncInputsToMatrix();
+    }
+
+    function parseInputValue(input) {
+        let rawStr = input.value.trim();
+        if (rawStr.includes('/')) {
+            let parts = rawStr.split('/');
+            if (parts.length === 2) {
+                let num = parseFloat(parts[0]);
+                let den = parseFloat(parts[1]);
+                if (!isNaN(num) && !isNaN(den) && den !== 0) input.value = rawStr; 
+            }
+        } else {
+            let parsed = parseFloat(rawStr);
+            if (isNaN(parsed)) input.value = "0";
+        }
+        syncInputsToMatrix();
+    }
+
+    function syncInputsToMatrix() {
+        const inputs = gridContainer.querySelectorAll('.kernel-input');
+        kernelMatrix = [];
+        inputs.forEach(input => {
+            let rawStr = input.value.trim();
+            if (rawStr.includes('/')) {
+                let parts = rawStr.split('/');
+                let num = parseFloat(parts[0]);
+                let den = parseFloat(parts[1]);
+                kernelMatrix.push((num / den) || 0);
+            } else {
+                kernelMatrix.push(parseFloat(rawStr) || 0);
+            }
+        });
+    }
+
+    function getPixelValueWithPadding(src, w, h, x, y, channel) {
+        if (paddingMode === 'zero') {
+            if (x < 0 || x >= w || y < 0 || y >= h) return 0;
+        }
+        else if (paddingMode === 'reflect') {
+            if (x < 0) x = -x;
+            if (x >= w) x = 2 * w - x - 2;
+            if (y < 0) y = -y;
+            if (y >= h) y = 2 * h - y - 2;
+        }
+        else if (paddingMode === 'replicate') {
+            x = Math.min(Math.max(x, 0), w - 1);
+            y = Math.min(Math.max(y, 0), h - 1);
+        }
+        
+        let idx = (y * w + x) * 4;
+        return src[idx + channel];
+    }
+
+    function applySpatialFilter() {
+        if (!originalImage) return;
+        syncInputsToMatrix();
+
+        offscreenCtx.drawImage(originalImage, 0, 0);
+        const srcData = offscreenCtx.getImageData(0, 0, originalImage.width, originalImage.height);
+        const dstData = offscreenCtx.createImageData(originalImage.width, originalImage.height);
+        
+        const src = srcData.data;
+        const dst = dstData.data;
+        const w = originalImage.width;
+        const h = originalImage.height;
+        const half = Math.floor(kernelSize / 2);
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                let rSum = 0, gSum = 0, bSum = 0;
+
+                for (let ky = 0; ky < kernelSize; ky++) {
+                    for (let kx = 0; kx < kernelSize; kx++) {
+                        let px = x + kx - half;
+                        let py = y + ky - half;
+                        let weight = kernelMatrix[ky * kernelSize + kx];
+
+                        rSum += getPixelValueWithPadding(src, w, h, px, py, 0) * weight;
+                        gSum += getPixelValueWithPadding(src, w, h, px, py, 1) * weight;
+                        bSum += getPixelValueWithPadding(src, w, h, px, py, 2) * weight;
+                    }
+                }
+
+                let destIdx = (y * w + x) * 4;
+                dst[destIdx]     = Math.min(Math.max(rSum, 0), 255);
+                dst[destIdx + 1] = Math.min(Math.max(gSum, 0), 255);
+                dst[destIdx + 2] = Math.min(Math.max(bSum, 0), 255);
+                dst[destIdx + 3] = src[destIdx + 3]; 
+            }
+        }
+
+        offscreenCtx.putImageData(dstData, 0, 0);
+        redrawCanvas();
+    }
+
+    function redrawCanvas() {
+        if (!originalImage) return;
+        imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+        imageCtx.drawImage(offscreenCanvas, padX, padY, newW, newH);
+    }
+
+    function resetToOriginal() {
+        if (!originalImage) return;
+        offscreenCtx.drawImage(originalImage, 0, 0);
+        redrawCanvas();
+    }
+
+    function saveProcessedImage() {
+        if (!originalImage) {
+            alert("저장할 이미지가 없습니다.");
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'spatial_filtered_image.png';
+        link.href = offscreenCanvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+
+</body>
+</html>
