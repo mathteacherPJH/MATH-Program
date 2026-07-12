@@ -25,6 +25,7 @@
             color: var(--c-text-main);
             margin: 0;
             padding: 15px;
+            padding-top: 75px; /* 상단 내비게이션 바 두께만큼 여백 확보 */
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -40,6 +41,59 @@
             left: 0;
             z-index: 1;
             pointer-events: none;
+        }
+
+        /* 🧭 고정형 상단 내비게이션 바 */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(44, 42, 41, 0.1);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        /* 럭셔리 딥그린 스타일의 Back 버튼 */
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: #1B4332;
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.8;
+        }
+
+        /* 메인 화면의 상단 메뉴 탭과 글자 크기, 자간, 굵기 일치 */
+        .navbar-brand-text {
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #1B4332; 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase; 
+        }
+
+        @media (min-width: 768px) {
+            .navbar-brand-text {
+                font-size: 14px; 
+            }
         }
 
         .main-container {
@@ -287,9 +341,8 @@
             border-color: #1B4332;
             background-color: #E9F5ED;
         }
-        #fileInput { display: none; }
 
-        /* ⏳ 로딩 팝업 오버레이 스타일 */
+        /* 로딩 팝업 오버레이 스타일 */
         .loading-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -333,6 +386,15 @@
 <body>
 
     <canvas id="neural-canvas"></canvas>
+
+    <nav class="top-navbar">
+        <button onclick="history.back()" class="back-btn">
+            ← BACK
+        </button>
+        <div class="navbar-brand-text">
+            BLUR AND SHARPENING
+        </div>
+    </nav>
 
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-alert-box">
@@ -543,7 +605,6 @@
     });
     function handleFileSelect(e) { if (e.target.files.length > 0) loadImageFile(e.target.files[0]); }
 
-    // 🔥 수정: 이미지를 가져올 때는 '이미지를 첨부하는 중입니다' 문구가 뜨도록 최적화
     function loadImageFile(file) {
         loadingText.innerText = "이미지를 안전하게 첨부하는 중입니다...";
         loadingOverlay.style.display = 'flex';
@@ -563,8 +624,6 @@
                 offscreenCtx = offscreenCanvas.getContext('2d');
 
                 calculateStaticRatios();
-                
-                // 첨부 시 내부 렌더링 루프 가동
                 applySpatialFilter();
                 loadingOverlay.style.display = 'none';
             }
@@ -689,7 +748,6 @@
         loadDefaultPreset();
     }
 
-    // 🔥 수정: 탭 전환 및 필터 적용 클릭 시 문구 동적 대입
     function triggerFilterWithOverlay() {
         if (!originalImage) return;
         loadingText.innerText = "필터 연산을 안전하게 적용 중입니다...";
@@ -701,7 +759,6 @@
         }, 50);
     }
 
-    // 🔥 수정: 원본 초기화 시 문구 동적 대입
     function triggerResetWithOverlay() {
         if (!originalImage) return;
         loadingText.innerText = "원본 이미지로 되돌리는 중입니다...";
