@@ -174,6 +174,14 @@
             <div class="file-name">chapter_3_reflection_and_rotation.html</div>
         </a>
 
+        <a href="chapter_3_convolution_operation.html" class="menu-item ch3-style" data-chapter="ch3">
+            <div class="menu-title">
+                <span class="badge badge-ch3">3단원</span>콘볼루션 연산 프로그램
+            </div>
+            <div class="menu-desc">합성곱(Convolution) 필터 행렬 연산을 통해 이미지의 특징(테두리, 윤곽선 등)을 추출하는 컴퓨터 비전의 핵심 원리를 탐구합니다.</div>
+            <div class="file-name">chapter_3_convolution_operation.html</div>
+        </a>
+
         <a href="chapter_4_regression_line.html" class="menu-item ch4-style" data-chapter="ch4">
             <div class="menu-title">
                 <span class="badge badge-ch4">4단원</span>산점도, 추세선 분석 프로그램
@@ -187,7 +195,6 @@
 
     <script>
         function filterChapter(ch, buttonElement) {
-            // 💡 오직 상단 탭 버튼(tab-button 클래스)을 눌렀을 때만 작동하도록 엄격하게 고립
             if (buttonElement) {
                 const buttons = document.querySelectorAll('.tab-button');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -214,7 +221,6 @@
             }
         }
 
-        // 초기 화면 설정 시 오작동 전면 차단
         window.onload = function() {
             filterChapter('all', document.getElementById('btn-all'));
         };
