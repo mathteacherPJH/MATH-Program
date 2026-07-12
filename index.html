@@ -2,228 +2,414 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>📐 인공지능 수학 탐구 프로그램 모음</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인공지능 수학 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h1 { color: #1a73e8; margin-bottom: 5px; font-size: 26px; font-weight: 700; }
-        .subtitle { color: #5f6368; margin-bottom: 30px; font-size: 15px; }
+        /* 글로벌 모던 자간 및 가독성 최적화 */
+        .premium-text { tracking: 0.03em; font-feature-settings: "ss01", "ss02"; }
+        .smooth-motion { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
         
-        .tab-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 850px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-        .tab-button {
-            padding: 10px 20px;
-            background-color: #fff;
-            border: 1px solid #dadce0;
-            border-radius: 20px;
-            color: #5f6368;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .tab-button:hover {
-            background-color: #f1f3f4;
-        }
-        .tab-button.active {
-            background-color: #1a73e8;
-            border-color: #1a73e8;
-            color: #fff;
-        }
+        /* 가로 스크롤바 숨김 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 레이어 우선순위 강제 설정 (캔버스를 가장 아래로, 컨텐츠는 위로) */
+        canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        nav, section, footer, div, aside { position: relative; z-index: 10; }
+        .bg-white { background-color: rgba(255, 255, 255, 0.85) !important; backdrop-blur-md: 8px; }
 
-        .menu-container {
-            width: 100%;
-            max-width: 850px;
-            display: block;
-        }
-        
-        .menu-item {
-            background: white;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            display: block;
-            position: relative;
-        }
-        .menu-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-        }
-        
-        .menu-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #202124;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .badge {
-            font-size: 12px;
-            font-weight: bold;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-        
-        .ch1-style { border-left: 5px solid #2c3e50; } 
-        .badge-ch1 { background-color: #2c3e50; }
-
-        .ch2-style { border-left: 5px solid #27ae60; } 
-        .badge-ch2 { background-color: #27ae60; } 
-
-        .ch3-style { border-left: 5px solid #d35400; } 
-        .badge-ch3 { background-color: #d35400; } 
-
-        .ch4-style { border-left: 5px solid #8e44ad; } 
-        .badge-ch4 { background-color: #8e44ad; } 
-
-        .ch5-style { border-left: 5px solid #c0392b; } 
-        .badge-ch5 { background-color: #c0392b; }
-
-        .menu-desc {
-            font-size: 14px;
-            color: #5f6368;
-            line-height: 1.6;
-        }
-        
-        .file-name {
-            display: none;
-        }
-        
-        .no-tools-msg {
-            text-align: center;
-            padding: 50px;
-            background: #fff;
-            border-radius: 8px;
-            color: #999;
-            border: 2px dashed #ddd;
-            display: none;
+        /* 🧭 우측 고정형 플로팅 메뉴 상시 노출 스타일 */
+        #floating-sidebar {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100; /* 최상단 배치 레이어 */
         }
     </style>
 </head>
-<body>
+<body class="bg-[#FBF9F4] text-[#2C2A29] font-sans antialiased selection:bg-[#1B4332] selection:text-white min-h-screen relative overflow-x-hidden flex flex-col justify-between premium-text">
 
-    <h1>📐 인공지능 수학 탐구 프로그램 모음</h1>
-    <div class="subtitle">수업, 수행평가 및 수학적 모델링을 위한 공학 도구 저장소입니다.</div>
+    <canvas id="neural-canvas"></canvas>
 
-    <div class="tab-container">
-        <button id="btn-all" class="tab-button active" onclick="filterChapter('all', this)">전체보기</button>
-        <button id="btn-ch1" class="tab-button" onclick="filterChapter('ch1', this)">1단원</button>
-        <button id="btn-ch2" class="tab-button" onclick="filterChapter('ch2', this)">2단원</button>
-        <button id="btn-ch3" class="tab-button" onclick="filterChapter('ch3', this)">3단원</button>
-        <button id="btn-ch4" class="tab-button" onclick="filterChapter('ch4', this)">4단원</button>
-        <button id="btn-ch5" class="tab-button" onclick="filterChapter('ch5', this)">5단원</button>
-        <button id="btn-download" class="tab-button" onclick="filterChapter('download', this)">📋 파일 다운로드</button>
-    </div>
-
-    <div class="menu-container" id="menu-box">
+    <nav class="fixed top-0 left-0 w-full bg-[#FBF9F4]/80 backdrop-blur-xl border-b border-[#2C2A29]/10 z-50 px-6 py-4 flex items-center justify-between transition-all duration-300">
+        <div class="flex items-center gap-2 select-none cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <span class="text-sm tracking-[0.3em] font-black text-[#1B4332] font-mono">MATHMATICS FOR AI</span>
+        </div>
         
-        <a href="chapter_2_morphological_analysis.html" class="menu-item ch2-style" data-chapter="ch2">
-            <div class="menu-title">
-                <span class="badge badge-ch2">2단원</span>단어집합 구성 프로그램
-            </div>
-            <div class="menu-desc">인공지능의 자연어 처리 기초가 되는 텍스트 데이터의 토큰화 및 형태소 분석 과정을 탐구합니다.</div>
-            <div class="file-name">chapter_2_morphological_analysis.html</div>
-        </a>        
+        <div class="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar structural-tabs">
+            <button onclick="scrollToSection('hero')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]">ABOUT US</button>
+            <button onclick="scrollToSection('services')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">OUR SERVICES</button>
+            <button onclick="scrollToSection('programs')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">PROGRAMS</button>
+            <button onclick="scrollToSection('tools')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">EXTERNAL TOOLS</button>
+        </div>
+    </nav>
+
+    <aside id="floating-sidebar" class="right-4 md:right-8 flex flex-col items-end gap-3 bg-white/95 backdrop-blur-xl border border-[#1B4332]/25 p-4 rounded-2xl shadow-2xl pt-6">
+        <button onclick="scrollToSection('hero')" id="q-hero" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-[#1B4332] transition-all">ABOUT US</span>
+            <div class="w-2 h-2 rounded-full bg-[#1B4332] scale-125 shadow-[0_0_6px_#1B4332] transition-all"></div>
+        </button>
         
-        <a href="chapter_3_image_representation.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 표현 프로그램
-            </div>
-            <div class="menu-desc">디지털 이미지가 행렬과 픽셀 데이터로 어떻게 표현되고 인공지능이 이를 어떻게 인식하는지 시각적으로 탐구합니다.</div>
-            <div class="file-name">chapter_3_image_representation.html</div>
-        </a>
+        <button onclick="scrollToSection('services')" id="q-services" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">OUR SERVICES</span>
+            <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
+        </button>
 
-        <a href="chapter_3_image_processing_1.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 밝기 및 흑백 변환
-            </div>
-            <div class="menu-desc">행렬 연산을 활용하여 이미지의 밝기 조절, 필터링, 대칭 이동 등 다양한 디지털 이미지 처리 기법을 실시간으로 구현하고 관찰합니다.</div>
-            <div class="file-name">chapter_3_image_processing_1.html</div>
-        </a>
+        <button onclick="scrollToSection('programs')" id="q-programs" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">PROGRAMS</span>
+            <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
+        </button>
 
-        <a href="chapter_3_reflection_and_rotation.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 대칭 및 회전 변환
-            </div>
-            <div class="menu-desc">일차변환 행렬과 삼각함수를 기반으로 평면 상의 이미지 데이터를 대칭 및 회전 이동시키는 기하학적 연산 과정을 실시간으로 탐구합니다.</div>
-            <div class="file-name">chapter_3_reflection_and_rotation.html</div>
-        </a>
+        <button onclick="scrollToSection('tools')" id="q-tools" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">EXTERNAL TOOLS</span>
+            <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
+        </button>
 
-        <a href="chapter_3_image_blending.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 합성 프로그램
-            </div>
-            <div class="menu-desc">두 이미지 행렬 데이터에 가중치를 부여하는 연산을 통해, 인공지능 이미지 합성 및 오버레이의 핵심 수학적 원리를 탐구합니다.</div>
-            <div class="file-name">chapter_3_image_blending.html</div>
-        </a>
+        <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="group flex items-center gap-3 mt-2 pt-3 border-t border-[#1B4332]/10 cursor-pointer w-full justify-end">
+            <span class="text-[11px] font-black tracking-widest text-[#1B4332] group-hover:scale-110 transition-transform">TOP ↑</span>
+            <div class="w-2 h-2 rounded-full bg-[#1B4332]"></div>
+        </button>
+    </aside>
 
-        <a href="chapter_4_regression_line.html" class="menu-item ch4-style" data-chapter="ch4">
-            <div class="menu-title">
-                <span class="badge badge-ch4">4단원</span>산점도, 추세선 분석 프로그램
-            </div>
-            <div class="menu-desc">선형, 이차, 지수, 로그 함수 형태의 추세선 공식과 결정계수(R²)를 실시간으로 분석합니다.</div>
-            <div class="file-name">chapter_4_regression_line.html</div>
-        </a>
+    <section id="hero" class="relative w-full h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#2C2A29]/10 pt-16 bg-[#F4F1EA]/50">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#FBF9F4]/30 to-[#FBF9F4] z-10"></div>
+        
+        <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-20 filter sepia-10 contrast-95 brightness-105">
 
-        <div class="no-tools-msg" id="empty-message">📂 해당 탭에 업로드된 내용이 아직 없습니다. (준비 중)</div>
-    </div>
+        <div class="relative z-20 text-center space-y-6 max-w-4xl px-6 select-none">
+            <p class="text-sm md:text-base tracking-[0.5em] font-black text-[#7D7569] uppercase">
+                VISUAL MATHEMATICS COMPASS
+            </p>
+            <h1 class="text-5xl sm:text-7xl font-light tracking-tight leading-[1.1] text-[#1B4332] pt-1">
+                EXPLORE AI MECHANISMS
+            </h1>
+            <p class="text-base sm:text-xl font-light text-[#5C564F] max-w-3xl mx-auto leading-relaxed tracking-wide pt-2">
+                인공지능의 핵심 원리를 시각적으로 보여줍니다.
+            </p>
+            <div class="pt-6">
+                <button onclick="scrollToSection('services')" class="px-8 py-3 bg-[#1B4332] text-xs font-bold tracking-widest text-white hover:bg-[#2D5A44] transition-all smooth-motion uppercase rounded-xs cursor-pointer shadow-lg shadow-[#1B4332]/10">SHORTCUT</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="max-w-5xl mx-auto w-full px-6 py-24 space-y-16">
+        <div class="text-center space-y-3 select-none">
+            <h2 class="text-sm font-bold tracking-[0.4em] text-[#1B4332] uppercase">OUR SERVICES</h2>
+            <div class="w-10 h-[1px] bg-[#1B4332] mx-auto opacity-30"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 01</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-wide">인공지능과 빅데이터</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    데이터 분류와 가공의 기초인 정량화 메커니즘을 배웁니다. 원시 데이터를 격자 형태의 수치 구조인 행렬 형식으로 매핑하고 처리하는 데이터 과학의 수학적 본질을 다룹니다.
+                </p>
+            </div>
+
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 02</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-wide">텍스트 데이터의 처리</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    인간의 자연어를 컴퓨터가 연산 가능한 벡터 공간의 좌표로 변환하는 기술을 추적합니다. 문장을 단어들을 쪼개는 토큰화와 형태소 분석 뒤에 숨겨진 기하학적 수치 구조를 탐구합니다.
+                </p>
+            </div>
+
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 03</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-tight">이미지 데이터의 처리</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    시각적 픽셀 정보가 거대한 디지털 행렬로 환원되는 구조를 가시화합니다. 행렬의 연산, 일차변환, 삼각함수를 활용하여 이미지의 밝기 제어, 대칭, 회전 이동을 수학적으로 통제합니다.
+                </p>
+            </div>
+
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 04</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-tight">인공지능과 확률</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    원시 불확실성 데이터들 사이에서 규칙적인 상관관계를 찾아내는 인공지능의 예측 모형을 설계합니다. 산점도 가시화와 최적 추세선 도출, 결정계수(R²) 선형회귀 분석의 정밀함을 다룹니다.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="programs" class="bg-[#F4F1EA]/40 w-full border-y border-[#2C2A29]/10 py-24">
+        <div class="max-w-4xl mx-auto px-6 space-y-12">
+            <div class="text-center space-y-2 select-none">
+                <h2 class="text-sm font-bold tracking-[0.4em] text-[#1B4332] uppercase">EXPLORATION PROGRAMS</h2>
+                <div class="w-10 h-[1px] bg-[#1B4332] mx-auto opacity-30"></div>
+            </div>
+
+            <div class="flex items-center justify-center border-b border-[#2C2A29]/10 pb-4 overflow-x-auto no-scrollbar gap-1 md:gap-4 inner-tabs-container">
+                <button onclick="filterPrograms('all')" id="inner-all" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm">전체보기</button>
+                <button onclick="filterPrograms('ch1')" id="inner-ch1" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">1단원</button>
+                <button onclick="filterPrograms('ch2')" id="inner-ch2" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">2단원</button>
+                <button onclick="filterPrograms('ch3')" id="inner-ch3" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">3단원</button>
+                <button onclick="filterPrograms('ch4')" id="inner-ch4" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">4단원</button>
+                <button onclick="filterPrograms('download')" id="inner-download" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">DOWNLOAD</button>
+            </div>
+
+            <div class="space-y-3" id="master-program-list">
+                
+                <div class="program-node ch1 hidden bg-white border border-[#2C2A29]/10 rounded-xs p-10 text-center text-sm text-gray-400 font-light">
+                    1단원에 등록된 탐구 세부 프로그램이 없습니다. (준비 중)
+                </div>
+
+                <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#2D6A4F] bg-[#E9F5ED] border border-[#BCDFCA] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#2D6A4F] transition-colors">단어집합 구성 프로그램</h4>
+                    </div>
+                    <a href="chapter_2_morphological_analysis.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 데이터 표현 프로그램</h4>
+                    </div>
+                    <a href="chapter_3_image_representation.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 데이터 밝기 및 흑백 변환</h4>
+                    </div>
+                    <a href="chapter_3_image_processing_1.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 데이터 대칭 및 회전 변환 행렬</h4>
+                    </div>
+                    <a href="chapter_3_reflection_and_rotation.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 가중치 합성 프로그램</h4>
+                    </div>
+                    <a href="chapter_3_image_blending.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node ch4 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#9B2226]/40 hover:shadow-lg hover:shadow-black/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#9B2226] bg-[#FDF0F0] border border-[#F5C6C6] px-2.5 py-0.5 rounded-xs">Chapter 04</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#9B2226] transition-colors">산점도 및 선형 회귀 추세선 분석</h4>
+                    </div>
+                    <a href="chapter_4_regression_line.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#9B2226] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node download hidden bg-white border border-[#2C2A29]/10 rounded-xs p-10 text-center text-sm text-gray-400 font-light">
+                    공유 가능한 배포자료용 강의록 PDF 및 학습지 파일 리스트가 비어 있습니다.
+                </div>
+
+                <div id="inner-empty-notice" class="hidden bg-[#F4F1EA] border border-dashed border-[#2C2A29]/20 rounded-xs p-12 text-center text-sm text-gray-400 font-light">
+                    선택한 조건의 탐구 아카이브 데이터가 부재합니다.
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer id="tools" class="w-full max-w-4xl mx-auto px-6 py-16 text-center space-y-6">
+        <p class="text-xs font-bold text-[#1B4332] uppercase tracking-[0.3em]">EXTERNAL OPEN FRAMEWORKS</p>
+        <div class="flex flex-wrap items-center justify-center gap-3">
+            <a href="https://www.geogebra.org" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">GEOGEBRA ↗</a>
+            <a href="https://www.desmos.com" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">DESMOS ↗</a>
+            <a href="https://www.algeomath.kr" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">ALGEOMATH ↗</a>
+            <a href="https://tong.mods.go.kr/front/main/main.do" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">TONG_RAMI ↗</a>
+            <a href="https://www.wolframalpha.com" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">WOLFRAMALPHA ↗</a>
+        </div>
+        <div class="text-[11px] text-[#9A9286] font-mono pt-4 space-y-1.5">
+            <p>&copy; 2026 AI &times; MATHEMATICS EDUCATION PROJECT LAB. ALL RIGHTS RESERVED.</p>
+            <p class="text-[#7D7569] font-medium">made by Ji Hwan Park (estintoshout)</p>
+        </div>
+    </footer>
 
     <script>
-        function filterChapter(ch, buttonElement) {
-            if (buttonElement) {
-                const buttons = document.querySelectorAll('.tab-button');
-                buttons.forEach(btn => btn.classList.remove('active'));
-                buttonElement.classList.add('active');
+        /* 🌐 1. 인공지능 신경망(Neural Network) 애니메이션 엔진 */
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        const mouse = { x: null, y: null, radius: 150 };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.35;
+                this.vy = (Math.random() - 0.5) * 0.35;
+                this.radius = Math.random() * 2 + 1;
             }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
 
-            const items = document.querySelectorAll('.menu-item');
-            let visibleCount = 0;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
 
-            items.forEach(item => {
-                if (ch === 'all' || item.getAttribute('data-chapter') === ch) {
-                    item.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    item.style.display = 'none';
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < mouse.radius) {
+                    const force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= dx * force * 0.03;
+                    this.y -= dy * force * 0.03;
                 }
-            });
-
-            const emptyMsg = document.getElementById('empty-message');
-            if (visibleCount === 0) {
-                emptyMsg.style.display = 'block';
-            } else {
-                emptyMsg.style.display = 'none';
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(27, 67, 50, 0.12)';
+                ctx.fill();
             }
         }
 
-        window.onload = function() {
-            filterChapter('all', document.getElementById('btn-all'));
-        };
+        function initParticles() {
+            particles = [];
+            const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.05 * (1 - dist / 110)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animate();
+
+
+        /* 🗂️ 2. 페이지 스크롤 워프 함수 */
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                const offset = 70;
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+                window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+            }
+        }
+
+
+        /* 🎛️ 3. 중첩 내부 아카이브 프로그램 단원 필터링 함수 */
+        function filterPrograms(filterTag) {
+            const nodes = document.querySelectorAll('.program-node');
+            let visibleCount = 0;
+
+            nodes.forEach(node => {
+                if (filterTag === 'all') {
+                    if(node.classList.contains('ch1') || node.classList.contains('download')) {
+                        node.style.display = 'none';
+                    } else {
+                        node.style.display = 'flex';
+                        visibleCount++;
+                    }
+                } else if (node.classList.contains(filterTag)) {
+                    node.style.display = node.classList.contains('group') ? 'flex' : 'block';
+                    visibleCount++;
+                } else {
+                    node.style.display = 'none';
+                }
+            });
+
+            const innerButtons = document.querySelectorAll('.inner-tabs-container button');
+            innerButtons.forEach(btn => {
+                btn.className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]";
+            });
+            document.getElementById(`inner-${filterTag}`).className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm";
+
+            document.getElementById('inner-empty-notice').style.display = (visibleCount === 0) ? 'block' : 'none';
+        }
+
+
+        /* 🧭 4. 헤더 탭 바 & 5단 우측 플로팅 퀵바 하이브리드 제어 커널 */
+        const sections = ['hero', 'services', 'programs', 'tools'];
+        const navButtons = document.querySelectorAll('.structural-tabs button');
+
+        filterPrograms('all');
+
+        window.addEventListener('scroll', () => {
+            let currentSection = 'hero';
+            
+            // 스크롤 최하단 인식 보정 버퍼
+            const isBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 50;
+
+            if (isBottom) {
+                currentSection = 'tools';
+            } else {
+                sections.forEach(id => {
+                    const sec = document.getElementById(id);
+                    if (sec) {
+                        const rect = sec.getBoundingClientRect();
+                        if (rect.top <= 140) currentSection = id;
+                    }
+                });
+            }
+
+            // 상단 메뉴 텍스트 언더바 하이라이팅 제어
+            const indexMap = { 'hero': 0, 'services': 1, 'programs': 2, 'tools': 3 };
+            const activeIdx = indexMap[currentSection];
+
+            navButtons.forEach((btn, idx) => {
+                if (idx === activeIdx) {
+                    btn.className = "px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors";
+                }
+            });
+
+            // 우측 퀵바 점형 도트 하이라이팅 연동 제어
+            sections.forEach(id => {
+                const btnText = document.querySelector(`#q-${id} span`);
+                const btnDot = document.querySelector(`#q-${id} div`);
+                
+                if (id === currentSection) {
+                    btnText.className = "text-[11px] font-bold tracking-wider text-[#1B4332] scale-105 transition-all";
+                    btnDot.className = "w-2 h-2 rounded-full bg-[#1B4332] scale-125 shadow-[0_0_6px_#1B4332] transition-all";
+                } else {
+                    btnText.className = "text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-all";
+                    btnDot.className = "w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all";
+                }
+            });
+        });
     </script>
 </body>
 </html>
