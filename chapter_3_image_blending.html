@@ -2,228 +2,828 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>📐 인공지능 수학 탐구 프로그램 모음</title>
+    <title>이미지 데이터의 처리 3 - 두 이미지의 합성</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
+        :root {
+            --c-bg-main: #F9F9FB;
+            --c-bg-card: #FFFFFF;
+            --c-text-main: #37352F;
+            --c-text-muted: #787774;
+            --c-border: #E2E2E6;
+            --c-tab-active: #EFEFED;
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-save-bg: #E28523;
+            --c-save-hover: #C9741B;
+            --c-reset-bg: #EB5757;
+            --c-reset-hover: #D14343;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            font-family: "Malgun Gothic", -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
             margin: 0;
-            padding: 40px 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-        }
-        h1 { color: #1a73e8; margin-bottom: 5px; font-size: 26px; font-weight: 700; }
-        .subtitle { color: #5f6368; margin-bottom: 30px; font-size: 15px; }
-        
-        .tab-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 850px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-        .tab-button {
-            padding: 10px 20px;
-            background-color: #fff;
-            border: 1px solid #dadce0;
-            border-radius: 20px;
-            color: #5f6368;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .tab-button:hover {
-            background-color: #f1f3f4;
-        }
-        .tab-button.active {
-            background-color: #1a73e8;
-            border-color: #1a73e8;
-            color: #fff;
+            height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
         }
 
-        .menu-container {
-            width: 100%;
-            max-width: 850px;
-            display: block;
+        /* 3분할 메인 레이아웃 비율 고정 및 안정화 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            min-height: 0; 
+            margin-bottom: 15px;
         }
-        
-        .menu-item {
-            background: white;
-            padding: 24px;
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            display: block;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+            min-width: 0;
         }
-        .menu-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+
+        /* 왼쪽 패널: 이미지 A, B 위아래 배치 */
+        .panel-left {
+            flex: 1;
+            min-width: 180px;
+            max-width: 280px;
+            gap: 10px;
         }
-        
-        .menu-title {
-            font-size: 18px;
+        /* 중앙 패널: 합성 결과 배치 */
+        .panel-center {
+            flex: 2;
+            min-width: 300px;
+        }
+        /* 오른쪽 패널: 행렬 P 시각화 배치 */
+        .panel-right {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+        }
+
+        .panel-title {
+            font-size: 13px;
             font-weight: bold;
-            color: #202124;
+            color: var(--c-text-main);
             margin-bottom: 8px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
+        }
+
+        /* 드롭존 및 뷰어 공통 */
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--c-border);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            font-size: 12px;
+            text-align: center;
+        }
+        .drop-zone.hover {
+            border-color: var(--c-accent);
+            background: #f0f7ff;
+        }
+        .drop-zone canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .display-zone {
+            flex: 1;
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            position: relative;
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .display-zone canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* 행렬 P 전용 스크롤박스 컨테이너 */
+        .matrix-scroll-container {
+            flex: 1;
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            background: #fff;
+            overflow: auto; 
+            position: relative;
         }
         
-        .badge {
+        .matrix-scroll-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .matrix-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--c-border);
+            border-radius: 4px;
+        }
+        .matrix-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: var(--c-text-muted);
+        }
+
+        .resolution-bar {
+            font-size: 11px;
+            color: var(--c-text-muted);
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-save { background-color: var(--c-save-bg); width: 100%; margin-top: 8px;}
+        .btn-save:hover { background-color: var(--c-save-hover); }
+        .btn-reset { background-color: var(--c-reset-bg); padding: 4px 0; font-size: 11px; white-space: nowrap; text-align: center; width: 100%;}
+        .btn-reset:hover { background-color: var(--c-reset-hover); }
+
+        /* [수정] 하단 제어판 전체 컨테이너 보정 */
+        .bottom-panel {
+            display: flex;
+            gap: 15px;
+            height: 140px; 
+            min-height: 140px;
+            flex-shrink: 0; /* 하단바 자체가 세로로 찌그러지는 현상 방지 */
+        }
+        .bottom-full-card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            gap: 15px;
+            min-width: 0;
+        }
+
+        /* [수정] 1구역: 합성 방식 선택 영역 폭 고정 */
+        .area-mode-control {
+            width: 140px;
+            min-width: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .mode-control-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: var(--c-text-main);
+        }
+        .mode-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .btn-mode-choice {
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            padding: 5px 0;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            background: var(--c-bg-main);
+            color: var(--c-text-main);
+            text-align: center;
+        }
+        .btn-mode-choice.active {
+            background: var(--c-accent);
+            color: #FFFFFF;
+            border-color: var(--c-accent);
+        }
+
+        .v-divider {
+            width: 1px;
+            background-color: var(--c-border);
+            height: 75%;
+            flex-shrink: 0;
+        }
+
+        /* [수정] 2구역: 슬라이더 조작 영역 유연성 및 최소폭 강제 */
+        .area-sliders {
+            flex: 2; /* 3구역보다 더 많은 공간을 차지하도록 가중치 분배 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 250px; /* 창이 작아져도 슬라이더 구역이 최소 이 크기를 유지 */
+            flex-shrink: 1;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+        .control-title-label {
             font-size: 12px;
             font-weight: bold;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
+            width: 110px; 
+            flex-shrink: 0;
             white-space: nowrap;
         }
-        
-        .ch1-style { border-left: 5px solid #2c3e50; } 
-        .badge-ch1 { background-color: #2c3e50; }
-
-        .ch2-style { border-left: 5px solid #27ae60; } 
-        .badge-ch2 { background-color: #27ae60; } 
-
-        .ch3-style { border-left: 5px solid #d35400; } 
-        .badge-ch3 { background-color: #d35400; } 
-
-        .ch4-style { border-left: 5px solid #8e44ad; } 
-        .badge-ch4 { background-color: #8e44ad; } 
-
-        .ch5-style { border-left: 5px solid #c0392b; } 
-        .badge-ch5 { background-color: #c0392b; }
-
-        .menu-desc {
-            font-size: 14px;
-            color: #5f6368;
-            line-height: 1.6;
+        .control-label {
+            font-size: 11px;
+            width: 70px;
+            flex-shrink: 0;
+            text-align: right;
+            white-space: nowrap;
         }
-        
-        .file-name {
-            display: none;
-        }
-        
-        .no-tools-msg {
+        .input-box {
+            width: 45px;
+            height: 22px;
             text-align: center;
-            padding: 50px;
-            background: #fff;
-            border-radius: 8px;
-            color: #999;
-            border: 2px dashed #ddd;
-            display: none;
+            font-family: "Consolas", monospace;
+            font-weight: bold;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            outline: none;
+            font-size: 11px;
+            flex-shrink: 0;
         }
+        .slider {
+            flex: 1; 
+            cursor: pointer;
+            min-width: 50px;
+        }
+
+        /* 원리 2 마스크 제어 영역 패널 내부 정돈 */
+        .mask-control-grid {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+            align-items: center;
+        }
+        .mask-col-shape {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 95px;
+            flex-shrink: 0;
+        }
+        .mask-col-size {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .brush-shape-group {
+            display: flex;
+            gap: 4px;
+        }
+        .btn-shape-choice {
+            flex: 1;
+            border: 1px solid var(--c-border);
+            background: var(--c-bg-main);
+            color: var(--c-text-main);
+            padding: 4px 0;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .btn-shape-choice.active {
+            background: var(--text-main, #37352F);
+            color: #fff;
+            border-color: var(--text-main, #37352F);
+        }
+
+        /* [수정] 3구역: 우측 수식 영역이 왼쪽을 침범하지 못하도록 한계 설정 */
+        .area-formulas {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 25%; 
+            min-width: 180px; 
+            max-width: 260px; 
+            flex-shrink: 0; /* 절대 스스로 줄어들거나 밀어서 깨지지 않음 */
+        }
+        .formula-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--c-bg-main);
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            height: 75px;
+            padding: 4px;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
+        }
+        .formula-box mjx-container {
+            font-size: 20px !important; /* 미세 조정하여 가독성과 공간 확보 조율 */
+            max-width: 100% !important;
+            margin: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+
+        #fileInputA, #fileInputB { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>📐 인공지능 수학 탐구 프로그램 모음</h1>
-    <div class="subtitle">수업, 수행평가 및 수학적 모델링을 위한 공학 도구 저장소입니다.</div>
+    <div class="main-container">
+        <div class="card panel-left">
+            <div class="panel-title">📥 입력 이미지 행렬</div>
+            <div id="dropZoneA" class="drop-zone" onclick="document.getElementById('fileInputA').click()">
+                <span id="txtPromptA">➕ 이미지 A 등록 (A)</span>
+                <canvas id="canvasPreviewA"></canvas>
+            </div>
+            <div id="resLabelA" class="resolution-bar">A: ---</div>
+            
+            <div id="dropZoneB" class="drop-zone" onclick="document.getElementById('fileInputB').click()">
+                <span id="txtPromptB">➕ 이미지 B 등록 (B)</span>
+                <canvas id="canvasPreviewB"></canvas>
+            </div>
+            <div id="resLabelB" class="resolution-bar">B: ---</div>
+            
+            <input type="file" id="fileInputA" accept="image/*" onchange="handleFileSelect(event, 'A')">
+            <input type="file" id="fileInputB" accept="image/*" onchange="handleFileSelect(event, 'B')">
+        </div>
 
-    <div class="tab-container">
-        <button id="btn-all" class="tab-button active" onclick="filterChapter('all', this)">전체보기</button>
-        <button id="btn-ch1" class="tab-button" onclick="filterChapter('ch1', this)">1단원</button>
-        <button id="btn-ch2" class="tab-button" onclick="filterChapter('ch2', this)">2단원</button>
-        <button id="btn-ch3" class="tab-button" onclick="filterChapter('ch3', this)">3단원</button>
-        <button id="btn-ch4" class="tab-button" onclick="filterChapter('ch4', this)">4단원</button>
-        <button id="btn-ch5" class="tab-button" onclick="filterChapter('ch5', this)">5단원</button>
-        <button id="btn-download" class="tab-button" onclick="filterChapter('download', this)">📋 파일 다운로드</button>
+        <div class="card panel-center">
+            <div class="panel-title">🖥️ 합성 완료 이미지 행렬 (M)</div>
+            <div id="resultZone" class="display-zone">
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            <div id="resLabelCombined" class="resolution-bar">합성 해상도: ---</div>
+            <button class="btn btn-save" onclick="saveProcessedImage()">💾 합성 이미지 저장하기</button>
+        </div>
+
+        <div class="card panel-right" id="rightMatrixPanel" style="display:none;">
+            <div class="panel-title">📊 마스크 행렬 상태 (P)</div>
+            <div class="matrix-scroll-container">
+                <canvas id="matrixPCanvas"></canvas>
+            </div>
+            <div class="resolution-bar">성분 값: 0 (흰색) / 1 (검은색)</div>
+        </div>
     </div>
 
-    <div class="menu-container" id="menu-box">
-        
-        <a href="chapter_2_morphological_analysis.html" class="menu-item ch2-style" data-chapter="ch2">
-            <div class="menu-title">
-                <span class="badge badge-ch2">2단원</span>단어집합 구성 프로그램
+    <div class="bottom-panel">
+        <div class="bottom-full-card">
+            
+            <div class="area-mode-control">
+                <div class="mode-control-title">⚙️ 합성 방식 선택</div>
+                <div class="mode-btn-group">
+                    <button id="btnMode1" class="btn-mode-choice active" onclick="setBlendMode(1)">원리 1 (볼록결합)</button>
+                    <button id="btnMode2" class="btn-mode-choice" onclick="setBlendMode(2)">원리 2 (아다마르 곱)</button>
+                </div>
             </div>
-            <div class="menu-desc">인공지능의 자연어 처리 기초가 되는 텍스트 데이터의 토큰화 및 형태소 분석 과정을 탐구합니다.</div>
-            <div class="file-name">chapter_2_morphological_analysis.html</div>
-        </a>        
-        
-        <a href="chapter_3_image_representation.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 표현 프로그램
-            </div>
-            <div class="menu-desc">디지털 이미지가 행렬과 픽셀 데이터로 어떻게 표현되고 인공지능이 이를 어떻게 인식하는지 시각적으로 탐구합니다.</div>
-            <div class="file-name">chapter_3_image_representation.html</div>
-        </a>
 
-        <a href="chapter_3_image_processing_1.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 밝기 및 흑백 변환
-            </div>
-            <div class="menu-desc">행렬 연산을 활용하여 이미지의 밝기 조절, 필터링, 대칭 이동 등 다양한 디지털 이미지 처리 기법을 실시간으로 구현하고 관찰합니다.</div>
-            <div class="file-name">chapter_3_image_processing_1.html</div>
-        </a>
+            <div class="v-divider"></div>
 
-        <a href="chapter_3_reflection_and_rotation.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 대칭 및 회전 변환
+            <div class="area-sliders">
+                <div id="rowWeight" class="control-row">
+                    <span class="control-title-label">🎛️ 가중치 비율 (t)</span>
+                    <span class="control-label">A 비중 (t)</span>
+                    <input type="text" id="entryWeight" class="input-box" value="0.50" onchange="onEntryWeightChanged()">
+                    <input type="range" id="sliderWeight" class="slider" min="0" max="100" step="1" value="50" oninput="onSliderWeightMove(this.value)">
+                </div>
+                
+                <div id="rowMaskControl" class="mask-control-grid" style="display:none;">
+                    <div class="mask-col-shape">
+                        <button id="btnShapeCircle" class="btn-shape-choice active" onclick="setBrushShape('circle')" style="margin-bottom: 3px;">동그라미</button>
+                        <button id="btnShapeSquare" class="btn-shape-choice" onclick="setBrushShape('square')" style="margin-bottom: 3px;">네모</button>
+                        <button class="btn btn-reset" onclick="resetMaskMatrix()">초기화</button>
+                    </div>
+                    
+                    <div class="mask-col-size">
+                        <div style="display:flex; align-items:center; width:100%; gap:10px;">
+                            <span class="control-title-label" style="width:70px; font-size:12px; white-space:nowrap;">📏 크기 설정</span>
+                            <input type="text" id="entryBrushSize" class="input-box" value="25" style="width:38px;" onchange="onBrushSizeEntryChanged()">
+                            <input type="range" id="sliderBrushSize" class="slider" min="5" max="80" step="1" value="25" oninput="onBrushSizeSliderMove(this.value)">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="menu-desc">일차변환 행렬과 삼각함수를 기반으로 평면 상의 이미지 데이터를 대칭 및 회전 이동시키는 기하학적 연산 과정을 실시간으로 탐구합니다.</div>
-            <div class="file-name">chapter_3_reflection_and_rotation.html</div>
-        </a>
 
-        <a href="chapter_3_image_blending.html" class="menu-item ch3-style" data-chapter="ch3">
-            <div class="menu-title">
-                <span class="badge badge-ch3">3단원</span>이미지 데이터 합성 프로그램
+            <div class="v-divider"></div>
+
+            <div class="area-formulas">
+                <div id="formulaDisplay" class="formula-box">
+                    $$tA + (1-t)B$$
+                </div>
             </div>
-            <div class="menu-desc">두 이미지 행렬 데이터에 가중치를 부여하는 연산을 통해, 인공지능 이미지 합성 및 오버레이의 핵심 수학적 원리를 탐구합니다.</div>
-            <div class="file-name">chapter_3_image_blending.html</div>
-        </a>
 
-        <a href="chapter_4_regression_line.html" class="menu-item ch4-style" data-chapter="ch4">
-            <div class="menu-title">
-                <span class="badge badge-ch4">4단원</span>산점도, 추세선 분석 프로그램
-            </div>
-            <div class="menu-desc">선형, 이차, 지수, 로그 함수 형태의 추세선 공식과 결정계수(R²)를 실시간으로 분석합니다.</div>
-            <div class="file-name">chapter_4_regression_line.html</div>
-        </a>
-
-        <div class="no-tools-msg" id="empty-message">📂 해당 탭에 업로드된 내용이 아직 없습니다. (준비 중)</div>
+        </div>
     </div>
 
-    <script>
-        function filterChapter(ch, buttonElement) {
-            if (buttonElement) {
-                const buttons = document.querySelectorAll('.tab-button');
-                buttons.forEach(btn => btn.classList.remove('active'));
-                buttonElement.classList.add('active');
-            }
+<script>
+    let imgA = null, imgB = null;
+    let offscreenCanvas = null, offscreenCtx = null;
+    let maskMatrix = null; 
 
-            const items = document.querySelectorAll('.menu-item');
-            let visibleCount = 0;
+    let scaleFactor = 1.0;
+    let padX = 0, padY = 0;
+    let newW = 0, newH = 0;
 
-            items.forEach(item => {
-                if (ch === 'all' || item.getAttribute('data-chapter') === ch) {
-                    item.style.display = 'block';
-                    visibleCount++;
+    let isDrawingMask = false;
+    let blendMode = 1; 
+    let blendWeight = 0.5; 
+
+    let brushShape = 'circle';
+    let brushRadius = 25; 
+    let currentMouseX = -1000, currentMouseY = -1000; 
+
+    const imageCanvas = document.getElementById('imageCanvas');
+    const imageCtx = imageCanvas.getContext('2d');
+    const matrixPCanvas = document.getElementById('matrixPCanvas');
+    const matrixPCtx = matrixPCanvas.getContext('2d');
+    const rightMatrixPanel = document.getElementById('rightMatrixPanel');
+    
+    const sliderWeight = document.getElementById('sliderWeight');
+    const entryWeight = document.getElementById('entryWeight');
+    const sliderBrushSize = document.getElementById('sliderBrushSize');
+    const entryBrushSize = document.getElementById('entryBrushSize');
+    const resLabelA = document.getElementById('resLabelA');
+    const resLabelB = document.getElementById('resLabelB');
+    const resLabelCombined = document.getElementById('resLabelCombined');
+    const formulaDisplay = document.getElementById('formulaDisplay');
+
+    function handleFileSelect(e, target) {
+        if (e.target.files.length > 0) loadImageFile(e.target.files[0], target);
+    }
+
+    function loadImageFile(file, target) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                if (target === 'A') {
+                    imgA = img;
+                    resLabelA.innerText = `A 해상도: ${imgA.width}x${imgA.height}`;
+                    drawPreview('canvasPreviewA', imgA);
+                    document.getElementById('txtPromptA').style.display = 'none';
                 } else {
-                    item.style.display = 'none';
+                    imgB = img;
+                    resLabelB.innerText = `B 해상도: ${imgB.width}x${imgB.height}`;
+                    drawPreview('canvasPreviewB', imgB);
+                    document.getElementById('txtPromptB').style.display = 'none';
                 }
-            });
 
-            const emptyMsg = document.getElementById('empty-message');
-            if (visibleCount === 0) {
-                emptyMsg.style.display = 'block';
+                if (imgA && imgB) {
+                    initMaskMatrix(imgA.width, imgA.height);
+                    calculateGeometry();
+                    executeComposition();
+                }
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function drawPreview(canvasId, img) {
+        const canv = document.getElementById(canvasId);
+        const ctx = canv.getContext('2d');
+        canv.width = canv.clientWidth;
+        canv.height = canv.clientHeight;
+        ctx.clearRect(0, 0, canv.width, canv.height);
+        
+        let s = Math.min(canv.width / img.width, canv.height / img.height);
+        let w = img.width * s;
+        let h = img.height * s;
+        let x = (canv.width - w) / 2;
+        let y = (canv.height - h) / 2;
+        ctx.drawImage(img, x, y, w, h);
+    }
+
+    function initMaskMatrix(w, h) {
+        maskMatrix = new Uint8Array(w * h); 
+    }
+
+    function resetMaskMatrix() {
+        if (maskMatrix) {
+            maskMatrix.fill(0); 
+            executeComposition();
+        }
+    }
+
+    function calculateGeometry() {
+        if (!imgA || !imgB) return;
+        const containerW = document.getElementById('resultZone').clientWidth;
+        const containerH = document.getElementById('resultZone').clientHeight;
+
+        const transW = imgA.width;
+        const transH = imgA.height;
+
+        resLabelCombined.innerText = `합성 해상도 : ${transW} x ${transH}`;
+
+        scaleFactor = Math.min(containerW / transW, containerH / transH);
+        newW = transW * scaleFactor;
+        newH = transH * scaleFactor;
+        padX = (containerW - newW) / 2;
+        padY = (containerH - newH) / 2;
+
+        imageCanvas.width = containerW;
+        imageCanvas.height = containerH;
+    }
+
+    function setBrushShape(shape) {
+        brushShape = shape;
+        document.getElementById('btnShapeCircle').classList.toggle('active', shape === 'circle');
+        document.getElementById('btnShapeSquare').classList.toggle('active', shape === 'square');
+        if (imgA && imgB) repaintCanvasWithOverlay();
+    }
+
+    function onBrushSizeSliderMove(val) {
+        brushRadius = parseInt(val);
+        entryBrushSize.value = brushRadius;
+        if (imgA && imgB) repaintCanvasWithOverlay();
+    }
+
+    function onBrushSizeEntryChanged() {
+        let val = parseInt(entryBrushSize.value);
+        if (isNaN(val) || val < 5 || val > 80) {
+            alert("가이드 크기는 5에서 80 사이의 정수여야 합니다.");
+            entryBrushSize.value = brushRadius;
+        } else {
+            brushRadius = val;
+            sliderBrushSize.value = val;
+            if (imgA && imgB) repaintCanvasWithOverlay();
+        }
+    }
+
+    function traceMaskInteraction(e) {
+        if (!imgA || !maskMatrix || blendMode !== 2) return;
+        
+        const rect = imageCanvas.getBoundingClientRect();
+        currentMouseX = e.clientX - rect.left;
+        currentMouseY = e.clientY - rect.top;
+
+        const origX = Math.floor((currentMouseX - padX) / scaleFactor);
+        const origY = Math.floor((currentMouseY - padY) / scaleFactor);
+
+        const w = imgA.width;
+        const h = imgA.height;
+        const mappedRadius = Math.max(1, Math.floor(brushRadius / scaleFactor)); 
+
+        if (origX >= -mappedRadius && origX < w + mappedRadius && origY >= -mappedRadius && origY < h + mappedRadius) {
+            for (let y = origY - mappedRadius; y <= origY + mappedRadius; y++) {
+                for (let x = origX - mappedRadius; x <= origX + mappedRadius; x++) {
+                    if (x >= 0 && x < w && y >= 0 && y < h) {
+                        if (brushShape === 'circle') {
+                            if ((x - origX)**2 + (y - origY)**2 <= mappedRadius**2) {
+                                maskMatrix[y * w + x] = 1; 
+                            }
+                        } else {
+                            maskMatrix[y * w + x] = 1; 
+                        }
+                    }
+                }
+            }
+            executeComposition(); 
+        }
+    }
+    
+    imageCanvas.addEventListener('mousedown', (e) => { 
+        if (blendMode === 2) { isDrawingMask = true; traceMaskInteraction(e); } 
+    });
+    
+    imageCanvas.addEventListener('mousemove', (e) => { 
+        const rect = imageCanvas.getBoundingClientRect();
+        currentMouseX = e.clientX - rect.left;
+        currentMouseY = e.clientY - rect.top;
+
+        if (blendMode === 2) {
+            if (isDrawingMask) {
+                traceMaskInteraction(e);
             } else {
-                emptyMsg.style.display = 'none';
+                repaintCanvasWithOverlay(); 
             }
         }
+    });
 
-        window.onload = function() {
-            filterChapter('all', document.getElementById('btn-all'));
-        };
-    </script>
+    imageCanvas.addEventListener('mouseleave', () => {
+        currentMouseX = -1000; currentMouseY = -1000; 
+        if (blendMode === 2 && imgA) repaintCanvasWithOverlay();
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; isDrawingMask = false; });
+
+    function setBlendMode(mode) {
+        blendMode = mode;
+        document.getElementById('btnMode1').classList.toggle('active', mode === 1);
+        document.getElementById('btnMode2').classList.toggle('active', mode === 2);
+        
+        document.getElementById('rowWeight').style.display = (mode === 1) ? 'flex' : 'none';
+        document.getElementById('rowMaskControl').style.display = (mode === 2) ? 'flex' : 'none';
+        
+        rightMatrixPanel.style.display = (mode === 2) ? 'flex' : 'none';
+
+        imageCanvas.style.cursor = (mode === 2) ? 'none' : 'default'; 
+
+        if (imgA && imgB) {
+            calculateGeometry(); 
+            executeComposition();
+        } else {
+            updateFormulaUI();
+        }
+    }
+
+    function onSliderWeightMove(val) {
+        blendWeight = parseFloat(val) / 100;
+        entryWeight.value = blendWeight.toFixed(2);
+        executeComposition();
+    }
+
+    function onEntryWeightChanged() {
+        let val = parseFloat(entryWeight.value);
+        if (isNaN(val) || val < 0 || val > 1) {
+            alert("가중치 t는 0.00에서 1.00 사이의 실수여야 합니다.");
+            entryWeight.value = blendWeight.toFixed(2);
+        } else {
+            blendWeight = val;
+            sliderWeight.value = Math.round(val * 100);
+            executeComposition();
+        }
+    }
+
+    function updateFormulaUI() {
+        if (blendMode === 1) {
+            let t = blendWeight.toFixed(2);
+            let omt = (1 - blendWeight).toFixed(2);
+            formulaDisplay.innerHTML = `$$\\mathbf{M} = ${t}\\mathbf{A} + ${omt}\\mathbf{B}$$`;
+        } else {
+            formulaDisplay.innerHTML = `$$\\mathbf{M} = \\mathbf{A} \\circ \\mathbf{P} + \\mathbf{B} \\circ (\\mathbf{J} - \\mathbf{P})$$`;
+        }
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([formulaDisplay]);
+        }
+    }
+
+    function drawLiveMatrixP() {
+        if (!maskMatrix || !imgA || blendMode !== 2) return;
+        const w = imgA.width;
+        const h = imgA.height;
+
+        let mCanvas = document.createElement('canvas'); mCanvas.width = w; mCanvas.height = h;
+        let mCtx = mCanvas.getContext('2d');
+        let mImgData = mCtx.createImageData(w, h);
+        let mData = mImgData.data;
+
+        for (let i = 0; i < maskMatrix.length; i++) {
+            let val = maskMatrix[i] === 1 ? 0 : 255; 
+            let idx = i * 4;
+            mData[idx] = val;
+            mData[idx+1] = val;
+            mData[idx+2] = val;
+            mData[idx+3] = 255; 
+        }
+        mCtx.putImageData(mImgData, 0, 0);
+
+        const pCanvasW = Math.max(220, matrixPCanvas.parentElement.clientWidth - 10);
+        const pCanvasH = Math.max(220, matrixPCanvas.parentElement.clientHeight - 10);
+        matrixPCanvas.width = pCanvasW;
+        matrixPCanvas.height = pCanvasH;
+
+        matrixPCtx.clearRect(0, 0, pCanvasW, pCanvasH);
+        let s = Math.min(pCanvasW / w, pCanvasH / h);
+        let nW = w * s; let nH = h * s;
+        let pX = (pCanvasW - nW) / 2; let pY = (pCanvasH - nH) / 2;
+
+        matrixPCtx.fillStyle = "#FFFFFF"; 
+        matrixPCtx.fillRect(pX, pY, nW, nH);
+        matrixPCtx.drawImage(mCanvas, pX, pY, nW, nH);
+        matrixPCtx.strokeStyle = "var(--c-border)";
+        matrixPCtx.strokeRect(pX, pY, nW, nH);
+    }
+
+    function repaintCanvasWithOverlay() {
+        imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+        imageCtx.fillStyle = "#FFFFFF";
+        imageCtx.fillRect(padX, padY, newW, newH);
+        imageCtx.drawImage(offscreenCanvas, padX, padY, newW, newH);
+
+        if (blendMode === 2 && currentMouseX >= padX && currentMouseX < padX + newW && currentMouseY >= padY && currentMouseY < padY + newH) {
+            imageCtx.save();
+            imageCtx.strokeStyle = "#EB5757"; 
+            imageCtx.lineWidth = 2;
+            imageCtx.beginPath();
+            
+            if (brushShape === 'circle') {
+                imageCtx.arc(currentMouseX, currentMouseY, brushRadius, 0, 2 * Math.PI);
+            } else {
+                imageCtx.strokeRect(currentMouseX - brushRadius, currentMouseY - brushRadius, brushRadius * 2, brushRadius * 2);
+            }
+            imageCtx.stroke();
+            imageCtx.restore();
+        }
+    }
+
+    function executeComposition() {
+        if (!imgA || !imgB) return;
+
+        const w = imgA.width;
+        const h = imgA.height;
+
+        offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = w;
+        offscreenCanvas.height = h;
+        offscreenCtx = offscreenCanvas.getContext('2d');
+
+        let canvasA = document.createElement('canvas'); canvasA.width = w; canvasA.height = h;
+        let ctxA = canvasA.getContext('2d');
+        ctxA.drawImage(imgA, 0, 0, w, h);
+        let dataA = ctxA.getImageData(0, 0, w, h).data;
+
+        let canvasB = document.createElement('canvas'); canvasB.width = w; canvasB.height = h;
+        let ctxB = canvasB.getContext('2d');
+        ctxB.drawImage(imgB, 0, 0, w, h); 
+        let dataB = ctxB.getImageData(0, 0, w, h).data;
+
+        let imgOut = offscreenCtx.createImageData(w, h);
+        let dataOut = imgOut.data;
+
+        for (let i = 0; i < dataA.length; i += 4) {
+            let idx = i / 4;
+
+            if (blendMode === 1) {
+                dataOut[i]   = blendWeight * dataA[i]   + (1 - blendWeight) * dataB[i];   
+                dataOut[i+1] = blendWeight * dataA[i+1] + (1 - blendWeight) * dataB[i+1]; 
+                dataOut[i+2] = blendWeight * dataA[i+2] + (1 - blendWeight) * dataB[i+2]; 
+                dataOut[i+3] = 255; 
+            } else {
+                let P = maskMatrix[idx]; 
+                dataOut[i]   = dataA[i]   * P + dataB[i]   * (1 - P);
+                dataOut[i+1] = dataA[i+1] * P + dataB[i+1] * (1 - P);
+                dataOut[i+2] = dataA[i+2] * P + dataB[i+2] * (1 - P);
+                dataOut[i+3] = 255;
+            }
+        }
+        offscreenCtx.putImageData(imgOut, 0, 0);
+
+        repaintCanvasWithOverlay();
+
+        if (blendMode === 2) {
+            drawLiveMatrixP();
+        }
+
+        updateFormulaUI();
+    }
+
+    function saveProcessedImage() {
+        if (!imgA || !imgB) {
+            alert("합성할 두 이미지가 모두 업로드되어야 저장이 가능합니다.");
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'chapter_3_image_composition_final.png';
+        link.href = offscreenCanvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+
 </body>
 </html>
