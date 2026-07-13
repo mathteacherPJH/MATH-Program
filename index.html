@@ -76,7 +76,7 @@
     <section id="hero" class="relative w-full h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#2C2A29]/10 pt-16 bg-[#F4F1EA]/50">
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#FBF9F4]/30 to-[#FBF9F4] z-10"></div>
         
-        <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-20 filter sepia-10 contrast-95 brightness-105">
+        <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-40 filter sepia-10 contrast-95 brightness-105">
 
         <div class="relative z-20 text-center space-y-6 max-w-4xl px-6 select-none">
             <p class="text-sm md:text-base tracking-[0.5em] font-black text-[#7D7569] uppercase">
@@ -239,12 +239,12 @@
     </footer>
 
     <script>
-        /* 🌐 1. 인공지능 신경망(Neural Network) & 비주기적 유성 기믹 애니메이션 커널 엔진 */
+        /* 🌐 1. 인공지능 신경망(Neural Network) & 고빈도 유성 기믹 애니메이션 커널 엔진 */
         const canvas = document.getElementById('neural-canvas');
         const ctx = canvas.getContext('2d');
 
         let particles = [];
-        let shootingStars = []; // 유성 객체 저장소
+        let shootingStars = []; 
         const mouse = { x: null, y: null, radius: 150 };
 
         function resizeCanvas() {
@@ -259,7 +259,6 @@
                 this.y = Math.random() * canvas.height;
                 this.vx = (Math.random() - 0.5) * 0.35;
                 this.vy = (Math.random() - 0.5) * 0.35;
-                // 💡 노드 입자 크기를 미세하게 조절해 가시성 증가
                 this.radius = Math.random() * 2.5 + 1.2;
             }
             update() {
@@ -281,53 +280,51 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                // 💡 노드 선명도 상향 보정 (0.12 -> 0.22)
                 ctx.fillStyle = 'rgba(27, 67, 50, 0.22)';
                 ctx.fill();
             }
         }
 
-        // ☄️ 비주기적 유성(별똥별) 클래스 설계
+        // ☄️ 고선명 다이내믹 유성(별똥별) 클래스
         class ShootingStar {
             constructor() {
                 this.reset();
             }
             reset() {
-                // 화면 위나 왼쪽에서 무작위 시작점 매핑
-                if (Math.random() > 0.5) {
-                    this.x = Math.random() * canvas.width * 0.5;
-                    this.y = -20;
+                // 상단 영역 전체 및 좌측 영역 위주로 무작위 출발 좌표 할당
+                if (Math.random() > 0.4) {
+                    this.x = Math.random() * canvas.width * 0.7;
+                    this.y = -30;
                 } else {
-                    this.x = -20;
-                    this.y = Math.random() * canvas.height * 0.5;
+                    this.x = -30;
+                    this.y = Math.random() * canvas.height * 0.6;
                 }
-                this.speed = Math.random() * 5 + 4; // 역동적인 이동 속도 도출
-                this.length = Math.random() * 80 + 50; // 유성 꼬리 잔상 길이
-                this.opacity = Math.random() * 0.4 + 0.2; // 과하지 않게 선명한 투명도
+                this.speed = Math.random() * 6 + 6; // 속도감 향상
+                this.length = Math.random() * 110 + 70; // 꼬리 잔상 확장
+                this.opacity = Math.random() * 0.45 + 0.35; // 💡 더 선명하고 존재감 강한 투명도 세팅
             }
             update() {
-                // 대각선 우하향 방향 벡터 전개
+                // 대각선 우하향 벡터 이동
                 this.x += this.speed;
-                this.y += this.speed * 0.7;
+                this.y += this.speed * 0.75;
                 
-                // 화면 밖으로 완전히 벗어나면 소멸용 플래그 처리
-                if (this.x > canvas.width + 100 || this.y > canvas.height + 100) {
+                if (this.x > canvas.width + 120 || this.y > canvas.height + 120) {
                     return false;
                 }
                 return true;
             }
             draw() {
-                // 선형 그라데이션을 통한 우아한 꼬리 잔상 연출
                 ctx.save();
-                let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.7);
+                let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.75);
                 grad.addColorStop(0, `rgba(27, 67, 50, ${this.opacity})`);
+                grad.addColorStop(0.2, `rgba(27, 67, 50, ${this.opacity * 0.6})`);
                 grad.addColorStop(1, 'rgba(27, 67, 50, 0)');
                 
                 ctx.beginPath();
                 ctx.moveTo(this.x, this.y);
-                ctx.lineTo(this.x - this.length, this.y - this.length * 0.7);
+                ctx.lineTo(this.x - this.length, this.y - this.length * 0.75);
                 ctx.strokeStyle = grad;
-                ctx.lineWidth = 1.8;
+                ctx.lineWidth = 2.5; // 💡 두께를 2.5px로 확장하여 선명하게 노출
                 ctx.stroke();
                 ctx.restore();
             }
@@ -358,7 +355,6 @@
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        // 💡 연결선 선명도 최대 임계치 보정 (0.05 -> 0.10)
                         ctx.strokeStyle = `rgba(27, 67, 50, ${0.10 * (1 - dist / 110)})`;
                         ctx.lineWidth = 0.8;
                         ctx.stroke();
@@ -366,8 +362,9 @@
                 }
             }
 
-            // 2. 비주기적 유성 무작위 확률 스폰 제어 (약 0.4% 확률로 매 프레임 체크)
-            if (Math.random() < 0.004 && shootingStars.length < 2) {
+            // 2. 💡 유성 스폰 빈도 확률 대폭 향상 (0.004 -> 0.018로 4.5배 상향)
+            // 동시 화면 노출 제한수도 최대 3개로 유연성 부여
+            if (Math.random() < 0.018 && shootingStars.length < 3) {
                 shootingStars.push(new ShootingStar());
             }
 
