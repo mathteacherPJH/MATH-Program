@@ -6,7 +6,6 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         :root {
-            /* 대시보드 스타일 기반의 테마 컬러 재정의 */
             --c-bg-main: #F4F4F0;
             --c-bg-card: #FDFDFB;
             --c-text-main: #37352F;
@@ -36,37 +35,26 @@
             overflow: hidden;
         }
 
-        /* 배경 미세 격자 패턴 및 애니메이션 오브젝트 효과 */
+        /* 1. 배경 도트무늬 패턴 (그물망 스타일) */
         body::before {
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-image: 
-                linear-gradient(to right, rgba(226, 226, 230, 0.4) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(226, 226, 230, 0.4) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-image: radial-gradient(rgba(226, 226, 230, 0.6) 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
             z-index: 1;
             pointer-events: none;
         }
 
-        /* 부유하는 배경 입자 노드 구현 (애니메이션 포함) */
-        .bg-node {
+        /* 2. 인터랙티브 신경망 애니메이션용 캔버스 고정 */
+        #bgCanvas {
             position: absolute;
-            background: rgba(200, 200, 205, 0.6);
-            border-radius: 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
-            pointer-events: none;
-        }
-        .node-1 { width: 4px; height: 4px; top: 15%; left: 10%; animation: floatNode 8s infinite ease-in-out; }
-        .node-2 { width: 5px; height: 5px; top: 60%; left: 5%; animation: floatNode 12s infinite ease-in-out 1s; }
-        .node-3 { width: 4px; height: 4px; top: 8%; left: 60%; animation: floatNode 10s infinite ease-in-out 2s; }
-        .node-4 { width: 6px; height: 6px; top: 75%; left: 50%; animation: floatNode 14s infinite ease-in-out 0.5s; }
-        .node-5 { width: 5px; height: 5px; top: 30%; right: 8%; animation: floatNode 9s infinite ease-in-out 1.5s; }
-        .node-6 { width: 4px; height: 4px; bottom: 15%; right: 12%; animation: floatNode 11s infinite ease-in-out 2.5s; }
-
-        @keyframes floatNode {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-10px) translateX(8px); }
+            pointer-events: none; /* 마우스 이벤트는 js에서 전역 윈도우로 감지 */
         }
 
         /* 상단 대시보드 헤더 영역 */
@@ -448,16 +436,11 @@
 </head>
 <body>
 
-    <div class="bg-node node-1"></div>
-    <div class="bg-node node-2"></div>
-    <div class="bg-node node-3"></div>
-    <div class="bg-node node-4"></div>
-    <div class="bg-node node-5"></div>
-    <div class="bg-node node-6"></div>
+    <canvas id="bgCanvas"></canvas>
 
     <div class="header-container">
-        <a href="index.html" class="btn-back">← BACK</a>
-        <div class="header-title">BLUR AND SHARPENING</div>
+        <button class="btn-back" onclick="history.back()">← BACK</button>
+        <div class="header-title">BLENDING</div>
     </div>
 
     <div class="main-container">
@@ -547,6 +530,106 @@
     </div>
 
 <script>
+    // --- 신경망 인터랙티브 배경 자바스크립트 엔진 ---
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: null, y: null, radius: 110 }; // 마우스 상호작용 반경
+
+    function resizeBgCanvas() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        initParticles();
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4; // 기본 유영 이동 속도
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.baseRadius = Math.random() * 2 + 1.5; // 도트 크기
+            this.radius = this.baseRadius;
+        }
+        draw() {
+            bgCtx.beginPath();
+            bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            bgCtx.fillStyle = 'rgba(180, 180, 185, 0.7)';
+            bgCtx.fill();
+        }
+        update() {
+            // 벽면 튕기기
+            if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+            
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // 마우스 인터랙션 (다가오면 회피/밀어내기 메커니즘)
+            if (mouse.x !== null && mouse.y !== null) {
+                let dx = this.x - mouse.x;
+                let dy = this.y - mouse.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < mouse.radius) {
+                    let force = (mouse.radius - distance) / mouse.radius;
+                    let angle = Math.atan2(dy, dx);
+                    this.x += Math.cos(angle) * force * 2;
+                    this.y += Math.sin(angle) * force * 2;
+                }
+            }
+            this.draw();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        // 화면 크기에 맞춰 도트 밀도 분배
+        const count = Math.floor((bgCanvas.width * bgCanvas.height) / 12000);
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animateParticles() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        
+        // 도트 업데이트 및 링크 선 연결 (신경망 효과)
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            for (let j = i + 1; j < particles.length; j++) {
+                let dx = particles[i].x - particles[j].x;
+                let dy = particles[i].y - particles[j].y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // 근접한 도트 노드 사이에 연한 링크 네트워크 구축
+                if (dist < 100) {
+                    let alpha = (100 - dist) / 100 * 0.15;
+                    bgCtx.beginPath();
+                    bgCtx.moveTo(particles[i].x, particles[i].y);
+                    bgCtx.lineTo(particles[j].x, particles[j].y);
+                    bgCtx.strokeStyle = `rgba(180, 180, 185, ${alpha})`;
+                    bgCtx.lineWidth = 0.8;
+                    bgCtx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateParticles);
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+    window.addEventListener('mouseleave', () => {
+        mouse.x = null;
+        mouse.y = null;
+    });
+    window.addEventListener('resize', resizeBgCanvas);
+    resizeBgCanvas();
+    animateParticles();
+
+
+    // --- 기존 비즈니스 코드 로직 유지 보존 ---
     let imgA = null, imgB = null;
     let offscreenCanvas = null, offscreenCtx = null;
     let maskMatrix = null; 
