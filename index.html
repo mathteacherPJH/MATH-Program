@@ -239,11 +239,12 @@
     </footer>
 
     <script>
-        /* 🌐 1. 인공지능 신경망(Neural Network) 애니메이션 엔진 */
+        /* 🌐 1. 인공지능 신경망(Neural Network) & 비주기적 유성 기믹 애니메이션 커널 엔진 */
         const canvas = document.getElementById('neural-canvas');
         const ctx = canvas.getContext('2d');
 
         let particles = [];
+        let shootingStars = []; // 유성 객체 저장소
         const mouse = { x: null, y: null, radius: 150 };
 
         function resizeCanvas() {
@@ -258,7 +259,8 @@
                 this.y = Math.random() * canvas.height;
                 this.vx = (Math.random() - 0.5) * 0.35;
                 this.vy = (Math.random() - 0.5) * 0.35;
-                this.radius = Math.random() * 2 + 1;
+                // 💡 노드 입자 크기를 미세하게 조절해 가시성 증가
+                this.radius = Math.random() * 2.5 + 1.2;
             }
             update() {
                 this.x += this.vx;
@@ -279,8 +281,55 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(27, 67, 50, 0.12)';
+                // 💡 노드 선명도 상향 보정 (0.12 -> 0.22)
+                ctx.fillStyle = 'rgba(27, 67, 50, 0.22)';
                 ctx.fill();
+            }
+        }
+
+        // ☄️ 비주기적 유성(별똥별) 클래스 설계
+        class ShootingStar {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                // 화면 위나 왼쪽에서 무작위 시작점 매핑
+                if (Math.random() > 0.5) {
+                    this.x = Math.random() * canvas.width * 0.5;
+                    this.y = -20;
+                } else {
+                    this.x = -20;
+                    this.y = Math.random() * canvas.height * 0.5;
+                }
+                this.speed = Math.random() * 5 + 4; // 역동적인 이동 속도 도출
+                this.length = Math.random() * 80 + 50; // 유성 꼬리 잔상 길이
+                this.opacity = Math.random() * 0.4 + 0.2; // 과하지 않게 선명한 투명도
+            }
+            update() {
+                // 대각선 우하향 방향 벡터 전개
+                this.x += this.speed;
+                this.y += this.speed * 0.7;
+                
+                // 화면 밖으로 완전히 벗어나면 소멸용 플래그 처리
+                if (this.x > canvas.width + 100 || this.y > canvas.height + 100) {
+                    return false;
+                }
+                return true;
+            }
+            draw() {
+                // 선형 그라데이션을 통한 우아한 꼬리 잔상 연출
+                ctx.save();
+                let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.7);
+                grad.addColorStop(0, `rgba(27, 67, 50, ${this.opacity})`);
+                grad.addColorStop(1, 'rgba(27, 67, 50, 0)');
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.length, this.y - this.length * 0.7);
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 1.8;
+                ctx.stroke();
+                ctx.restore();
             }
         }
 
@@ -294,6 +343,8 @@
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 1. 기본 인공지능 연결 인력망 연산 루프
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update();
                 particles[i].draw();
@@ -307,12 +358,26 @@
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.05 * (1 - dist / 110)})`;
+                        // 💡 연결선 선명도 최대 임계치 보정 (0.05 -> 0.10)
+                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.10 * (1 - dist / 110)})`;
                         ctx.lineWidth = 0.8;
                         ctx.stroke();
                     }
                 }
             }
+
+            // 2. 비주기적 유성 무작위 확률 스폰 제어 (약 0.4% 확률로 매 프레임 체크)
+            if (Math.random() < 0.004 && shootingStars.length < 2) {
+                shootingStars.push(new ShootingStar());
+            }
+
+            // 3. 유성 업데이트 및 렌더링 스택 제어
+            shootingStars = shootingStars.filter(star => {
+                let alive = star.update();
+                if (alive) star.draw();
+                return alive;
+            });
+
             requestAnimationFrame(animate);
         }
 
