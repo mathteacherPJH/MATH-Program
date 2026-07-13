@@ -6,7 +6,8 @@
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
-            --c-bg-card: rgba(255, 255, 255, 0.85); 
+            /* 🔥 보정: 카드의 배경 투명도를 0.85에서 0.73으로 살짝 낮춰 배경 오브젝트가 더 맑게 투과되도록 설정 */
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
             --c-text-main: #2C2A29;
             --c-text-muted: #7D7569;
             --c-border: rgba(44, 42, 41, 0.1);
@@ -25,7 +26,7 @@
             color: var(--c-text-main);
             margin: 0;
             padding: 15px;
-            padding-top: 75px; /* 상단 내비게이션 바 두께만큼 여백 확보 */
+            padding-top: 75px; 
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -43,7 +44,6 @@
             pointer-events: none;
         }
 
-        /* 🧭 고정형 상단 내비게이션 바 */
         .top-navbar {
             position: fixed;
             top: 0;
@@ -60,7 +60,6 @@
             box-sizing: border-box;
         }
 
-        /* 럭셔리 딥그린 스타일의 Back 버튼 */
         .back-btn {
             background: transparent;
             border: none;
@@ -81,7 +80,6 @@
             opacity: 0.8;
         }
 
-        /* 메인 화면의 상단 메뉴 탭과 글자 크기, 자간, 굵기 일치 */
         .navbar-brand-text {
             font-size: 12px; 
             font-weight: bold; 
@@ -117,11 +115,10 @@
             box-sizing: border-box;
             min-width: 0;
             position: relative;
-            backdrop-filter: blur(8px); 
+            backdrop-filter: blur(6px); /* 🔥 보정: 흐림 강도를 8px -> 6px로 살짝 낮춰 하단 레이어 투과성 증가 */
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
         }
 
-        /* 왼쪽 이미지 영역 */
         .drop-zone {
             flex: 1;
             border: 2px dashed rgba(27, 67, 50, 0.2); 
@@ -134,7 +131,7 @@
             cursor: pointer;
             position: relative;
             overflow: hidden; 
-            background: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.5);
         }
         .drop-zone.hover {
             border-color: #1B4332;
@@ -152,7 +149,6 @@
             pointer-events: none; 
         }
 
-        /* 마우스를 따라다니는 콤팩트한 정사각형 플로팅 현황판 */
         .floating-analyzer {
             position: absolute;
             display: none; 
@@ -244,7 +240,6 @@
         .btn-save { background-color: var(--c-save-bg); }
         .btn-save:hover { background-color: var(--c-save-hover); }
 
-        /* 오른쪽 편집 영역 네비게이션 버튼 탭 */
         .nav-group {
             display: flex;
             gap: 4px;
@@ -280,7 +275,6 @@
             letter-spacing: 0.05em;
         }
 
-        /* 행렬 편집 헤더 구역 (버튼 우측 배치) */
         .matrix-header-zone {
             display: flex;
             justify-content: space-between;
@@ -342,12 +336,10 @@
             background-color: #E9F5ED;
         }
 
-        /* 🔥 수정: 파일 인풋 태그를 완벽하게 숨겨 투박한 텍스트 삭제 */
         #fileInput { 
             display: none !important; 
         }
 
-        /* 로딩 팝업 오버레이 스타일 */
         .loading-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -531,7 +523,8 @@
             this.y = Math.random() * bgCanvas.height;
             this.vx = (Math.random() - 0.5) * 0.35;
             this.vy = (Math.random() - 0.5) * 0.35;
-            this.radius = Math.random() * 2 + 1;
+            /* 🔥 보정: 노드 점의 크기를 1~3px -> 1.5~3.5px로 미세 상향 */
+            this.radius = Math.random() * 2 + 1.5; 
         }
         update() {
             this.x += this.vx;
@@ -551,7 +544,8 @@
         draw() {
             bgCtx.beginPath();
             bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.12)';
+            /* 🔥 보정: 점의 투명도 농도를 0.12 -> 0.19로 미세 상향 */
+            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.19)'; 
             bgCtx.fill();
         }
     }
@@ -579,8 +573,9 @@
                     bgCtx.beginPath();
                     bgCtx.moveTo(particles[i].x, particles[i].y);
                     bgCtx.lineTo(particles[j].x, particles[j].y);
-                    bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.05 * (1 - dist / 110)})`;
-                    bgCtx.lineWidth = 0.8;
+                    /* 🔥 보정: 선의 기본 알파 농도 매개변수를 0.05 -> 0.09로 상향하고 두께(lineWidth)를 0.8 -> 1.0으로 보정 */
+                    bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.09 * (1 - dist / 110)})`;
+                    bgCtx.lineWidth = 1.0;
                     bgCtx.stroke();
                 }
             }
@@ -736,7 +731,6 @@
         loadDefaultPreset();
     }
 
-    // 패딩 제어
     function changePaddingMode(mode) {
         paddingMode = mode;
         document.getElementById('pad_zero').classList.toggle('active', mode === 'zero');
