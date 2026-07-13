@@ -6,8 +6,9 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         :root {
-            --c-bg-main: #F9F9FB;
-            --c-bg-card: #FFFFFF;
+            /* 대시보드 스타일 기반의 테마 컬러 재정의 */
+            --c-bg-main: #F4F4F0;
+            --c-bg-card: #FDFDFB;
             --c-text-main: #37352F;
             --c-text-muted: #787774;
             --c-border: #E2E2E6;
@@ -25,12 +26,81 @@
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 15px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             height: 100vh;
             box-sizing: border-box;
             user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 배경 미세 격자 패턴 및 애니메이션 오브젝트 효과 */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(to right, rgba(226, 226, 230, 0.4) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(226, 226, 230, 0.4) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 부유하는 배경 입자 노드 구현 (애니메이션 포함) */
+        .bg-node {
+            position: absolute;
+            background: rgba(200, 200, 205, 0.6);
+            border-radius: 50%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .node-1 { width: 4px; height: 4px; top: 15%; left: 10%; animation: floatNode 8s infinite ease-in-out; }
+        .node-2 { width: 5px; height: 5px; top: 60%; left: 5%; animation: floatNode 12s infinite ease-in-out 1s; }
+        .node-3 { width: 4px; height: 4px; top: 8%; left: 60%; animation: floatNode 10s infinite ease-in-out 2s; }
+        .node-4 { width: 6px; height: 6px; top: 75%; left: 50%; animation: floatNode 14s infinite ease-in-out 0.5s; }
+        .node-5 { width: 5px; height: 5px; top: 30%; right: 8%; animation: floatNode 9s infinite ease-in-out 1.5s; }
+        .node-6 { width: 4px; height: 4px; bottom: 15%; right: 12%; animation: floatNode 11s infinite ease-in-out 2.5s; }
+
+        @keyframes floatNode {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-10px) translateX(8px); }
+        }
+
+        /* 상단 대시보드 헤더 영역 */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px 20px 10px;
+            z-index: 2;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: var(--c-text-main);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .btn-back:hover {
+            opacity: 0.7;
+        }
+
+        .header-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-text-main);
+            letter-spacing: 2px;
         }
 
         /* 3분할 메인 레이아웃 비율 고정 및 안정화 */
@@ -40,6 +110,7 @@
             gap: 15px;
             min-height: 0; 
             margin-bottom: 15px;
+            z-index: 2;
         }
 
         .card {
@@ -51,6 +122,7 @@
             padding: 15px;
             box-sizing: border-box;
             min-width: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
         /* 왼쪽 패널: 이미지 A, B 위아래 배치 */
@@ -178,13 +250,14 @@
         .btn-reset { background-color: var(--c-reset-bg); padding: 4px 0; font-size: 11px; white-space: nowrap; text-align: center; width: 100%;}
         .btn-reset:hover { background-color: var(--c-reset-hover); }
 
-        /* [수정] 하단 제어판 전체 컨테이너 보정 */
+        /* 하단 제어판 전체 컨테이너 보정 */
         .bottom-panel {
             display: flex;
             gap: 15px;
             height: 140px; 
             min-height: 140px;
-            flex-shrink: 0; /* 하단바 자체가 세로로 찌그러지는 현상 방지 */
+            flex-shrink: 0; 
+            z-index: 2;
         }
         .bottom-full-card {
             background-color: var(--c-bg-card);
@@ -197,9 +270,10 @@
             box-sizing: border-box;
             gap: 15px;
             min-width: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
-        /* [수정] 1구역: 합성 방식 선택 영역 폭 고정 */
+        /* 1구역: 합성 방식 선택 영역 폭 고정 */
         .area-mode-control {
             width: 140px;
             min-width: 140px;
@@ -243,13 +317,13 @@
             flex-shrink: 0;
         }
 
-        /* [수정] 2구역: 슬라이더 조작 영역 유연성 및 최소폭 강제 */
+        /* 2구역: 슬라이더 조작 영역 유연성 및 최소폭 강제 */
         .area-sliders {
-            flex: 2; /* 3구역보다 더 많은 공간을 차지하도록 가중치 분배 */
+            flex: 2; 
             display: flex;
             flex-direction: column;
             justify-content: center;
-            min-width: 250px; /* 창이 작아져도 슬라이더 구역이 최소 이 크기를 유지 */
+            min-width: 250px; 
             flex-shrink: 1;
         }
         .control-row {
@@ -335,7 +409,7 @@
             border-color: var(--text-main, #37352F);
         }
 
-        /* [수정] 3구역: 우측 수식 영역이 왼쪽을 침범하지 못하도록 한계 설정 */
+        /* 3구역: 우측 수식 영역 한계 설정 */
         .area-formulas {
             flex: 1;
             display: flex;
@@ -344,7 +418,7 @@
             width: 25%; 
             min-width: 180px; 
             max-width: 260px; 
-            flex-shrink: 0; /* 절대 스스로 줄어들거나 밀어서 깨지지 않음 */
+            flex-shrink: 0; 
         }
         .formula-box {
             display: flex;
@@ -360,7 +434,7 @@
             overflow: hidden;
         }
         .formula-box mjx-container {
-            font-size: 20px !important; /* 미세 조정하여 가독성과 공간 확보 조율 */
+            font-size: 20px !important; 
             max-width: 100% !important;
             margin: 0 !important;
             display: flex !important;
@@ -373,6 +447,18 @@
     </style>
 </head>
 <body>
+
+    <div class="bg-node node-1"></div>
+    <div class="bg-node node-2"></div>
+    <div class="bg-node node-3"></div>
+    <div class="bg-node node-4"></div>
+    <div class="bg-node node-5"></div>
+    <div class="bg-node node-6"></div>
+
+    <div class="header-container">
+        <a href="index.html" class="btn-back">← BACK</a>
+        <div class="header-title">BLUR AND SHARPENING</div>
+    </div>
 
     <div class="main-container">
         <div class="card panel-left">
@@ -650,7 +736,7 @@
         if (blendMode === 2 && imgA) repaintCanvasWithOverlay();
     });
 
-    window.addEventListener('mouseup', () => { isDragging = false; isDrawingMask = false; });
+    window.addEventListener('mouseup', () => { isDrawingMask = false; });
 
     function setBlendMode(mode) {
         blendMode = mode;
