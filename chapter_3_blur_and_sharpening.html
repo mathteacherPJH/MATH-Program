@@ -342,6 +342,11 @@
             background-color: #E9F5ED;
         }
 
+        /* 🔥 수정: 파일 인풋 태그를 완벽하게 숨겨 투박한 텍스트 삭제 */
+        #fileInput { 
+            display: none !important; 
+        }
+
         /* 로딩 팝업 오버레이 스타일 */
         .loading-overlay {
             position: fixed;
@@ -731,6 +736,7 @@
         loadDefaultPreset();
     }
 
+    // 패딩 제어
     function changePaddingMode(mode) {
         paddingMode = mode;
         document.getElementById('pad_zero').classList.toggle('active', mode === 'zero');
