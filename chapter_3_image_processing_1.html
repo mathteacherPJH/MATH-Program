@@ -7,7 +7,8 @@
         :root {
             /* 🌿 메인 대시보드의 딥그린 및 폰베이지 아이덴티티 반영 */
             --c-bg-main: #FBF9F4;
-            --c-bg-card: rgba(255, 255, 255, 0.85);
+            /* 맑은 투과성을 위해 대시보드 스펙인 0.73~0.85 사이의 최적값인 0.85 설정 */
+            --c-bg-card: rgba(255, 255, 255, 0.85); 
             --c-text-main: #2C2A29;
             --c-text-muted: #7D7569;
             --c-border: rgba(44, 42, 41, 0.15);
@@ -15,7 +16,7 @@
             --c-accent: #1B4332;
             --c-accent-hover: #2D5A44;
             
-            /* 🎨 요청에 따라 최초의 파란색/주황색 아이덴티티 원복 */
+            /* 🎨 요청에 따른 최초의 파란색/주황색 버튼 아이덴티티 */
             --c-upload-bg: #2383E2;
             --c-upload-hover: #1A6CB8;
             --c-save-bg: #E28523;
@@ -31,12 +32,13 @@
             color: var(--c-text-main);
             margin: 0;
             padding: 20px;
+            padding-top: 75px; /* 상단 고정 네비게이션 공간 확보 */
             display: flex;
             flex-direction: column;
             height: 100vh;
             box-sizing: border-box;
             user-select: none;
-            /* ✨ 글로벌 자간 및 모던 가독성 최적화 */
+            /* ✨ 글로벌 모던 자간 및 가독성 최적화 */
             letter-spacing: 0.03em;
             -webkit-font-smoothing: antialiased;
             position: relative;
@@ -53,40 +55,65 @@
         }
         
         /* 메인 컨텐츠 구조는 z-index를 주어 캔버스 위로 배치 */
-        header, .main-container, .bottom-panel {
+        .top-navbar, .main-container, .bottom-panel {
             position: relative;
             z-index: 10;
         }
 
-        /* 🧭 대시보드 메인 커널 완벽 싱크 헤더 네비게이션 */
-        .top-nav-bar {
+        /* 🧭 대시보드 메인 텍스트 스타일과 1:1 완벽 매핑된 고정형 내비게이션 바 */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.80);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(44, 42, 41, 0.1);
+            z-index: 1000;
+            padding: 16px 24px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 5px 10px 20px 10px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            justify-content: space-between;
+            box-sizing: border-box;
         }
-        .btn-back {
-            background: none;
+
+        .back-btn {
+            background: transparent;
             border: none;
-            color: #2C2A29;
-            font-size: 11px;
-            font-weight: 900;
-            cursor: pointer;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            padding: 5px;
-            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .btn-back:hover {
-            opacity: 0.4;
-        }
-        .nav-title-right {
-            font-size: 11px;
-            font-weight: 900;
             color: #1B4332;
+            /* 대시보드 폰트 스택 매핑 */
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            /* 0.3em 자간 및 대문자화 완벽 동기화 */
             letter-spacing: 0.3em;
             text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.7;
+        }
+
+        .navbar-brand-text {
+            color: #1B4332; 
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            /* 0.3em 자간 및 대문자화 완벽 동기화 */
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+        }
+
+        @media (min-width: 768px) {
+            .back-btn, .navbar-brand-text {
+                font-size: 14px; 
+            }
         }
 
         /* 메인 레이아웃 (반반 분할) */
@@ -101,14 +128,14 @@
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
-            border-radius: 6px;
+            border-radius: 12px; 
             display: flex;
             flex-direction: column;
             flex: 1;
             padding: 20px;
             box-sizing: border-box;
             min-width: 0;
-            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.02);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
             backdrop-filter: blur(8px);
         }
 
@@ -116,7 +143,7 @@
         .drop-zone {
             flex: 1;
             border: 1px dashed var(--c-text-muted);
-            border-radius: 4px;
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -125,7 +152,7 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.6);
         }
         .drop-zone.hover {
             border-color: var(--c-accent);
@@ -160,7 +187,7 @@
         }
         .btn {
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             color: white;
             font-size: 13px;
             font-weight: bold;
@@ -184,7 +211,7 @@
             gap: 4px;
             background: #F4F1EA;
             padding: 4px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 10px;
             border: 1px solid var(--c-border);
         }
@@ -197,7 +224,7 @@
             font-weight: bold;
             color: var(--c-text-muted);
             cursor: pointer;
-            border-radius: 3px;
+            border-radius: 6px;
             transition: all 0.2s ease;
         }
         .nav-btn.active {
@@ -215,7 +242,7 @@
             width: 100%;
             height: 100%;
             background: #ffffff;
-            border-radius: 4px;
+            border-radius: 6px;
         }
 
         /* 하단 제어판 */
@@ -252,7 +279,7 @@
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
-            border-radius: 3px;
+            border-radius: 4px;
             transition: background 0.2s;
         }
         .btn-inline-reset:hover { background: var(--c-border); }
@@ -317,10 +344,14 @@
 
     <canvas id="neural-canvas"></canvas>
 
-    <header class="top-nav-bar">
-        <button class="btn-back" onclick="history.back()">← BACK</button>
-        <div class="nav-title-right">BRIGHTNESS AND GRAYSCALE</div>
-    </header>
+    <nav class="top-navbar">
+        <button onclick="history.back()" class="back-btn">
+            ← BACK
+        </button>
+        <div class="navbar-brand-text">
+            BRIGHTNESS AND GRAYSCALE
+        </div>
+    </nav>
 
     <div class="main-container">
         <div class="card">
@@ -402,7 +433,7 @@
             this.y = Math.random() * canvas.height;
             this.vx = (Math.random() - 0.5) * 0.35;
             this.vy = (Math.random() - 0.5) * 0.35;
-            this.radius = Math.random() * 2 + 1;
+            this.radius = Math.random() * 2 + 1.5; /* 노드 점 스펙 동기화 */
         }
         update() {
             this.x += this.vx;
@@ -422,7 +453,7 @@
         draw() {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
+            ctx.fillStyle = 'rgba(27, 67, 50, 0.19)'; /* 알파 농도 동기화 */
             ctx.fill();
         }
     }
@@ -449,8 +480,8 @@
                     ctx.beginPath();
                     ctx.moveTo(particles[i].x, particles[i].y);
                     ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.strokeStyle = `rgba(27, 67, 50, ${0.04 * (1 - dist / 110)})`;
-                    ctx.lineWidth = 0.8;
+                    ctx.strokeStyle = `rgba(27, 67, 50, ${0.09 * (1 - dist / 110)})`; /* 인력망 선 투명도 싱크 */
+                    ctx.lineWidth = 1.0;
                     ctx.stroke();
                 }
             }
