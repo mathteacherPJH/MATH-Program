@@ -6,11 +6,11 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         :root {
-            --c-bg-main: #F9F9FB;
-            --c-bg-card: #FFFFFF;
-            --c-text-main: #37352F;
-            --c-text-muted: #787774;
-            --c-border: #E2E2E6;
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
             --c-tab-active: #EFEFED;
             --c-accent: #2383E2;
             --c-accent-hover: #1A6CB8;
@@ -18,6 +18,7 @@
             --c-save-hover: #C9741B;
             --c-reset-bg: #EB5757;
             --c-reset-hover: #D14343;
+            --c-neural-green: rgba(27, 67, 50, 0.12); 
         }
 
         body {
@@ -26,11 +27,72 @@
             color: var(--c-text-main);
             margin: 0;
             padding: 15px;
+            padding-top: 75px; 
             display: flex;
             flex-direction: column;
             height: 100vh;
             box-sizing: border-box;
             user-select: none;
+            overflow-x: hidden;
+            letter-spacing: 0.03em;
+        }
+
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(44, 42, 41, 0.1);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: #1B4332;
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.8;
+        }
+
+        .navbar-brand-text {
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #1B4332; 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase; 
+        }
+
+        @media (min-width: 768px) {
+            .navbar-brand-text {
+                font-size: 14px; 
+            }
         }
 
         /* 메인 레이아웃 */
@@ -40,25 +102,30 @@
             gap: 20px;
             min-height: 0; 
             margin-bottom: 15px;
+            position: relative;
+            z-index: 10;
         }
 
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
-            border-radius: 8px;
+            border-radius: 12px; 
             display: flex;
             flex-direction: column;
             flex: 1;
-            padding: 15px;
+            padding: 20px;
             box-sizing: border-box;
             min-width: 0;
+            position: relative;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
         }
 
         /* 왼쪽: 이미지 뷰어 */
         .drop-zone {
             flex: 1;
-            border: 2px dashed var(--c-border);
-            border-radius: 6px;
+            border: 2px dashed rgba(27, 67, 50, 0.2); 
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -67,11 +134,11 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.5);
         }
         .drop-zone.hover {
-            border-color: var(--c-accent);
-            background: #f0f7ff;
+            border-color: #1B4332;
+            background: #F4F1EA;
         }
         .drop-zone canvas {
             position: absolute;
@@ -99,13 +166,13 @@
         }
         .btn {
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             color: white;
             font-size: 14px;
             font-weight: bold;
-            padding: 10px;
+            padding: 11px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -120,11 +187,11 @@
         .nav-group {
             display: flex;
             gap: 4px;
-            background: var(--c-bg-main);
+            background: #F4F1EA; 
             padding: 4px;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-bottom: 8px;
-            border: 1px solid var(--c-border);
+            border: 1px solid rgba(44, 42, 41, 0.05);
         }
         .nav-btn {
             flex: 1;
@@ -135,12 +202,13 @@
             font-weight: bold;
             color: var(--c-text-muted);
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
         .nav-btn.active {
-            background: var(--c-bg-card);
-            color: var(--c-text-main);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: #FFFFFF;
+            color: #1B4332; 
+            box-shadow: 0 2px 6px rgba(44,42,41,0.08);
         }
 
         .matrix-container {
@@ -151,7 +219,7 @@
         #matrixCanvas {
             width: 100%;
             height: 100%;
-            background: var(--c-bg-card);
+            background: transparent;
         }
 
         /* 단일 가로 통합형 하단 제어판 */
@@ -159,11 +227,13 @@
             display: flex;
             gap: 15px;
             height: 140px;
+            position: relative;
+            z-index: 10;
         }
         .bottom-full-card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             width: 100%;
@@ -171,6 +241,8 @@
             box-sizing: border-box;
             gap: 15px;
             min-width: 0;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
         }
 
         /* 1구역: 여백 배경색 조절 */
@@ -200,9 +272,10 @@
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            background: var(--c-bg-main);
+            background: #F4F1EA;
             color: var(--c-text-main);
             white-space: nowrap;
+            transition: all 0.2s;
         }
         .btn-bg-choice.active-white {
             background: #FFFFFF;
@@ -250,7 +323,7 @@
         .toggle-btn {
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            background: var(--c-bg-main);
+            background: #F4F1EA;
             padding: 3px 6px;
             font-size: 11px;
             font-weight: bold;
@@ -259,6 +332,7 @@
             width: 75px;
             text-align: center;
             flex-shrink: 0;
+            transition: all 0.2s;
         }
         .toggle-btn.active {
             background: var(--c-reset-bg);
@@ -290,7 +364,7 @@
             min-width: 50px;
         }
         .btn-inline-reset {
-            background: var(--c-tab-active);
+            background: #F4F1EA;
             border: 1px solid var(--c-border);
             padding: 2px 6px;
             font-size: 10px;
@@ -298,6 +372,7 @@
             cursor: pointer;
             border-radius: 4px;
             flex-shrink: 0;
+            transition: all 0.2s;
         }
         .btn-inline-reset:hover { background: var(--c-border); }
 
@@ -316,7 +391,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--c-bg-main);
+            background: #F4F1EA;
             border: 1px solid var(--c-border);
             border-radius: 6px;
             height: 50px;
@@ -326,7 +401,6 @@
             overflow-x: auto; 
             overflow-y: hidden;
         }
-        /* 요청대로 MathJax 수식 기본 렌더링 글자 크기를 10.5px로 지정 */
         .formula-box mjx-container {
             font-size: 10.5px !important; 
             max-width: 100% !important;
@@ -338,12 +412,24 @@
 </head>
 <body>
 
+    <canvas id="neural-canvas"></canvas>
+
+    <nav class="top-navbar">
+        <button onclick="history.back()" class="back-btn">
+            ← BACK
+        </button>
+        <div class="navbar-brand-text">
+            REFLECTION AND ROTATION
+        </div>
+    </nav>
+
     <div class="main-container">
         <div class="card">
             <div id="dropZone" class="drop-zone">
                 <div id="dropPrompt" class="info-text">
                     📄 여기에 이미지 블록을 추가하세요<br>
-                    클릭하거나 파일을 드래그 앤 드롭 하세요.
+                    클릭하거나 파일을 드래그 앤 드롭 하세요.<br>
+                    (이미지 로드 후 마우스를 가져다 대면 분석창이 출력됩니다)
                 </div>
                 <canvas id="imageCanvas"></canvas>
             </div>
@@ -389,7 +475,7 @@
             <div class="area-sliders">
                 <div class="control-row">
                     <span class="control-title-label">📐 대칭변환</span>
-                    <button id="btnFlipToggle" class="toggle-btn" onclick="toggleFlipActive()">대칭 활성화</button>
+                    <button id="btnFlipToggle" class="toggle-btn" onclick="toggleFlipActive()">대칭 미적용</button>
                     <span class="control-label">대칭축 각도 (θ°)</span>
                     <input type="text" id="entryFlipAngle" class="input-box" value="0" onchange="onEntryFlipChanged()">
                     <input type="range" id="sliderFlipAngle" class="slider" min="0" max="180" step="1" value="0" oninput="onSliderFlipMove(this.value)">
@@ -398,7 +484,7 @@
                 
                 <div class="control-row">
                     <span class="control-title-label">🔄 회전변환</span>
-                    <button id="btnRotToggle" class="toggle-btn" onclick="toggleRotActive()">회전 활성화</button>
+                    <button id="btnRotToggle" class="toggle-btn" onclick="toggleRotActive()">회전 미적용</button>
                     <span class="control-label">회전 각도 (φ°)</span>
                     <input type="text" id="entryRotAngle" class="input-box" value="0" onchange="onEntryRotChanged()">
                     <input type="range" id="sliderRotAngle" class="slider" min="0" max="360" step="1" value="0" oninput="onSliderRotMove(this.value)">
@@ -455,6 +541,90 @@
     const sliderRotAngle = document.getElementById('sliderRotAngle');
     const entryRotAngle = document.getElementById('entryRotAngle');
     const resLabel = document.getElementById('resolutionLabel');
+
+    // 배경 신경망 애니메이션 관련 변수 및 클래스
+    const bgCanvas = document.getElementById('neural-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: null, y: null, radius: 150 };
+
+    function resizeBgCanvas() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        initParticles();
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = (Math.random() - 0.5) * 0.35;
+            this.radius = Math.random() * 2 + 1.5; 
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < mouse.radius) {
+                const force = (mouse.radius - distance) / mouse.radius;
+                this.x -= dx * force * 0.03;
+                this.y -= dy * force * 0.03;
+            }
+        }
+        draw() {
+            bgCtx.beginPath();
+            bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.19)'; 
+            bgCtx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animateBg() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 110) {
+                    bgCtx.beginPath();
+                    bgCtx.moveTo(particles[i].x, particles[i].y);
+                    bgCtx.lineTo(particles[j].x, particles[j].y);
+                    bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.09 * (1 - dist / 110)})`;
+                    bgCtx.lineWidth = 1.0;
+                    bgCtx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateBg);
+    }
+
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+    window.addEventListener('resize', resizeBgCanvas);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        resizeBgCanvas();
+        animateBg();
+    });
 
     function handleInitialClick(e) {
         if (!originalImage) document.getElementById('fileInput').click();
@@ -626,8 +796,7 @@
         offscreenCanvas.height = transH;
         offscreenCtx = offscreenCanvas.getContext('2d');
 
-        offscreenCtx.fillStyle = "rgba(0,0,0,0)";
-        offscreenCtx.fillRect(0, 0, transW, transH);
+        offscreenCtx.clearRect(0, 0, transW, transH);
 
         offscreenCtx.save();
         offscreenCtx.translate(transW / 2, transH / 2);
@@ -741,7 +910,7 @@
         const cellW = availableW / sampleW;
         const cellH = availableH / sampleH;
 
-        matrixCtx.fillStyle = "#37352F";
+        matrixCtx.fillStyle = "#2C2A29";
         matrixCtx.font = "bold 13px Malgun Gothic";
         matrixCtx.fillText(`📁 변환 데이터: X(${Math.floor(x1)}~${Math.floor(x2)}), Y(${Math.floor(y1)}~${Math.floor(y2)}) | 뷰포트: ${matrixViewMode}`, 10, 20);
 
@@ -749,7 +918,7 @@
         const data = imgData.data;
 
         matrixCtx.font = "10px Malgun Gothic";
-        matrixCtx.fillStyle = "#787774";
+        matrixCtx.fillStyle = "#7D7569";
         matrixCtx.textAlign = "center";
         for (let c = 0; c < sampleW; c++) {
             matrixCtx.fillText(`${c + 1}열`, startX + (c * cellW) + (cellW / 2), startY - 10);
@@ -768,7 +937,7 @@
                 const A = data[idx+3]; 
 
                 let bgStyle = "#FFFFFF";
-                let textStyle = "#37352F";
+                let textStyle = "#2C2A29";
                 let pixelText = "";
 
                 if (A === 0) {
@@ -779,7 +948,7 @@
                     } else {
                         R = G = B = 255; 
                         bgStyle = "#FFFFFF";
-                        textStyle = "#37352F";
+                        textStyle = "#2C2A29";
                     }
                 } else {
                     if (emptySpaceBgColor === "black") {
@@ -817,7 +986,7 @@
 
                 matrixCtx.fillStyle = bgStyle;
                 matrixCtx.fillRect(cellX, cellY, cellW, cellH);
-                matrixCtx.strokeStyle = "#E2E2E6";
+                matrixCtx.strokeStyle = "rgba(44, 42, 41, 0.1)";
                 matrixCtx.lineWidth = 1;
                 matrixCtx.strokeRect(cellX, cellY, cellW, cellH);
 
@@ -842,7 +1011,6 @@
         else updateFormulaText();
     }
 
-    // 슬라이더 조작
     function onSliderFlipMove(val) {
         flipAngle = parseInt(val);
         entryFlipAngle.value = flipAngle;
@@ -901,8 +1069,6 @@
             } else updateFormulaText();
         }
     }
-
-    document.title = "이미지 데이터의 처리 2 - 대칭변환과 회전변환";
 
     function resetTransforms(type) {
         if (type === 'flip') {
