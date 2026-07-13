@@ -7,15 +7,20 @@
         :root {
             /* 🌿 메인 대시보드의 딥그린 및 폰베이지 아이덴티티 반영 */
             --c-bg-main: #FBF9F4;
-            --c-bg-card: rgba(255, 255, 255, 0.9);
+            --c-bg-card: rgba(255, 255, 255, 0.85);
             --c-text-main: #2C2A29;
             --c-text-muted: #7D7569;
             --c-border: rgba(44, 42, 41, 0.15);
             --c-tab-active: #F4F1EA;
             --c-accent: #1B4332;
             --c-accent-hover: #2D5A44;
-            --c-save-bg: #7D7569;
-            --c-save-hover: #5C564F;
+            
+            /* 🎨 요청에 따라 최초의 파란색/주황색 아이덴티티 원복 */
+            --c-upload-bg: #2383E2;
+            --c-upload-hover: #1A6CB8;
+            --c-save-bg: #E28523;
+            --c-save-hover: #C9741B;
+            
             --c-reset-bg: #9B2226;
             --c-reset-hover: #B7094C;
         }
@@ -34,6 +39,23 @@
             /* ✨ 글로벌 자간 및 모던 가독성 최적화 */
             letter-spacing: 0.03em;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 🌐 배경 캔버스 레이어 우선순위 강제 설정 (가장 아래 배치) */
+        canvas#neural-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: 1; 
+            pointer-events: none; 
+        }
+        
+        /* 메인 컨텐츠 구조는 z-index를 주어 캔버스 위로 배치 */
+        header, .main-container, .bottom-panel {
+            position: relative;
+            z-index: 10;
         }
 
         /* 🧭 대시보드 메인 커널 완벽 싱크 헤더 네비게이션 */
@@ -41,8 +63,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 10px 30px 10px;
-            /* 고정폭 서체 레이아웃 강제 지정 */
+            padding: 5px 10px 20px 10px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         }
         .btn-back {
@@ -52,7 +73,6 @@
             font-size: 11px;
             font-weight: 900;
             cursor: pointer;
-            /* 자간 장평 리밸런싱 (MATHMATICS FOR AI 탭 스펙 적용) */
             letter-spacing: 0.3em;
             text-transform: uppercase;
             padding: 5px;
@@ -65,7 +85,6 @@
             font-size: 11px;
             font-weight: 900;
             color: #1B4332;
-            /* 우측 타이틀도 완벽하게 메인 탭 그리드 형태로 매핑 */
             letter-spacing: 0.3em;
             text-transform: uppercase;
         }
@@ -106,7 +125,7 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.95);
         }
         .drop-zone.hover {
             border-color: var(--c-accent);
@@ -154,8 +173,8 @@
             gap: 6px;
             letter-spacing: 0.05em;
         }
-        .btn-upload { background-color: var(--c-accent); }
-        .btn-upload:hover { background-color: var(--c-accent-hover); transform: translateY(-1px); }
+        .btn-upload { background-color: var(--c-upload-bg); }
+        .btn-upload:hover { background-color: var(--c-upload-hover); transform: translateY(-1px); }
         .btn-save { background-color: var(--c-save-bg); }
         .btn-save:hover { background-color: var(--c-save-hover); transform: translateY(-1px); }
 
@@ -286,8 +305,8 @@
             letter-spacing: 0.05em;
             transition: background 0.2s;
         }
-        .btn-gray { background-color: var(--c-save-bg); }
-        .btn-gray:hover { background-color: var(--c-save-hover); }
+        .btn-gray { background-color: #5C564F; }
+        .btn-gray:hover { background-color: #2C2A29; }
         .btn-color { background-color: var(--c-reset-bg); }
         .btn-color:hover { background-color: var(--c-reset-hover); }
 
@@ -295,6 +314,8 @@
     </style>
 </head>
 <body>
+
+    <canvas id="neural-canvas"></canvas>
 
     <header class="top-nav-bar">
         <button class="btn-back" onclick="history.back()">← BACK</button>
@@ -363,6 +384,87 @@
     </div>
 
 <script>
+    /* 🌐 대시보드 신경망(Neural Network) 애니메이션 커널 스크립트 */
+    const canvas = document.getElementById('neural-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: null, y: null, radius: 150 };
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initParticles();
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = (Math.random() - 0.5) * 0.35;
+            this.radius = Math.random() * 2 + 1;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < mouse.radius) {
+                const force = (mouse.radius - distance) / mouse.radius;
+                this.x -= dx * force * 0.03;
+                this.y -= dy * force * 0.03;
+            }
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
+            ctx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animateNeuralNetwork() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 110) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(27, 67, 50, ${0.04 * (1 - dist / 110)})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateNeuralNetwork);
+    }
+
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    animateNeuralNetwork();
+
+    /* 🎛️ 기존 이미지 데이터 연산 커널 로직 스택 유지 */
     let originalImage = null;   
     let offscreenCanvas = null; 
     let offscreenCtx = null;
