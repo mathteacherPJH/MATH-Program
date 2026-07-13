@@ -76,7 +76,7 @@
     <section id="hero" class="relative w-full h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#2C2A29]/10 pt-16 bg-[#F4F1EA]/50">
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#FBF9F4]/30 to-[#FBF9F4] z-10"></div>
         
-        <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-40 filter sepia-10 contrast-95 brightness-105">
+        <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-15 filter sepia-10 contrast-95 brightness-105">
 
         <div class="relative z-20 text-center space-y-6 max-w-4xl px-6 select-none">
             <p class="text-sm md:text-base tracking-[0.5em] font-black text-[#7D7569] uppercase">
@@ -239,7 +239,7 @@
     </footer>
 
     <script>
-        /* 🌐 1. 인공지능 신경망(Neural Network) & 고빈도 유성 기믹 애니메이션 커널 엔진 */
+        /* 🌐 1. 인공지능 신경망(Neural Network) & 보정형 유성 기믹 애니메이션 엔진 */
         const canvas = document.getElementById('neural-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -259,7 +259,7 @@
                 this.y = Math.random() * canvas.height;
                 this.vx = (Math.random() - 0.5) * 0.35;
                 this.vy = (Math.random() - 0.5) * 0.35;
-                this.radius = Math.random() * 2.5 + 1.2;
+                this.radius = Math.random() * 2 + 1; // 입자 크기도 미니멀하게 리밸런싱
             }
             update() {
                 this.x += this.vx;
@@ -280,18 +280,18 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(27, 67, 50, 0.22)';
+                // 💡 신경망 노드 투명도 원래의 연한 세팅으로 원복 (0.22 -> 0.10)
+                ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
                 ctx.fill();
             }
         }
 
-        // ☄️ 고선명 다이내믹 유성(별똥별) 클래스
+        // ☄️ 정밀 주기로 보정된 5초 간격 유성(별똥별) 클래스
         class ShootingStar {
             constructor() {
                 this.reset();
             }
             reset() {
-                // 상단 영역 전체 및 좌측 영역 위주로 무작위 출발 좌표 할당
                 if (Math.random() > 0.4) {
                     this.x = Math.random() * canvas.width * 0.7;
                     this.y = -30;
@@ -299,12 +299,11 @@
                     this.x = -30;
                     this.y = Math.random() * canvas.height * 0.6;
                 }
-                this.speed = Math.random() * 6 + 6; // 속도감 향상
-                this.length = Math.random() * 110 + 70; // 꼬리 잔상 확장
-                this.opacity = Math.random() * 0.45 + 0.35; // 💡 더 선명하고 존재감 강한 투명도 세팅
+                this.speed = Math.random() * 4 + 5; 
+                this.length = Math.random() * 100 + 60; 
+                this.opacity = Math.random() * 0.35 + 0.25; // 눈에 확 띄되 과하지 않게 선명화
             }
             update() {
-                // 대각선 우하향 벡터 이동
                 this.x += this.speed;
                 this.y += this.speed * 0.75;
                 
@@ -317,14 +316,14 @@
                 ctx.save();
                 let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.75);
                 grad.addColorStop(0, `rgba(27, 67, 50, ${this.opacity})`);
-                grad.addColorStop(0.2, `rgba(27, 67, 50, ${this.opacity * 0.6})`);
+                grad.addColorStop(0.3, `rgba(27, 67, 50, ${this.opacity * 0.4})`);
                 grad.addColorStop(1, 'rgba(27, 67, 50, 0)');
                 
                 ctx.beginPath();
                 ctx.moveTo(this.x, this.y);
                 ctx.lineTo(this.x - this.length, this.y - this.length * 0.75);
                 ctx.strokeStyle = grad;
-                ctx.lineWidth = 2.5; // 💡 두께를 2.5px로 확장하여 선명하게 노출
+                ctx.lineWidth = 2.2; // 확실히 궤적이 인지되도록 보정한 최적의 두께
                 ctx.stroke();
                 ctx.restore();
             }
@@ -341,7 +340,7 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 1. 기본 인공지능 연결 인력망 연산 루프
+            // 1. 인공지능 연결 인력망 연산 루프
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update();
                 particles[i].draw();
@@ -355,16 +354,16 @@
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.10 * (1 - dist / 110)})`;
+                        // 💡 연결망 선명도 원래의 보이지 않는 선으로 복구 (0.10 -> 0.04)
+                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.04 * (1 - dist / 110)})`;
                         ctx.lineWidth = 0.8;
                         ctx.stroke();
                     }
                 }
             }
 
-            // 2. 💡 유성 스폰 빈도 확률 대폭 향상 (0.004 -> 0.018로 4.5배 상향)
-            // 동시 화면 노출 제한수도 최대 3개로 유연성 부여
-            if (Math.random() < 0.018 && shootingStars.length < 3) {
+            // 2. 💡 [시간 보정 핵심] 무작위 프레임 스폰 대신, 약 5초에 1번 꼴로 스폰되도록 확률 조정 (0.018 -> 0.0035 하향)
+            if (Math.random() < 0.0035 && shootingStars.length < 2) {
                 shootingStars.push(new ShootingStar());
             }
 
