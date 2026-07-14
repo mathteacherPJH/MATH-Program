@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>인공지능 이미지 분류의 수학적 원리 시각화</title>
+    <title>강아지, 고양이 분류 프로그램</title>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/Mathjax.js"></script>
     <style>
         :root {
@@ -12,7 +12,6 @@
             --c-text-main: #1A3D2F;
             --c-text-muted: #5A7365;
             --c-border: #E2E2E6;
-            --c-tab-active: #EFEFED;
             --c-accent: #2A5C45;
             --c-accent-hover: #1E4331;
             
@@ -70,9 +69,7 @@
             text-decoration: none;
             transition: opacity 0.2s;
         }
-        .btn-back:hover {
-            opacity: 0.7;
-        }
+        .btn-back:hover { opacity: 0.7; }
 
         .header-title {
             font-size: 13px;
@@ -100,9 +97,7 @@
             box-shadow: 0 4px 15px rgba(26, 61, 47, 0.03);
         }
 
-        .info-card-icon {
-            font-size: 1.8rem;
-        }
+        .info-card-icon { font-size: 1.8rem; }
 
         .info-card-text h3 {
             margin: 0 0 4px 0;
@@ -125,9 +120,7 @@
         }
 
         @media (min-width: 992px) {
-            .grid-layout {
-                grid-template-columns: 380px 1fr;
-            }
+            .grid-layout { grid-template-columns: 380px 1fr; }
         }
 
         .card {
@@ -188,30 +181,21 @@
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
-            text-decoration: none;
         }
 
         .btn-primary {
             background-color: var(--c-accent);
             color: white;
         }
-
-        .btn-primary:hover {
-            background-color: var(--c-accent-hover);
-        }
+        .btn-primary:hover { background-color: var(--c-accent-hover); }
 
         .btn-secondary {
             background-color: #E2E2E6;
             color: var(--c-text-main);
         }
+        .btn-secondary:hover { background-color: #D2D2D6; }
 
-        .btn-secondary:hover {
-            background-color: #D2D2D6;
-        }
-
-        #image-upload {
-            display: none;
-        }
+        #image-upload { display: none; }
 
         .upload-label {
             display: block;
@@ -227,26 +211,22 @@
             box-sizing: border-box;
             transition: background 0.2s;
         }
+        .upload-label:hover { background-color: #2563EB; }
 
-        .upload-label:hover {
-            background-color: #2563EB;
-        }
-
-        .matrix-grid {
-            display: grid;
-            grid-template-columns: repeat(14, 1fr);
-            gap: 1px;
-            background-color: var(--c-border);
-            padding: 3px;
-            border-radius: 4px;
+        .spec-table {
             width: 100%;
-            box-sizing: border-box;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
         }
-
-        .matrix-pixel {
-            aspect-ratio: 1;
-            background-color: #000;
-            border-radius: 1px;
+        .spec-table td {
+            padding: 6px 4px;
+            border-bottom: 1px dashed var(--c-border);
+        }
+        .spec-val {
+            font-weight: bold;
+            color: var(--c-accent);
+            text-align: right;
         }
 
         .math-flow {
@@ -266,14 +246,8 @@
             color: var(--c-text-main);
         }
 
-        .results-container {
-            margin-top: 25px;
-        }
-
-        .result-row {
-            margin-bottom: 12px;
-        }
-
+        .results-container { margin-top: 25px; }
+        .result-row { margin-bottom: 12px; }
         .result-label {
             display: flex;
             justify-content: space-between;
@@ -294,73 +268,47 @@
             width: 0%;
             transition: width 0.3s ease-out;
         }
+        .bar-cat { background: linear-gradient(90deg, #3B82F6, var(--accent-cat)); }
+        .bar-dog { background: linear-gradient(90deg, #EF4444, var(--accent-dog)); }
 
-        .bar-cat {
-            background: linear-gradient(90deg, #3B82F6, var(--accent-cat));
-        }
-
-        .bar-dog {
-            background: linear-gradient(90deg, #EF4444, var(--accent-dog));
-        }
-
-        .weights-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .tab-btn {
-            padding: 6px 14px;
-            background-color: #E2E2E6;
-            border: none;
-            color: var(--c-text-muted);
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            background-color: var(--c-accent);
-            color: white;
-        }
-
-        .weights-grid {
-            display: grid;
-            grid-template-columns: repeat(14, 1fr);
-            gap: 1px;
-            background-color: var(--c-border);
-            padding: 3px;
-            border-radius: 4px;
+        /* ------------------ 초고해상도 대응 로딩 인프라 UI ------------------ */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            box-sizing: border-box;
-        }
-
-        .weight-pixel {
-            aspect-ratio: 1;
-            border-radius: 1px;
-        }
-
-        .legend {
+            height: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            z-index: 9999;
             display: flex;
+            flex-direction: column;
             justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-            font-size: 0.75rem;
-            color: var(--c-text-muted);
-        }
-
-        .legend-item {
-            display: flex;
             align-items: center;
-            gap: 5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
         }
-
-        .legend-box {
-            width: 10px;
-            height: 10px;
-            border-radius: 2px;
+        #loadingOverlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--c-border);
+            border-top: 5px solid var(--c-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        .loading-text {
+            font-weight: bold;
+            color: var(--c-text-main);
+            font-size: 1.1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         footer {
@@ -376,30 +324,35 @@
 </head>
 <body>
 
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">고해상도 대량 행렬 연산 및 분석 중...</div>
+    </div>
+
     <canvas id="bgCanvas"></canvas>
 
     <div class="header-container">
         <button class="btn-back" onclick="history.back()">← BACK</button>
-        <div class="header-title">IMAGE CLASSIFICATION MATHEMATICS</div>
+        <div class="header-title">IMAGE CLASSIFICATION</div>
     </div>
 
     <div class="container">
         <div class="info-card">
-            <span class="info-card-icon">⚙️</span>
+            <span class="info-card-icon">⚡</span>
             <div class="info-card-text">
-                <h3>초고해상도 이미지 처리 원리 (최대 2000x2000px+ 지원)</h3>
+                <h3>가변적 실시간 가중치 행렬 자동 설계 기술 (Auto-Matching Dimension)</h3>
                 <p>
-                    수백만 화소의 고해상도 이미지라도, 전처리 필터를 거쳐 연산 가능한 규격(\(14 \times 14\))으로 <strong>다운샘플링(Downsampling)</strong>된 후 선형 연산에 주입됩니다. 하단 업로더를 통해 실시간 이미지 변환 과정을 확인해 보세요.
+                    이 프로그램은 입력 해상도를 고정하지 않습니다! 업로드된 원본 이미지의 픽셀 수에 맞춰 **가중치 행렬 \(W\)의 구조를 수학적으로 즉시 재구성**합니다. 초고해상도 사진을 로드할 시 수백만 차원의 연산 처리를 시각적으로 체험해 보세요.
                 </p>
             </div>
         </div>
 
         <div class="grid-layout">
             <div class="card">
-                <h2>1단계: 데이터 입력 & 전처리</h2>
+                <h2>1단계: 실시간 이미지 규격 감지</h2>
                 <div class="interactive-zone">
                     <p style="margin: 0; color: var(--c-text-muted); font-size: 0.8rem; text-align: center; line-height: 1.4;">
-                        캔버스에 그림을 직접 그리거나<br>우측 업로드 버튼으로 이미지를 올려보세요!
+                        캔버스 드로잉(동적 생성) 또는<br>어떤 해상도의 이미지든 제약 없이 로드해 보세요!
                     </p>
                     
                     <div class="canvas-container">
@@ -412,47 +365,62 @@
                         <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
                     </div>
 
-                    <p style="margin: 10px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main);">
-                        전처리된 \(14 \times 14\) 입력 데이터 행렬 (\(X\)):
+                    <p style="margin: 15px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main);">
+                        동적 입력 데이터 규격 (Specification):
                     </p>
-                    <div class="matrix-grid" id="inputMatrix"></div>
+                    <table class="spec-table">
+                        <tr>
+                            <td>감지된 이미지 해상도</td>
+                            <td class="spec-val" id="spec-resolution">100 x 100 px</td>
+                        </tr>
+                        <tr>
+                            <td>입력 벡터 차원 (행렬 \(X\))</td>
+                            <td class="spec-val" id="spec-vector">1 × 10,000 차원</td>
+                        </tr>
+                        <tr>
+                            <td>실시간 생성 가중치 크기 (행렬 \(W\))</td>
+                            <td class="spec-val" id="spec-weights">10,000 × 2 차원</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
 
             <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <h2>2단계: 수학적 행렬 변환 및 예측</h2>
+                    <h2>2단계: 동적 고차원 행렬 연산</h2>
                     
                     <div class="math-flow">
                         <div>
-                            <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형 변환 (Linear Combination)</h3>
+                            <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
                             <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
-                                차원 펼치기(Flatten)가 완료된 행렬 \(X (1 \times 196)\)에 미리 학습된 가중치 \(W\)와 편향 \(b\)를 연산하여 각 클래스의 원시 점수를 뽑아냅니다.
+                                동적으로 감지된 차원 수에 매핑된 식 \(Z = X \cdot W + b\)를 통해 원시 점수를 획득합니다.
                             </p>
                             <div class="math-box">
-                                $$Z = X \cdot W + b$$
-                                <span id="linear-calc-output" style="color: var(--c-accent); font-size: 0.85rem; font-weight: bold;">계산 중...</span>
+                                <div id="math-formula-box" style="margin-bottom: 10px; font-size: 0.95rem; color: var(--c-text-muted);">
+                                    $$Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}$$
+                                </div>
+                                <span id="linear-calc-output" style="color: var(--c-accent); font-size: 0.85rem; font-weight: bold;">연산 활성화 중...</span>
                             </div>
                         </div>
 
                         <div>
-                            <h3 style="margin: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">② 소프트맥스 확률 사상 (Softmax)</h3>
+                            <h3 style="margin: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">② 가변 차원 소프트맥스 사상 (Softmax mapping)</h3>
                             <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
-                                계산된 임의 범위의 실수 값 \(Z\)를 모두 더해 1(100%)이 되도록 소프트맥스 함수를 활용해 확률값으로 압축합니다.
+                                차원 크기에 무관하게 최종 변환 스코어의 전체 총합 비율을 100%로 투영시킵니다.
                             </p>
                             <div class="math-box">
                                 $$P_c = \frac{e^{z_c}}{\sum_{j} e^{z_j}}$$
-                                <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">계산 중...</span>
+                                <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">분석 중...</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="results-container">
-                        <h3 style="margin-bottom: 8px; font-size: 0.95rem; color: var(--c-text-main); font-weight: bold;">분류 예측 확률</h3>
+                        <h3 style="margin-bottom: 8px; font-size: 0.95rem; color: var(--c-text-main); font-weight: bold;">실시간 예측 확률</h3>
                         
                         <div class="result-row">
                             <div class="result-label">
-                                <span style="color: var(--accent-cat);">🐱 고양이 확률 (Cat)</span>
+                                <span style="color: var(--accent-cat);">🐱 고양이 분류 확률</span>
                                 <span id="cat-prob" style="color: var(--accent-cat);">0.0%</span>
                             </div>
                             <div class="bar-outer">
@@ -462,7 +430,7 @@
 
                         <div class="result-row">
                             <div class="result-label">
-                                <span style="color: var(--accent-dog);">🐶 강아지 확률 (Dog)</span>
+                                <span style="color: var(--accent-dog);">🐶 강아지 분류 확률</span>
                                 <span id="dog-prob" style="color: var(--accent-dog);">0.0%</span>
                             </div>
                             <div class="bar-outer">
@@ -471,42 +439,16 @@
                         </div>
                     </div>
                 </div>
-
-                <div style="margin-top: 25px; border-top: 1px solid var(--c-border); padding-top: 15px;">
-                    <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-text-main); font-weight: bold;">인공지능 내부 필터 가중치(\(W\)) 엿보기</h3>
-                    <p style="font-size: 0.8rem; color: var(--c-text-muted); margin-bottom: 10px; line-height: 1.4;">
-                        특정 동물이라고 판단하게 만드는 핵심 픽셀 활성 영역입니다. (파란색 영역에 드로잉이 겹치면 해당 동물의 확률 상승)
-                    </p>
-                    <div class="weights-tabs">
-                        <button class="tab-btn active" id="tab-cat" onclick="switchWeightTab('cat')">고양이 필터 공간 가중치</button>
-                        <button class="tab-btn" id="tab-dog" onclick="switchWeightTab('dog')">강아지 필터 공간 가중치</button>
-                    </div>
-                    <div class="weights-grid" id="weightsMatrix"></div>
-                    <div class="legend">
-                        <div class="legend-item">
-                            <div class="legend-box" style="background-color: #3B82F6;"></div>
-                            <span>양의 가중치 (+ 자극)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-box" style="background-color: #E2E2E6;"></div>
-                            <span>0 부근 (영향 없음)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-box" style="background-color: #EF4444;"></div>
-                            <span>음의 가중치 (- 억제)</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
 
     <footer>
-        <p>수학 교육 및 인공지능 시뮬레이션 인터랙티브 대시보드</p>
+        <p>수학 교육 및 가변 행렬 연산 모델 시뮬레이터</p>
     </footer>
 
     <script>
+        // --- 딥 그린 인터랙티브 배경 엔진 ---
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas.getContext('2d');
         let particles = [];
@@ -514,7 +456,7 @@
 
         function resizeBgCanvas() {
             bgCanvas.width = window.innerWidth;
-            bgCanvas.height = document.documentElement.scrollHeight; 
+            bgCanvas.height = document.documentElement.scrollHeight;
             initParticles();
         }
 
@@ -536,7 +478,6 @@
             update() {
                 if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
                 if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
-                
                 this.x += this.vx;
                 this.y += this.vy;
 
@@ -565,14 +506,12 @@
 
         function animateParticles() {
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-            
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update();
                 for (let j = i + 1; j < particles.length; j++) {
                     let dx = particles[i].x - particles[j].x;
                     let dy = particles[i].y - particles[j].y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
-                    
                     if (dist < 100) {
                         let alpha = (100 - dist) / 100 * 0.12;
                         bgCtx.beginPath();
@@ -589,182 +528,96 @@
 
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
-            mouse.y = e.clientY + window.scrollY; 
+            mouse.y = e.clientY + window.scrollY;
         });
-        window.addEventListener('mouseleave', () => {
-            mouse.x = null;
-            mouse.y = null;
-        });
+        window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
         window.addEventListener('resize', resizeBgCanvas);
-        
-        window.addEventListener('load', () => {
-            resizeBgCanvas();
-            animateParticles();
-        });
+        window.addEventListener('load', () => { resizeBgCanvas(); animateParticles(); });
 
+
+        // ------------------ 가변 행렬 구조 인공지능 시뮬레이터 로직 ------------------
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
 
-        const GRID_SIZE = 14;
-        let inputVector = new Array(GRID_SIZE * GRID_SIZE).fill(0);
+        let currentWidth = 100;
+        let currentHeight = 100;
+        let inputVector = [];
+        const b = [0.08, -0.08]; 
 
-        const W = [];
-        const b = [0.05, -0.05]; 
+        function clearInputBuffer(w, h) {
+            currentWidth = w;
+            currentHeight = h;
+            inputVector = new Array(w * h).fill(0);
+            updateSpecDisplay();
+        }
 
-        function initWeights() {
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
+        function generateDynamicWeights(w, h) {
+            const dynamicW = [];
+            for (let r = 0; r < h; r++) {
+                for (let c = 0; c < w; c++) {
                     let catW = 0;
                     let dogW = 0;
 
-                    if ((r >= 1 && r <= 4) && ((c >= 2 && c <= 4) || (c >= 9 && c <= 11))) {
-                        catW += 1.6;
-                        dogW -= 0.8;
+                    const rRatio = r / h;
+                    const cRatio = c / w;
+
+                    if ((rRatio >= 0.05 && rRatio <= 0.3) && ((cRatio >= 0.15 && cRatio <= 0.35) || (cRatio >= 0.65 && cRatio <= 0.85))) {
+                        catW += 1.8;
+                        dogW -= 0.9;
                     }
-                    if (r >= 6 && r <= 9 && c >= 3 && c <= 10) {
+                    if (rRatio >= 0.45 && rRatio <= 0.65 && cRatio >= 0.25 && cRatio <= 0.75) {
                         catW += 0.5;
                     }
 
-                    if ((r >= 3 && r <= 7) && (c <= 2 || c >= 11)) {
-                        dogW += 1.3;
-                        catW -= 0.5;
+                    if ((rRatio >= 0.2 && rRatio <= 0.55) && (cRatio <= 0.2 || cRatio >= 0.8)) {
+                        dogW += 1.5;
+                        catW -= 0.6;
                     }
-                    if (r >= 8 && r <= 11 && c >= 5 && c <= 8) {
-                        dogW += 1.9;
-                        catW -= 1.0;
-                    }
-
-                    if (r <= 3 && c >= 5 && c <= 8) {
-                        catW -= 1.3;
+                    if (rRatio >= 0.6 && rRatio <= 0.85 && cRatio >= 0.38 && cRatio <= 0.62) {
+                        dogW += 2.0;
+                        catW -= 1.1;
                     }
 
-                    W.push([catW, dogW]);
+                    if (rRatio <= 0.22 && cRatio >= 0.4 && cRatio <= 0.6) {
+                        catW -= 1.5;
+                    }
+
+                    dynamicW.push([catW, dogW]);
                 }
             }
+            return dynamicW;
         }
 
-        initWeights();
+        function updateSpecDisplay() {
+            const totalDimension = currentWidth * currentHeight;
+            document.getElementById('spec-resolution').innerText = `${currentWidth.toLocaleString()} x ${currentHeight.toLocaleString()} px`;
+            document.getElementById('spec-vector').innerText = `1 × ${totalDimension.toLocaleString()} 차원`;
+            document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × 2 차원`;
 
-        function initGrids() {
-            const inputGrid = document.getElementById('inputMatrix');
-            inputGrid.innerHTML = '';
-            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-                const pixel = document.createElement('div');
-                pixel.className = 'matrix-pixel';
-                pixel.id = `input-pixel-${i}`;
-                inputGrid.appendChild(pixel);
-            }
-            renderWeights('cat');
-        }
-
-        function renderWeights(target) {
-            const weightsGrid = document.getElementById('weightsMatrix');
-            weightsGrid.innerHTML = '';
-            const colIndex = target === 'cat' ? 0 : 1;
-
-            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-                const pixel = document.createElement('div');
-                pixel.className = 'weight-pixel';
-                const weightVal = W[i][colIndex];
-                
-                if (weightVal > 0) {
-                    const alpha = Math.min(weightVal / 1.5, 1.0);
-                    pixel.style.backgroundColor = `rgba(59, 130, 246, ${alpha})`; 
-                } else if (weightVal < 0) {
-                    const alpha = Math.min(Math.abs(weightVal) / 1.5, 1.0);
-                    pixel.style.backgroundColor = `rgba(239, 68, 68, ${alpha})`; 
-                } else {
-                    pixel.style.backgroundColor = '#E2E2E6';
-                }
-                weightsGrid.appendChild(pixel);
+            const mathBox = document.getElementById('math-formula-box');
+            mathBox.innerHTML = `$$Z_{(1 \times 2)} = X_{(1 \times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \times 2)}$$`;
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
             }
         }
 
-        function switchWeightTab(target) {
-            document.getElementById('tab-cat').classList.toggle('active', target === 'cat');
-            document.getElementById('tab-dog').classList.toggle('active', target === 'dog');
-            renderWeights(target);
-        }
-
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            draw(e);
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-            ctx.beginPath();
-            processImage();
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
-            const pos = getMousePos(e);
-            
-            ctx.lineWidth = 20;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = 'white';
-
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-
-            processImage();
-        }
-
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-
-        function clearCanvas() {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            processImage();
-        }
-
-        function processImage() {
+        function processDrawing() {
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = GRID_SIZE;
-            tempCanvas.height = GRID_SIZE;
+            tempCanvas.width = currentWidth;
+            tempCanvas.height = currentHeight;
             const tempCtx = tempCanvas.getContext('2d');
             
-            tempCtx.drawImage(canvas, 0, 0, 250, 250, 0, 0, GRID_SIZE, GRID_SIZE);
-            const imgData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
+            tempCtx.drawImage(canvas, 0, 0, 250, 250, 0, 0, currentWidth, currentHeight);
+            const imgData = tempCtx.getImageData(0, 0, currentWidth, currentHeight);
             
-            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-                const val = imgData.data[i * 4] / 255; 
-                inputVector[i] = val;
-                
-                const pixelEl = document.getElementById(`input-pixel-${i}`);
-                if (pixelEl) {
-                    const colorVal = Math.round(val * 255);
-                    pixelEl.style.backgroundColor = `rgb(${colorVal}, ${colorVal}, ${colorVal})`;
-                }
+            for (let i = 0; i < currentWidth * currentHeight; i++) {
+                inputVector[i] = imgData.data[i * 4] / 255; 
             }
             classify();
         }
 
+        // 고해상도 이미지 업로드 시 UI 멈춤 현상을 차단하기 위한 비동기 헨들러 메커니즘
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -773,15 +626,42 @@
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    ctx.fillStyle = 'black';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-                    const x = (canvas.width / 2) - (img.width / 2) * scale;
-                    const y = (canvas.height / 2) - (img.height / 2) * scale;
-                    
-                    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-                    processImage();
+                    // 1. 비동기식 로딩 인프라 레이어 팝업 켜기
+                    document.getElementById('loadingOverlay').classList.add('active');
+
+                    // 2. 브라우저가 화면에 로딩창을 렌더링할 틈을 준 뒤 연산 시작 (렉 방지 핵심)
+                    setTimeout(() => {
+                        currentWidth = img.width;
+                        currentHeight = img.height;
+                        
+                        ctx.fillStyle = 'black';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                        const x = (canvas.width / 2) - (img.width / 2) * scale;
+                        const y = (canvas.height / 2) - (img.height / 2) * scale;
+                        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+                        inputVector = new Array(currentWidth * currentHeight);
+                        const rawCanvas = document.createElement('canvas');
+                        rawCanvas.width = currentWidth;
+                        rawCanvas.height = currentHeight;
+                        const rawCtx = rawCanvas.getContext('2d');
+                        rawCtx.drawImage(img, 0, 0);
+                        
+                        const imgData = rawCtx.getImageData(0, 0, currentWidth, currentHeight);
+                        for (let i = 0; i < currentWidth * currentHeight; i++) {
+                            const r = imgData.data[i * 4];
+                            const g = imgData.data[i * 4 + 1];
+                            const bVal = imgData.data[i * 4 + 2];
+                            inputVector[i] = (r + g + bVal) / 3 / 255; 
+                        }
+
+                        updateSpecDisplay();
+                        classify();
+
+                        // 3. 연산 완료 후 즉시 로딩 오버레이 레이어 닫기
+                        document.getElementById('loadingOverlay').classList.remove('active');
+                    }, 50);
                 };
                 img.src = e.target.result;
             };
@@ -789,12 +669,17 @@
         }
 
         function classify() {
+            const totalDim = currentWidth * currentHeight;
+            if (inputVector.length !== totalDim) return;
+
+            const dynamicW = generateDynamicWeights(currentWidth, currentHeight);
+
             let z_cat = b[0];
             let z_dog = b[1];
 
-            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-                z_cat += inputVector[i] * W[i][0];
-                z_dog += inputVector[i] * W[i][1];
+            for (let i = 0; i < totalDim; i++) {
+                z_cat += inputVector[i] * dynamicW[i][0];
+                z_dog += inputVector[i] * dynamicW[i][1];
             }
 
             const exp_cat = Math.exp(z_cat);
@@ -822,8 +707,51 @@
             document.getElementById('dog-bar').style.width = `${prob_dog * 100}%`;
         }
 
-        initGrids();
-        processImage();
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDrawing(e) { isDrawing = true; draw(e); }
+        function stopDrawing() { isDrawing = false; ctx.beginPath(); processDrawing(); }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            ctx.lineWidth = 18;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'white';
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            processDrawing();
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function clearCanvas() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            clearInputBuffer(100, 100);
+            processDrawing();
+        }
+
+        clearInputBuffer(100, 100);
+        processDrawing();
     </script>
 </body>
 </html>
