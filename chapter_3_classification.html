@@ -486,11 +486,11 @@
                         <div>
                             <h3 style="margin: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">② 가변 차원 소프트맥스 사상 (Softmax mapping)</h3>
                             <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
-                                차원 크기에 무관하게 최종 변환 스코어의 전체 총합 비율을 100%로 투영시킵니다.
+                                차원 크기에 무관하게 최종 변환 스코어의 전체 총합 비율을 100%로 투영시킵니다. (온도 계수 \(T=5.0\) 적용)
                             </p>
                             <div class="math-box">
                                 <div id="softmax-math-box" style="margin-bottom: 8px;">
-                                    \[P_c = \frac{e^{z_c}}{\sum_{j=1}^{2} e^{z_j}}\]
+                                    \[P_c = \frac{e^{z_c / T}}{\sum_{j} e^{z_j / T}}\]
                                 </div>
                                 <div id="softmax-calc-output-container">
                                     <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">분석 중...</span>
@@ -616,9 +616,10 @@
         let inputVector = [];
         
         let activeClassCount = 2;
+        // 동적 스케일링 보정용 기본 편향값 정의
         const b_model = {
-            2: [0.08, -0.08],
-            3: [0.08, 0.05, -0.08]
+            2: [0.0, 0.0],
+            3: [0.0, 1.2, 0.0] // 3클래스 모드일 때 "둘 다 아님"에 기본 가중치 편향(+1.2)을 주어 오작동을 강력 방어합니다.
         };
 
         let toolMode = 'pen';
@@ -630,9 +631,9 @@
             
             const mathBox = document.getElementById('softmax-math-box');
             if(classNum === 2) {
-                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c}}{\\sum_{j=1}^{2} e^{z_j}}\\]`;
+                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c / T}}{\\sum_{j=1}^{2} e^{z_j / T}}\\]`;
             } else {
-                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c}}{\\sum_{j=1}^{3} e^{z_j}}\\]`;
+                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c / T}}{\\sum_{j=1}^{3} e^{z_j / T}}\\]`;
             }
 
             updateSpecDisplay();
@@ -710,6 +711,7 @@
             updateSpecDisplay();
         }
 
+        // [트릭 3] 딱딱한 경계선 대신 가우시안 소프트 벨 마스크(Gaussian Soft Mask) 구조 설계
         function generateDynamicWeights(w, h, cols) {
             const dynamicW = [];
             for (let r = 0; r < h; r++) {
@@ -721,35 +723,29 @@
                     const rRatio = r / h;
                     const cRatio = c / w;
 
-                    if ((rRatio >= 0.05 && rRatio <= 0.3) && ((cRatio >= 0.22 && cRatio <= 0.38) || (cRatio >= 0.62 && cRatio <= 0.78))) {
-                        catW += 2.0;
-                        dogW -= 1.0;
-                        otherW -= 0.5;
-                    }
-                    if (rRatio >= 0.45 && rRatio <= 0.65 && cRatio >= 0.25 && cRatio <= 0.75) {
-                        catW += 0.5;
-                    }
+                    // 고양이 귀 부드러운 확률 마스크 분포 연산
+                    const leftCatEar = Math.exp(-((Math.pow(rRatio - 0.18, 2) / 0.02) + (Math.pow(cRatio - 0.30, 2) / 0.01)));
+                    const rightCatEar = Math.exp(-((Math.pow(rRatio - 0.18, 2) / 0.02) + (Math.pow(cRatio - 0.70, 2) / 0.01)));
+                    catW += (leftCatEar + rightCatEar) * 3.5;
 
-                    if ((rRatio >= 0.2 && rRatio <= 0.55) && (cRatio <= 0.22 || cRatio >= 0.78)) {
-                        dogW += 1.8;
-                        catW -= 0.8;
-                        otherW -= 0.5;
-                    }
-                    if (rRatio >= 0.6 && rRatio <= 0.85 && cRatio >= 0.42 && cRatio <= 0.58) {
-                        dogW += 2.2;
-                        catW -= 1.2;
-                        otherW -= 0.5;
-                    }
+                    // 강아지 처진 귀 및 하단 코 영역 부드러운 확률 마스크 분포 연산
+                    const leftDogEar = Math.exp(-((Math.pow(rRatio - 0.38, 2) / 0.03) + (Math.pow(cRatio - 0.12, 2) / 0.008)));
+                    const rightDogEar = Math.exp(-((Math.pow(rRatio - 0.38, 2) / 0.03) + (Math.pow(cRatio - 0.88, 2) / 0.008)));
+                    const dogSnout = Math.exp(-((Math.pow(rRatio - 0.72, 2) / 0.02) + (Math.pow(cRatio - 0.50, 2) / 0.015)));
+                    dogW += (leftDogEar + rightDogEar) * 2.5 + dogSnout * 4.0;
 
-                    if (rRatio <= 0.22 && cRatio >= 0.42 && cRatio <= 0.58) {
-                        catW -= 1.5;
-                    }
+                    // 서로 반대되는 특성은 상쇄 억제 적용
+                    catW -= dogSnout * 1.5;
+                    dogW -= (leftCatEar + rightCatEar) * 1.5;
 
                     if (cols === 3) {
-                        if (rRatio >= 0.85 || cRatio <= 0.1 || cRatio >= 0.9) {
-                            otherW += 1.3; 
-                            catW -= 0.8;
-                            dogW -= 0.8;
+                        // 낙서선이 아무것도 없는 깨끗한 중앙 빈 도화지 영역에 쓰이면 타 클래스 가중치 억제 및 기타 영역 누적
+                        const centerVoid = Math.exp(-((Math.pow(rRatio - 0.45, 2) / 0.04) + (Math.pow(cRatio - 0.50, 2) / 0.04)));
+                        otherW += (1.0 - leftCatEar - rightCatEar - dogSnout) * 0.8;
+                        
+                        // 극단적인 가장자리 영역 테두리 루프
+                        if (rRatio >= 0.88 || rRatio <= 0.05 || cRatio <= 0.08 || cRatio >= 0.92) {
+                            otherW += 2.0;
                         }
                         dynamicW.push([catW, otherW, dogW]);
                     } else {
@@ -779,11 +775,15 @@
             tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, currentWidth, currentHeight);
             const imgData = tempCtx.getImageData(0, 0, currentWidth, currentHeight);
             
+            // 검은색 드로잉 가중치 캡처 루프
+            let activePixelCount = 0;
             for (let i = 0; i < currentWidth * currentHeight; i++) {
                 const rVal = imgData.data[i * 4];
-                inputVector[i] = 1.0 - (rVal / 255.0); 
+                const activeVal = 1.0 - (rVal / 255.0);
+                inputVector[i] = activeVal;
+                if(activeVal > 0.1) activePixelCount++;
             }
-            classify();
+            classify(activePixelCount);
         }
 
         function handleImageUpload(event) {
@@ -813,17 +813,20 @@
                         const rawCtx = rawCanvas.getContext('2d');
                         rawCtx.drawImage(img, 0, 0);
                         
+                        let activePixelCount = 0;
                         const imgData = rawCtx.getImageData(0, 0, currentWidth, currentHeight);
                         for (let i = 0; i < currentWidth * currentHeight; i++) {
                             const r = imgData.data[i * 4];
                             const g = imgData.data[i * 4 + 1];
                             const bVal = imgData.data[i * 4 + 2];
                             const brightness = (r + g + bVal) / 3 / 255;
-                            inputVector[i] = 1.0 - brightness; 
+                            const activeVal = 1.0 - brightness;
+                            inputVector[i] = activeVal; 
+                            if(activeVal > 0.1) activePixelCount++;
                         }
 
                         updateSpecDisplay();
-                        classify();
+                        classify(activePixelCount);
 
                         document.getElementById('loadingOverlay').classList.remove('active');
                     }, 50);
@@ -833,12 +836,18 @@
             reader.readAsDataURL(file);
         }
 
-        function classify() {
+        function classify(activePixelCount = 0) {
             const totalDim = currentWidth * currentHeight;
             if (inputVector.length !== totalDim) return;
 
             const dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
             const currentBias = b_model[activeClassCount];
+
+            // [트릭 2] 무언가 그리기 시작하면 드로잉 누적 픽셀 비례에 부합하게 기본 베이스 바이어스를 동적 조절
+            const dynamicNoiseFactor = activePixelCount > 0 ? Math.min(activePixelCount / (totalDim * 0.03), 2.5) : 0;
+
+            // [트릭 1] 확률 리미트 파라미터 (소프트맥스 온도 변수 T)
+            const T = 5.0; 
 
             let prob_cat = 0, prob_other = 0, prob_dog = 0;
 
@@ -851,8 +860,9 @@
                     z_dog += inputVector[i] * dynamicW[i][1];
                 }
 
-                const exp_cat = Math.exp(z_cat);
-                const exp_dog = Math.exp(z_dog);
+                // 온도계수 사상 연산
+                const exp_cat = Math.exp(z_cat / T);
+                const exp_dog = Math.exp(z_dog / T);
                 const sum_exp = exp_cat + exp_dog;
 
                 prob_cat = exp_cat / sum_exp;
@@ -863,7 +873,7 @@
                     `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
 
                 document.getElementById('softmax-calc-output').innerHTML = 
-                    `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(1)}}}{Sum} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(1)}}}{Sum} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
+                    `\\[P_{cat} = \\frac{e^{z_{cat} / 5.0}}{Sum} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{z_{dog} / 5.0}}{Sum} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -872,8 +882,9 @@
                 document.getElementById('other-bar-seg').style.width = `0%`;
 
             } else {
+                // 3클래스 연산 분기 (기타 베이스 스코어 주입)
                 let z_cat = currentBias[0];
-                let z_other = currentBias[1];
+                let z_other = currentBias[1] + dynamicNoiseFactor; // 글자가 침범해도 동적 노이즈 바이어스가 고양이 점수를 압도합니다.
                 let z_dog = currentBias[2];
 
                 for (let i = 0; i < totalDim; i++) {
@@ -882,9 +893,9 @@
                     z_dog += inputVector[i] * dynamicW[i][2];
                 }
 
-                const exp_cat = Math.exp(z_cat);
-                const exp_other = Math.exp(z_other);
-                const exp_dog = Math.exp(z_dog);
+                const exp_cat = Math.exp(z_cat / T);
+                const exp_other = Math.exp(z_other / T);
+                const exp_dog = Math.exp(z_dog / T);
                 const sum_exp = exp_cat + exp_other + exp_dog;
 
                 prob_cat = exp_cat / sum_exp;
@@ -895,7 +906,7 @@
                     `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{other} = (${z_other.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
 
                 document.getElementById('softmax-calc-output').innerHTML = 
-                    `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(1)}}}{Sum} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{other} = \\frac{e^{${z_other.toFixed(1)}}}{Sum} = ${(prob_other * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(1)}}}{Sum} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
+                    `\\[P_{cat} = \\frac{e^{z_{cat} / 5.0}}{Sum} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{other} = \\frac{e^{z_{other} / 5.0}}{Sum} = ${(prob_other * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = \\frac{e^{z_{dog} / 5.0}}{Sum} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
