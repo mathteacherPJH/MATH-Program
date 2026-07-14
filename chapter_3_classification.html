@@ -15,8 +15,11 @@
             --c-accent: #2A5C45;
             --c-accent-hover: #1E4331;
             
-            --accent-cat: #2563EB; 
-            --accent-dog: #B91C1C; 
+            /* 정치적 연상을 완벽히 배제한 세련된 자연 테마 컬러 조합 */
+            --color-cat: #D97706; /* 고양이: 따뜻한 앰버 토마토 */
+            --color-dog: #6366F1; /* 강아지: 차분한 미드나잇 인디고 퍼플 */
+            --c-btn-delete: #C2410C; /* 지우기: 은은한 주홍빛 레드 */
+            --c-btn-delete-hover: #9A3412;
         }
 
         body {
@@ -153,16 +156,15 @@
             width: 100%;
         }
 
-        /* [핵심 수정] 가로세로 비율 고정을 완전 해제하고, 세로 높이를 280px로 딱 제한했습니다. */
         .canvas-container {
             position: relative;
             background-color: #ffffff; 
             border: 2px solid var(--c-text-main);
             overflow: hidden;
-            width: 100%; /* 가로는 카드 영역에 맞춰 유연하게 100% 꽉 찹니다. */
-            height: 280px; /* 세로는 모니터 화면에 딱 맞게 컴팩트하게 고정합니다. */
-            cursor: crosshair;
-            transition: border-radius 0.15s ease; 
+            width: 100%; 
+            height: 280px; 
+            cursor: none; /* 내장 포인터를 숨기고 사용자 브러시 가이드라인을 띄웁니다 */
+            border-radius: 6px;
         }
 
         canvas#drawCanvas {
@@ -170,6 +172,17 @@
             display: block;
             width: 100%;
             height: 100%;
+        }
+
+        /* 브러시 가이드라인 레이어 */
+        #brushGuide {
+            position: absolute;
+            border: 1px solid rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.1);
+            pointer-events: none; /* 마우스 이벤트를 통과시켜 드로잉 방해 금지 */
+            transform: translate(-50%, -50%); /* 중심 정렬 */
+            display: none;
+            z-index: 10;
         }
 
         .slider-panel {
@@ -191,7 +204,7 @@
             font-size: 0.85rem;
             font-weight: bold;
             color: var(--c-text-main);
-            width: 90px;
+            width: 110px;
             flex-shrink: 0;
         }
 
@@ -237,11 +250,12 @@
         }
         .btn-primary:hover { background-color: var(--c-accent-hover); }
 
-        .btn-secondary {
-            background-color: #E2E2E6;
-            color: var(--c-text-main);
+        /* 요청하신 대로 지우기 버튼을 레드 테마로 강조 수정했습니다 */
+        .btn-danger {
+            background-color: var(--c-btn-delete);
+            color: white;
         }
-        .btn-secondary:hover { background-color: #D2D2D6; }
+        .btn-danger:hover { background-color: var(--c-btn-delete-hover); }
 
         #image-upload { display: none; }
 
@@ -295,29 +309,40 @@
         }
 
         .results-container { margin-top: 25px; }
-        .result-row { margin-bottom: 12px; }
-        .result-label {
+        
+        /* ------------------ 요청하신 1개 통합 확률 바 디자인 시스템 ------------------ */
+        .unified-bar-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
             font-size: 0.9rem;
             font-weight: bold;
+            margin-bottom: 8px;
         }
-
-        .bar-outer {
+        
+        .unified-bar-outer {
+            width: 100%;
+            height: 24px;
+            border-radius: 12px;
             background-color: #E2E2E6;
-            height: 18px;
-            border-radius: 9px;
             overflow: hidden;
+            position: relative;
+            display: flex;
         }
 
-        .bar-inner {
+        .unified-bar-segment {
             height: 100%;
-            width: 0%;
             transition: width 0.3s ease-out;
         }
-        .bar-cat { background: linear-gradient(90deg, #3B82F6, var(--accent-cat)); }
-        .bar-dog { background: linear-gradient(90deg, #EF4444, var(--accent-dog)); }
+
+        .segment-cat {
+            background: linear-gradient(90deg, #F59E0B, var(--color-cat));
+            width: 50%;
+        }
+
+        .segment-dog {
+            background: linear-gradient(90deg, #818CF8, var(--color-dog));
+            width: 50%;
+        }
 
         #loadingOverlay {
             position: fixed;
@@ -396,6 +421,7 @@
                     
                     <div class="canvas-container" id="canvasFrame">
                         <canvas id="drawCanvas"></canvas>
+                        <div id="brushGuide"></div>
                     </div>
 
                     <div class="slider-panel">
@@ -405,9 +431,9 @@
                             <span class="slider-value" id="lineWidthVal">25 px</span>
                         </div>
                         <div class="slider-row">
-                            <span class="slider-label">테두리 곡 각도</span>
-                            <input type="range" id="borderRadiusSlider" class="slider-control" min="0" max="50" value="0">
-                            <span class="slider-value" id="borderRadiusVal">0%</span>
+                            <span class="slider-label">포인트 곡 각도</span>
+                            <input type="range" id="borderRadiusSlider" class="slider-control" min="0" max="50" value="50">
+                            <span class="slider-value" id="borderRadiusVal">50%</span>
                         </div>
                     </div>
 
@@ -416,7 +442,7 @@
                             <label class="upload-label" for="image-upload">이미지 업로드</label>
                             <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
                         </div>
-                        <button class="btn btn-secondary" onclick="clearCanvas()">지우기</button>
+                        <button class="btn btn-danger" onclick="clearCanvas()">지우기</button>
                     </div>
 
                     <p style="margin: 15px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main); width: 100%;">
@@ -476,28 +502,16 @@
                     </div>
 
                     <div class="results-container">
-                        <h3 style="margin-bottom: 8px; font-size: 0.95rem; color: var(--c-text-main); font-weight: bold;">실시간 예측 확률</h3>
-                        
-                        <div class="result-row">
-                            <div class="result-label">
-                                <span style="color: var(--accent-cat);">🐱 고양이 분류 확률</span>
-                                <span id="cat-prob" style="color: var(--accent-cat);">0.0%</span>
-                            </div>
-                            <div class="bar-outer">
-                                <div class="bar-inner bar-cat" id="cat-bar"></div>
-                            </div>
+                        <div class="unified-bar-header">
+                            <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">50.0%</span>)</span>
+                            <span style="color: var(--color-dog);">강아지 (<span id="dog-text-prob">50.0%</span>) 🐶</span>
                         </div>
-
-                        <div class="result-row">
-                            <div class="result-label">
-                                <span style="color: var(--accent-dog);">🐶 강아지 분류 확률</span>
-                                <span id="dog-prob" style="color: var(--accent-dog);">0.0%</span>
-                            </div>
-                            <div class="bar-outer">
-                                <div class="bar-inner bar-dog" id="dog-bar"></div>
-                            </div>
+                        <div class="unified-bar-outer">
+                            <div class="unified-bar-segment segment-cat" id="cat-bar-seg"></div>
+                            <div class="unified-bar-segment segment-dog" id="dog-bar-seg"></div>
                         </div>
                     </div>
+                    
                 </div>
             </div>
         </div>
@@ -601,28 +615,59 @@
         const radiusSlider = document.getElementById('borderRadiusSlider');
         const radiusValText = document.getElementById('borderRadiusVal');
         const canvasFrame = document.getElementById('canvasFrame');
+        const brushGuide = document.getElementById('brushGuide');
 
-        // 가로가 긴(1.5:1 비율) 와이드 캔버스 해상도 설계
         let currentWidth = 150; 
         let currentHeight = 100;
         let inputVector = [];
         const b = [0.08, -0.08]; 
 
+        // 가이드라인 브러시 크기 및 곡각도 반영 제어 함수
+        function updateBrushGuideStyle() {
+            const size = parseInt(widthSlider.value);
+            
+            // 캔버스의 스케일 비율을 구하여 가이드라인 크기도 화면에 맞게 동기화 보정
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = rect.width / canvas.width;
+            const visualSize = size * scaleX;
+
+            brushGuide.style.width = `${visualSize}px`;
+            brushGuide.style.height = `${visualSize}px`;
+            
+            const pct = parseInt(radiusSlider.value);
+            brushGuide.style.borderRadius = `${pct}%`;
+        }
+
         widthSlider.addEventListener('input', () => {
             widthValText.innerText = `${widthSlider.value} px`;
+            updateBrushGuideStyle();
         });
 
         radiusSlider.addEventListener('input', () => {
             const percent = radiusSlider.value;
             radiusValText.innerText = `${percent}%`;
-            canvasFrame.style.borderRadius = `${percent}%`;
+            updateBrushGuideStyle();
         });
 
-        // 캔버스 크기를 와이드 동적 화면 크기와 연동
+        // 가이드라인 포인터 트래킹 이벤트 리스너 바인딩
+        canvasFrame.addEventListener('mousemove', (e) => {
+            brushGuide.style.display = 'block';
+            const rect = canvasFrame.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            brushGuide.style.left = `${x}px`;
+            brushGuide.style.top = `${y}px`;
+        });
+
+        canvasFrame.addEventListener('mouseleave', () => {
+            brushGuide.style.display = 'none';
+        });
+
         function syncCanvasDisplaySize() {
             canvas.width = canvasFrame.clientWidth;
-            canvas.height = canvasFrame.clientHeight; // 280px로 강제 제어된 프레임 높이를 상속받아 그립니다.
+            canvas.height = canvasFrame.clientHeight; 
             clearCanvasContent();
+            updateBrushGuideStyle();
         }
 
         function clearCanvasContent() {
@@ -784,14 +829,14 @@
                 });
             }
 
-            document.getElementById('cat-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
-            document.getElementById('dog-prob').innerText = `${(prob_dog * 100).toFixed(1)}%`;
+            // 통합 확률 바 텍스트 및 퍼센티지 너비 제어
+            document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
+            document.getElementById('dog-text-prob').innerText = `${(prob_dog * 100).toFixed(1)}%`;
 
-            document.getElementById('cat-bar').style.width = `${prob_cat * 100}%`;
-            document.getElementById('dog-bar').style.width = `${prob_dog * 100}%`;
+            document.getElementById('cat-bar-seg').style.width = `${prob_cat * 100}%`;
+            document.getElementById('dog-bar-seg').style.width = `${prob_dog * 100}%`;
         }
 
-        // 마우스 절대좌표 보정 보강
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -810,8 +855,19 @@
             if (!isDrawing) return;
             e.preventDefault();
             const pos = getMousePos(e);
+            
             ctx.lineWidth = parseInt(widthSlider.value); 
-            ctx.lineCap = 'round';
+            
+            // 요청하신 포인트 곡 각도 값에 따라 원형 또는 직각 사각형 펜 끝 처리 제어
+            const pct = parseInt(radiusSlider.value);
+            if (pct >= 40) {
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            } else {
+                ctx.lineCap = 'square';
+                ctx.lineJoin = 'miter';
+            }
+            
             ctx.strokeStyle = '#000000'; 
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
