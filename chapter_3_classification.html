@@ -79,7 +79,7 @@
         }
 
         .container {
-            max-width: 1400px; /* 더 넓은 화면을 사용하기 위해 컨테이너 최대 크기를 늘렸습니다 */
+            max-width: 1400px; 
             margin: 0 auto;
             width: 100%;
             z-index: 2;
@@ -112,7 +112,6 @@
             line-height: 1.5;
         }
 
-        /* 1단계와 2단계 창의 가로 길이 합계가 전체 창의 너비가 되도록 1:1 비율 그리드 설정 */
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
@@ -154,17 +153,16 @@
             width: 100%;
         }
 
-        /* 캔버스 드로잉 창 가로 비율을 카드 크기에 맞게 100%로 키웠습니다 */
+        /* [핵심 수정] 가로세로 비율 고정을 완전 해제하고, 세로 높이를 280px로 딱 제한했습니다. */
         .canvas-container {
             position: relative;
-            background-color: #000;
+            background-color: #ffffff; 
             border: 2px solid var(--c-text-main);
-            border-radius: 6px;
             overflow: hidden;
-            width: 100%;
-            max-width: 480px; /* 너무 세로로 길어지는 것을 방지하는 최대 가로폭 */
-            aspect-ratio: 1 / 1; /* 항상 정사각 비율 유지 */
+            width: 100%; /* 가로는 카드 영역에 맞춰 유연하게 100% 꽉 찹니다. */
+            height: 280px; /* 세로는 모니터 화면에 딱 맞게 컴팩트하게 고정합니다. */
             cursor: crosshair;
+            transition: border-radius 0.15s ease; 
         }
 
         canvas#drawCanvas {
@@ -174,16 +172,55 @@
             height: 100%;
         }
 
+        .slider-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .slider-label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--c-text-main);
+            width: 90px;
+            flex-shrink: 0;
+        }
+
+        .slider-control {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            accent-color: var(--c-accent);
+        }
+
+        .slider-value {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--c-accent);
+            width: 45px;
+            text-align: right;
+        }
+
         .btn-group {
             display: flex;
             gap: 8px;
             width: 100%;
-            max-width: 480px;
         }
 
         .btn {
             flex: 1;
-            padding: 10px;
+            padding: 8px 10px; 
             border: none;
             border-radius: 4px;
             font-weight: bold;
@@ -191,6 +228,7 @@
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
+            box-sizing: border-box;
         }
 
         .btn-primary {
@@ -210,7 +248,7 @@
         .upload-label {
             display: block;
             width: 100%;
-            padding: 10px;
+            padding: 8px 10px; 
             background-color: #3B82F6;
             color: white;
             text-align: center;
@@ -225,7 +263,6 @@
 
         .spec-table {
             width: 100%;
-            max-width: 480px;
             border-collapse: collapse;
             margin-top: 10px;
             font-size: 0.85rem;
@@ -321,10 +358,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 아래쪽 구분선 및 글자 푸터를 완전 삭제했습니다 */
-        footer {
-            display: none;
-        }
+        footer { display: none; }
     </style>
 </head>
 <body>
@@ -357,34 +391,49 @@
                 <h2>1단계: 실시간 이미지 규격 감지</h2>
                 <div class="interactive-zone">
                     <p style="margin: 0; color: var(--c-text-muted); font-size: 0.8rem; text-align: center; line-height: 1.4;">
-                        캔버스 드로잉(동적 생성) 또는<br>어떤 해상도의 이미지든 제약 없이 로드해 보세요!
+                        캔버스 드로잉(동적 생성) 또는 어떤 해상도의 이미지든 제약 없이 로드해 보세요!
                     </p>
                     
-                    <div class="canvas-container">
-                        <canvas id="drawCanvas" width="500" height="500"></canvas>
+                    <div class="canvas-container" id="canvasFrame">
+                        <canvas id="drawCanvas"></canvas>
+                    </div>
+
+                    <div class="slider-panel">
+                        <div class="slider-row">
+                            <span class="slider-label">드로잉 굵기</span>
+                            <input type="range" id="lineWidthSlider" class="slider-control" min="5" max="80" value="25">
+                            <span class="slider-value" id="lineWidthVal">25 px</span>
+                        </div>
+                        <div class="slider-row">
+                            <span class="slider-label">테두리 곡 각도</span>
+                            <input type="range" id="borderRadiusSlider" class="slider-control" min="0" max="50" value="0">
+                            <span class="slider-value" id="borderRadiusVal">0%</span>
+                        </div>
                     </div>
 
                     <div class="btn-group">
+                        <div style="flex: 1;">
+                            <label class="upload-label" for="image-upload">이미지 업로드</label>
+                            <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
+                        </div>
                         <button class="btn btn-secondary" onclick="clearCanvas()">지우기</button>
-                        <label class="upload-label" for="image-upload">이미지 업로드</label>
-                        <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
                     </div>
 
-                    <p style="margin: 15px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main); width: 100%; max-width: 480px; margin-left: auto; margin-right: auto;">
+                    <p style="margin: 15px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main); width: 100%;">
                         동적 입력 데이터 규격 (Specification):
                     </p>
                     <table class="spec-table">
                         <tr>
                             <td>감지된 이미지 해상도</td>
-                            <td class="spec-val" id="spec-resolution">100 x 100 px</td>
+                            <td class="spec-val" id="spec-resolution">150 x 100 px</td>
                         </tr>
                         <tr>
                             <td>입력 벡터 차원 (행렬 \(X\))</td>
-                            <td class="spec-val" id="spec-vector">1 × 10,000 차원</td>
+                            <td class="spec-val" id="spec-vector">1 × 15,000 차원</td>
                         </tr>
                         <tr>
                             <td>실시간 생성 가중치 크기 (행렬 \(W\))</td>
-                            <td class="spec-val" id="spec-weights">10,000 × 2 차원</td>
+                            <td class="spec-val" id="spec-weights">15,000 × 2 차원</td>
                         </tr>
                     </table>
                 </div>
@@ -547,10 +596,39 @@
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
 
-        let currentWidth = 100;
+        const widthSlider = document.getElementById('lineWidthSlider');
+        const widthValText = document.getElementById('lineWidthVal');
+        const radiusSlider = document.getElementById('borderRadiusSlider');
+        const radiusValText = document.getElementById('borderRadiusVal');
+        const canvasFrame = document.getElementById('canvasFrame');
+
+        // 가로가 긴(1.5:1 비율) 와이드 캔버스 해상도 설계
+        let currentWidth = 150; 
         let currentHeight = 100;
         let inputVector = [];
         const b = [0.08, -0.08]; 
+
+        widthSlider.addEventListener('input', () => {
+            widthValText.innerText = `${widthSlider.value} px`;
+        });
+
+        radiusSlider.addEventListener('input', () => {
+            const percent = radiusSlider.value;
+            radiusValText.innerText = `${percent}%`;
+            canvasFrame.style.borderRadius = `${percent}%`;
+        });
+
+        // 캔버스 크기를 와이드 동적 화면 크기와 연동
+        function syncCanvasDisplaySize() {
+            canvas.width = canvasFrame.clientWidth;
+            canvas.height = canvasFrame.clientHeight; // 280px로 강제 제어된 프레임 높이를 상속받아 그립니다.
+            clearCanvasContent();
+        }
+
+        function clearCanvasContent() {
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
         function clearInputBuffer(w, h) {
             currentWidth = w;
@@ -569,7 +647,7 @@
                     const rRatio = r / h;
                     const cRatio = c / w;
 
-                    if ((rRatio >= 0.05 && rRatio <= 0.3) && ((cRatio >= 0.15 && cRatio <= 0.35) || (cRatio >= 0.65 && cRatio <= 0.85))) {
+                    if ((rRatio >= 0.05 && rRatio <= 0.3) && ((cRatio >= 0.22 && cRatio <= 0.38) || (cRatio >= 0.62 && cRatio <= 0.78))) {
                         catW += 1.8;
                         dogW -= 0.9;
                     }
@@ -577,16 +655,16 @@
                         catW += 0.5;
                     }
 
-                    if ((rRatio >= 0.2 && rRatio <= 0.55) && (cRatio <= 0.2 || cRatio >= 0.8)) {
+                    if ((rRatio >= 0.2 && rRatio <= 0.55) && (cRatio <= 0.22 || cRatio >= 0.78)) {
                         dogW += 1.5;
                         catW -= 0.6;
                     }
-                    if (rRatio >= 0.6 && rRatio <= 0.85 && cRatio >= 0.38 && cRatio <= 0.62) {
+                    if (rRatio >= 0.6 && rRatio <= 0.85 && cRatio >= 0.42 && cRatio <= 0.58) {
                         dogW += 2.0;
                         catW -= 1.1;
                     }
 
-                    if (rRatio <= 0.22 && cRatio >= 0.4 && cRatio <= 0.6) {
+                    if (rRatio <= 0.22 && cRatio >= 0.42 && cRatio <= 0.58) {
                         catW -= 1.5;
                     }
 
@@ -603,12 +681,10 @@
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × 2 차원`;
 
             const mathBox = document.getElementById('math-formula-box');
-            // MathJax v3 전용 수식 갱신 코드 적용 (문법 노출 해결)
             mathBox.innerHTML = `\\[Z_{(1 \\times 2)} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \\times 2)}\\]`;
         }
 
         function processDrawing() {
-            // 실제 드로잉 데이터를 설정된 가로/세로 해상도로 캡처
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = currentWidth;
             tempCanvas.height = currentHeight;
@@ -618,7 +694,8 @@
             const imgData = tempCtx.getImageData(0, 0, currentWidth, currentHeight);
             
             for (let i = 0; i < currentWidth * currentHeight; i++) {
-                inputVector[i] = imgData.data[i * 4] / 255; 
+                const rVal = imgData.data[i * 4];
+                inputVector[i] = 1.0 - (rVal / 255.0); 
             }
             classify();
         }
@@ -637,8 +714,7 @@
                         currentWidth = img.width;
                         currentHeight = img.height;
                         
-                        ctx.fillStyle = 'black';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        clearCanvasContent();
                         const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
                         const x = (canvas.width / 2) - (img.width / 2) * scale;
                         const y = (canvas.height / 2) - (img.height / 2) * scale;
@@ -656,7 +732,8 @@
                             const r = imgData.data[i * 4];
                             const g = imgData.data[i * 4 + 1];
                             const bVal = imgData.data[i * 4 + 2];
-                            inputVector[i] = (r + g + bVal) / 3 / 255; 
+                            const brightness = (r + g + bVal) / 3 / 255;
+                            inputVector[i] = 1.0 - brightness; 
                         }
 
                         updateSpecDisplay();
@@ -691,21 +768,19 @@
             const prob_cat = exp_cat / sum_exp;
             const prob_dog = exp_dog / sum_exp;
 
-            // MathJax가 바뀐 문장 속 텍스트 수식을 올바르게 읽을 수 있도록 동적 HTML 교체
             document.getElementById('linear-calc-output').innerHTML = 
                 `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
 
             document.getElementById('softmax-calc-output').innerHTML = 
                 `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
 
-            // 중요: 동적 데이터 갱신 후 MathJax 리렌더링 비동기 강제 트리거 (수식 깨짐 해결)
             if (window.MathJax && MathJax.typesetPromise) {
                 MathJax.typesetPromise([
                     document.getElementById('math-formula-box'),
                     document.getElementById('linear-calc-output-container'),
                     document.getElementById('softmax-calc-output-container')
                 ]).catch(function (err) {
-                    console.log("MathJax typesetting failed: " + err.message);
+                    console.log("MathJax error: " + err.message);
                 });
             }
 
@@ -716,16 +791,12 @@
             document.getElementById('dog-bar').style.width = `${prob_dog * 100}%`;
         }
 
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // 정사각 가로세로 동적 계산
+        // 마우스 절대좌표 보정 보강
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             
-            // 캔버스 자체 크기와 렌더링 스케일을 일치시키는 비율 보정식 적용
             return { 
                 x: (clientX - rect.left) * (canvas.width / rect.width), 
                 y: (clientY - rect.top) * (canvas.height / rect.height) 
@@ -739,9 +810,9 @@
             if (!isDrawing) return;
             e.preventDefault();
             const pos = getMousePos(e);
-            ctx.lineWidth = 35; // 캔버스가 커진 비례에 맞춰 드로잉 선 두께를 보정했습니다.
+            ctx.lineWidth = parseInt(widthSlider.value); 
             ctx.lineCap = 'round';
-            ctx.strokeStyle = 'white';
+            ctx.strokeStyle = '#000000'; 
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
             ctx.beginPath();
@@ -759,14 +830,21 @@
         canvas.addEventListener('touchend', stopDrawing);
 
         function clearCanvas() {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            clearInputBuffer(100, 100);
+            clearCanvasContent();
+            clearInputBuffer(150, 100);
             processDrawing();
         }
 
-        clearInputBuffer(100, 100);
-        processDrawing();
+        window.addEventListener('resize', () => {
+            syncCanvasDisplaySize();
+            processDrawing();
+        });
+        
+        setTimeout(() => {
+            syncCanvasDisplaySize();
+            clearInputBuffer(150, 100);
+            processDrawing();
+        }, 100);
     </script>
 </body>
 </html>
