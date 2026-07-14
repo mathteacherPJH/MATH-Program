@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인공지능 이미지 분류의 수학적 원리 시각화</title>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/Mathjax.js"></script>
     <style>
         :root {
-            /* 공유해주신 디자인과 통일성을 맞춘 딥 그린 & 소프트 베이지 테마 컬러 */
             --c-bg-main: #FBF9F4;
             --c-bg-card: #FDFDFB;
             --c-text-main: #1A3D2F;
@@ -18,8 +16,8 @@
             --c-accent: #2A5C45;
             --c-accent-hover: #1E4331;
             
-            --accent-cat: #2563EB; /* 고양이 고유 인디고 블루 */
-            --accent-dog: #B91C1C; /* 강아지 고유 인디안 레드 */
+            --accent-cat: #2563EB; 
+            --accent-dog: #B91C1C; 
         }
 
         body {
@@ -38,7 +36,6 @@
             overflow-x: hidden;
         }
 
-        /* 1. 인터랙티브 신경망 애니메이션용 캔버스 고정 */
         #bgCanvas {
             position: absolute;
             top: 0;
@@ -49,7 +46,6 @@
             pointer-events: none;
         }
 
-        /* 상단 대시보드 헤더 영역 및 구분선 */
         .header-container {
             display: flex;
             justify-content: space-between;
@@ -85,7 +81,6 @@
             letter-spacing: 2px;
         }
 
-        /* 메인 전체 레이아웃 */
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -93,7 +88,6 @@
             z-index: 2;
         }
 
-        /* 해상도 처리 인포메이션 카드 */
         .info-card {
             background-color: var(--c-bg-card);
             border: 1px dashed var(--c-accent);
@@ -123,7 +117,6 @@
             line-height: 1.5;
         }
 
-        /* 가로 2분할 그리드 */
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
@@ -137,7 +130,6 @@
             }
         }
 
-        /* 모듈형 화이트 카드 디자인 */
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
@@ -157,7 +149,6 @@
             color: var(--c-text-main);
         }
 
-        /* 인터랙티브 캔버스 구역 */
         .interactive-zone {
             display: flex;
             flex-direction: column;
@@ -218,7 +209,6 @@
             background-color: #D2D2D6;
         }
 
-        /* 업로더 커스텀 */
         #image-upload {
             display: none;
         }
@@ -242,7 +232,6 @@
             background-color: #2563EB;
         }
 
-        /* 14x14 다운샘플링 행렬 시각화 */
         .matrix-grid {
             display: grid;
             grid-template-columns: repeat(14, 1fr);
@@ -260,7 +249,6 @@
             border-radius: 1px;
         }
 
-        /* 계산 구조 및 하부 디자인 */
         .math-flow {
             display: flex;
             flex-direction: column;
@@ -278,7 +266,6 @@
             color: var(--c-text-main);
         }
 
-        /* 실시간 확률 차트 */
         .results-container {
             margin-top: 25px;
         }
@@ -316,7 +303,6 @@
             background: linear-gradient(90deg, #EF4444, var(--accent-dog));
         }
 
-        /* 가중치 필터 패널 */
         .weights-tabs {
             display: flex;
             gap: 8px;
@@ -521,7 +507,6 @@
     </footer>
 
     <script>
-        // --- 딥 그린 톤 조율 인터랙티브 배경 엔진 ---
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas.getContext('2d');
         let particles = [];
@@ -529,7 +514,7 @@
 
         function resizeBgCanvas() {
             bgCanvas.width = window.innerWidth;
-            bgCanvas.height = document.documentElement.scrollHeight; // 전체 스크롤 영역 대응
+            bgCanvas.height = document.documentElement.scrollHeight; 
             initParticles();
         }
 
@@ -604,7 +589,7 @@
 
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
-            mouse.y = e.clientY + window.scrollY; // 스크롤 보정
+            mouse.y = e.clientY + window.scrollY; 
         });
         window.addEventListener('mouseleave', () => {
             mouse.x = null;
@@ -612,13 +597,11 @@
         });
         window.addEventListener('resize', resizeBgCanvas);
         
-        // 페이지 로드 완료 후 캔버스 높이 최적화
         window.addEventListener('load', () => {
             resizeBgCanvas();
             animateParticles();
         });
 
-        // ------------------ 분류 시뮬레이션 JS 엔진 ------------------
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -626,7 +609,6 @@
         const GRID_SIZE = 14;
         let inputVector = new Array(GRID_SIZE * GRID_SIZE).fill(0);
 
-        // 이미지 특징 검출 가중치 구조 설계
         const W = [];
         const b = [0.05, -0.05]; 
 
@@ -636,28 +618,23 @@
                     let catW = 0;
                     let dogW = 0;
 
-                    // 고양이: 뾰족한 귀 (상단 좌우 영역 양수 부여)
                     if ((r >= 1 && r <= 4) && ((c >= 2 && c <= 4) || (c >= 9 && c <= 11))) {
                         catW += 1.6;
                         dogW -= 0.8;
                     }
-                    // 고양이: 수염과 둥근 볼선
                     if (r >= 6 && r <= 9 && c >= 3 && c <= 10) {
                         catW += 0.5;
                     }
 
-                    // 강아지: 양 끝으로 축 처진 귀
                     if ((r >= 3 && r <= 7) && (c <= 2 || c >= 11)) {
                         dogW += 1.3;
                         catW -= 0.5;
                     }
-                    // 강아지: 중앙 하단에 뭉뚝하게 튀어나온 머즐과 코
                     if (r >= 8 && r <= 11 && c >= 5 && c <= 8) {
                         dogW += 1.9;
                         catW -= 1.0;
                     }
 
-                    // 양 귀 사이 간격 비우기 (일자 수평선 방지 필터)
                     if (r <= 3 && c >= 5 && c <= 8) {
                         catW -= 1.3;
                     }
@@ -693,10 +670,10 @@
                 
                 if (weightVal > 0) {
                     const alpha = Math.min(weightVal / 1.5, 1.0);
-                    pixel.style.backgroundColor = `rgba(59, 130, 246, ${alpha})`; // 양의 영향
+                    pixel.style.backgroundColor = `rgba(59, 130, 246, ${alpha})`; 
                 } else if (weightVal < 0) {
                     const alpha = Math.min(Math.abs(weightVal) / 1.5, 1.0);
-                    pixel.style.backgroundColor = `rgba(239, 68, 68, ${alpha})`; // 음의 영향
+                    pixel.style.backgroundColor = `rgba(239, 68, 68, ${alpha})`; 
                 } else {
                     pixel.style.backgroundColor = '#E2E2E6';
                 }
@@ -710,7 +687,6 @@
             renderWeights(target);
         }
 
-        // 마우스 드로잉 메커니즘
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -767,7 +743,6 @@
             processImage();
         }
 
-        // 원본 이미지를 14x14 크기로 실시간 축소 연산하는 핵심 축소 알고리즘
         function processImage() {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = GRID_SIZE;
@@ -790,7 +765,6 @@
             classify();
         }
 
-        // 고해상도 이미지 데이터의 비동기 업로드 및 자동 스케일링 전처리
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -814,7 +788,6 @@
             reader.readAsDataURL(file);
         }
 
-        // 선형 조합 및 소프트맥스 함수 분류 예측 연산
         function classify() {
             let z_cat = b[0];
             let z_dog = b[1];
@@ -831,7 +804,6 @@
             const prob_cat = exp_cat / sum_exp;
             const prob_dog = exp_dog / sum_exp;
 
-            // 라텍스 수식 및 텍스트 데이터 갱신
             document.getElementById('linear-calc-output').innerHTML = 
                 `Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})`;
 
@@ -843,7 +815,6 @@
                 MathJax.typesetPromise();
             }
 
-            // 시각화 퍼센티지 바 차트 업데이트
             document.getElementById('cat-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
             document.getElementById('dog-prob').innerText = `${(prob_dog * 100).toFixed(1)}%`;
 
