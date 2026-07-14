@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인공지능 이미지 분류의 수학적 원리 시각화</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/Mathjax.js"></script>
+    <style>
+        :root {
+            /* 공유해주신 디자인과 통일성을 맞춘 딥 그린 & 소프트 베이지 테마 컬러 */
+            --c-bg-main: #FBF9F4;
+            --c-bg-card: #FDFDFB;
+            --c-text-main: #1A3D2F;
+            --c-text-muted: #5A7365;
+            --c-border: #E2E2E6;
+            --c-tab-active: #EFEFED;
+            --c-accent: #2A5C45;
+            --c-accent-hover: #1E4331;
+            
+            --accent-cat: #2563EB; /* 고양이 고유 인디고 블루 */
+            --accent-dog: #B91C1C; /* 강아지 고유 인디안 레드 */
+        }
+
+        body {
+            font-family: "Malgun Gothic", -apple-system, sans-serif;
+            font-size: 16px;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 1. 인터랙티브 신경망 애니메이션용 캔버스 고정 */
+        #bgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 상단 대시보드 헤더 영역 및 구분선 */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px 15px 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--c-border);
+            z-index: 2;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: var(--c-text-main);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .btn-back:hover {
+            opacity: 0.7;
+        }
+
+        .header-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-text-main);
+            letter-spacing: 2px;
+        }
+
+        /* 메인 전체 레이아웃 */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+            z-index: 2;
+        }
+
+        /* 해상도 처리 인포메이션 카드 */
+        .info-card {
+            background-color: var(--c-bg-card);
+            border: 1px dashed var(--c-accent);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(26, 61, 47, 0.03);
+        }
+
+        .info-card-icon {
+            font-size: 1.8rem;
+        }
+
+        .info-card-text h3 {
+            margin: 0 0 4px 0;
+            color: var(--c-accent);
+            font-size: 1rem;
+        }
+
+        .info-card-text p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--c-text-muted);
+            line-height: 1.5;
+        }
+
+        /* 가로 2분할 그리드 */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 992px) {
+            .grid-layout {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+
+        /* 모듈형 화이트 카드 디자인 */
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(26, 61, 47, 0.04);
+            box-sizing: border-box;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.15rem;
+            border-left: 4px solid var(--c-accent);
+            padding-left: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--c-text-main);
+        }
+
+        /* 인터랙티브 캔버스 구역 */
+        .interactive-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .canvas-container {
+            position: relative;
+            background-color: #000;
+            border: 2px solid var(--c-text-main);
+            border-radius: 6px;
+            overflow: hidden;
+            width: 250px;
+            height: 250px;
+            cursor: crosshair;
+        }
+
+        canvas#drawCanvas {
+            image-rendering: pixelated;
+            display: block;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--c-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--c-accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: #E2E2E6;
+            color: var(--c-text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: #D2D2D6;
+        }
+
+        /* 업로더 커스텀 */
+        #image-upload {
+            display: none;
+        }
+
+        .upload-label {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #3B82F6;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background 0.2s;
+        }
+
+        .upload-label:hover {
+            background-color: #2563EB;
+        }
+
+        /* 14x14 다운샘플링 행렬 시각화 */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 1px;
+            background-color: var(--c-border);
+            padding: 3px;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .matrix-pixel {
+            aspect-ratio: 1;
+            background-color: #000;
+            border-radius: 1px;
+        }
+
+        /* 계산 구조 및 하부 디자인 */
+        .math-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .math-box {
+            background-color: #F8F9FA;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--c-border);
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            border-left: 3px solid var(--c-accent);
+            color: var(--c-text-main);
+        }
+
+        /* 실시간 확률 차트 */
+        .results-container {
+            margin-top: 25px;
+        }
+
+        .result-row {
+            margin-bottom: 12px;
+        }
+
+        .result-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .bar-outer {
+            background-color: #E2E2E6;
+            height: 18px;
+            border-radius: 9px;
+            overflow: hidden;
+        }
+
+        .bar-inner {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease-out;
+        }
+
+        .bar-cat {
+            background: linear-gradient(90deg, #3B82F6, var(--accent-cat));
+        }
+
+        .bar-dog {
+            background: linear-gradient(90deg, #EF4444, var(--accent-dog));
+        }
+
+        /* 가중치 필터 패널 */
+        .weights-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tab-btn {
+            padding: 6px 14px;
+            background-color: #E2E2E6;
+            border: none;
+            color: var(--c-text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--c-accent);
+            color: white;
+        }
+
+        .weights-grid {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 1px;
+            background-color: var(--c-border);
+            padding: 3px;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .weight-pixel {
+            aspect-ratio: 1;
+            border-radius: 1px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--c-text-muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-box {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--c-text-muted);
+            border-top: 1px solid var(--c-border);
+            margin-top: 20px;
+            font-size: 0.85rem;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="header-container">
+        <button class="btn-back" onclick="history.back()">← BACK</button>
+        <div class="header-title">IMAGE CLASSIFICATION MATHEMATICS</div>
+    </div>
+
+    <div class="container">
+        <div class="info-card">
+            <span class="info-card-icon">⚙️</span>
+            <div class="info-card-text">
+                <h3>초고해상도 이미지 처리 원리 (최대 2000x2000px+ 지원)</h3>
+                <p>
+                    수백만 화소의 고해상도 이미지라도, 전처리 필터를 거쳐 연산 가능한 규격(\(14 \times 14\))으로 <strong>다운샘플링(Downsampling)</strong>된 후 선형 연산에 주입됩니다. 하단 업로더를 통해 실시간 이미지 변환 과정을 확인해 보세요.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <div class="card">
+                <h2>1단계: 데이터 입력 & 전처리</h2>
+                <div class="interactive-zone">
+                    <p style="margin: 0; color: var(--c-text-muted); font-size: 0.8rem; text-align: center; line-height: 1.4;">
+                        캔버스에 그림을 직접 그리거나<br>우측 업로드 버튼으로 이미지를 올려보세요!
+                    </p>
+                    
+                    <div class="canvas-container">
+                        <canvas id="drawCanvas" width="250" height="250"></canvas>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="clearCanvas()">지우기</button>
+                        <label class="upload-label" for="image-upload">이미지 업로드</label>
+                        <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+
+                    <p style="margin: 10px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main);">
+                        전처리된 \(14 \times 14\) 입력 데이터 행렬 (\(X\)):
+                    </p>
+                    <div class="matrix-grid" id="inputMatrix"></div>
+                </div>
+            </div>
+
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h2>2단계: 수학적 행렬 변환 및 예측</h2>
+                    
+                    <div class="math-flow">
+                        <div>
+                            <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형 변환 (Linear Combination)</h3>
+                            <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
+                                차원 펼치기(Flatten)가 완료된 행렬 \(X (1 \times 196)\)에 미리 학습된 가중치 \(W\)와 편향 \(b\)를 연산하여 각 클래스의 원시 점수를 뽑아냅니다.
+                            </p>
+                            <div class="math-box">
+                                $$Z = X \cdot W + b$$
+                                <span id="linear-calc-output" style="color: var(--c-accent); font-size: 0.85rem; font-weight: bold;">계산 중...</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 style="margin: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">② 소프트맥스 확률 사상 (Softmax)</h3>
+                            <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
+                                계산된 임의 범위의 실수 값 \(Z\)를 모두 더해 1(100%)이 되도록 소프트맥스 함수를 활용해 확률값으로 압축합니다.
+                            </p>
+                            <div class="math-box">
+                                $$P_c = \frac{e^{z_c}}{\sum_{j} e^{z_j}}$$
+                                <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">계산 중...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="results-container">
+                        <h3 style="margin-bottom: 8px; font-size: 0.95rem; color: var(--c-text-main); font-weight: bold;">분류 예측 확률</h3>
+                        
+                        <div class="result-row">
+                            <div class="result-label">
+                                <span style="color: var(--accent-cat);">🐱 고양이 확률 (Cat)</span>
+                                <span id="cat-prob" style="color: var(--accent-cat);">0.0%</span>
+                            </div>
+                            <div class="bar-outer">
+                                <div class="bar-inner bar-cat" id="cat-bar"></div>
+                            </div>
+                        </div>
+
+                        <div class="result-row">
+                            <div class="result-label">
+                                <span style="color: var(--accent-dog);">🐶 강아지 확률 (Dog)</span>
+                                <span id="dog-prob" style="color: var(--accent-dog);">0.0%</span>
+                            </div>
+                            <div class="bar-outer">
+                                <div class="bar-inner bar-dog" id="dog-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px; border-top: 1px solid var(--c-border); padding-top: 15px;">
+                    <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-text-main); font-weight: bold;">인공지능 내부 필터 가중치(\(W\)) 엿보기</h3>
+                    <p style="font-size: 0.8rem; color: var(--c-text-muted); margin-bottom: 10px; line-height: 1.4;">
+                        특정 동물이라고 판단하게 만드는 핵심 픽셀 활성 영역입니다. (파란색 영역에 드로잉이 겹치면 해당 동물의 확률 상승)
+                    </p>
+                    <div class="weights-tabs">
+                        <button class="tab-btn active" id="tab-cat" onclick="switchWeightTab('cat')">고양이 필터 공간 가중치</button>
+                        <button class="tab-btn" id="tab-dog" onclick="switchWeightTab('dog')">강아지 필터 공간 가중치</button>
+                    </div>
+                    <div class="weights-grid" id="weightsMatrix"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-box" style="background-color: #3B82F6;"></div>
+                            <span>양의 가중치 (+ 자극)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background-color: #E2E2E6;"></div>
+                            <span>0 부근 (영향 없음)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background-color: #EF4444;"></div>
+                            <span>음의 가중치 (- 억제)</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>수학 교육 및 인공지능 시뮬레이션 인터랙티브 대시보드</p>
+    </footer>
+
+    <script>
+        // --- 딥 그린 톤 조율 인터랙티브 배경 엔진 ---
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 110 };
+
+        function resizeBgCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = document.documentElement.scrollHeight; // 전체 스크롤 영역 대응
+            initParticles();
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * bgCanvas.width;
+                this.y = Math.random() * bgCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.4; 
+                this.vy = (Math.random() - 0.5) * 0.4;
+                this.baseRadius = Math.random() * 2 + 1.5; 
+                this.radius = this.baseRadius;
+            }
+            draw() {
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                bgCtx.fillStyle = 'rgba(42, 92, 69, 0.15)';
+                bgCtx.fill();
+            }
+            update() {
+                if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+                
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = this.x - mouse.x;
+                    let dy = this.y - mouse.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < mouse.radius) {
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        let angle = Math.atan2(dy, dx);
+                        this.x += Math.cos(angle) * force * 2;
+                        this.y += Math.sin(angle) * force * 2;
+                    }
+                }
+                this.draw();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = Math.floor((bgCanvas.width * bgCanvas.height) / 13000);
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                for (let j = i + 1; j < particles.length; j++) {
+                    let dx = particles[i].x - particles[j].x;
+                    let dy = particles[i].y - particles[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 100) {
+                        let alpha = (100 - dist) / 100 * 0.12;
+                        bgCtx.beginPath();
+                        bgCtx.moveTo(particles[i].x, particles[i].y);
+                        bgCtx.lineTo(particles[j].x, particles[j].y);
+                        bgCtx.strokeStyle = `rgba(42, 92, 69, ${alpha})`;
+                        bgCtx.lineWidth = 0.8;
+                        bgCtx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY + window.scrollY; // 스크롤 보정
+        });
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+        window.addEventListener('resize', resizeBgCanvas);
+        
+        // 페이지 로드 완료 후 캔버스 높이 최적화
+        window.addEventListener('load', () => {
+            resizeBgCanvas();
+            animateParticles();
+        });
+
+        // ------------------ 분류 시뮬레이션 JS 엔진 ------------------
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        const GRID_SIZE = 14;
+        let inputVector = new Array(GRID_SIZE * GRID_SIZE).fill(0);
+
+        // 이미지 특징 검출 가중치 구조 설계
+        const W = [];
+        const b = [0.05, -0.05]; 
+
+        function initWeights() {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    let catW = 0;
+                    let dogW = 0;
+
+                    // 고양이: 뾰족한 귀 (상단 좌우 영역 양수 부여)
+                    if ((r >= 1 && r <= 4) && ((c >= 2 && c <= 4) || (c >= 9 && c <= 11))) {
+                        catW += 1.6;
+                        dogW -= 0.8;
+                    }
+                    // 고양이: 수염과 둥근 볼선
+                    if (r >= 6 && r <= 9 && c >= 3 && c <= 10) {
+                        catW += 0.5;
+                    }
+
+                    // 강아지: 양 끝으로 축 처진 귀
+                    if ((r >= 3 && r <= 7) && (c <= 2 || c >= 11)) {
+                        dogW += 1.3;
+                        catW -= 0.5;
+                    }
+                    // 강아지: 중앙 하단에 뭉뚝하게 튀어나온 머즐과 코
+                    if (r >= 8 && r <= 11 && c >= 5 && c <= 8) {
+                        dogW += 1.9;
+                        catW -= 1.0;
+                    }
+
+                    // 양 귀 사이 간격 비우기 (일자 수평선 방지 필터)
+                    if (r <= 3 && c >= 5 && c <= 8) {
+                        catW -= 1.3;
+                    }
+
+                    W.push([catW, dogW]);
+                }
+            }
+        }
+
+        initWeights();
+
+        function initGrids() {
+            const inputGrid = document.getElementById('inputMatrix');
+            inputGrid.innerHTML = '';
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'matrix-pixel';
+                pixel.id = `input-pixel-${i}`;
+                inputGrid.appendChild(pixel);
+            }
+            renderWeights('cat');
+        }
+
+        function renderWeights(target) {
+            const weightsGrid = document.getElementById('weightsMatrix');
+            weightsGrid.innerHTML = '';
+            const colIndex = target === 'cat' ? 0 : 1;
+
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'weight-pixel';
+                const weightVal = W[i][colIndex];
+                
+                if (weightVal > 0) {
+                    const alpha = Math.min(weightVal / 1.5, 1.0);
+                    pixel.style.backgroundColor = `rgba(59, 130, 246, ${alpha})`; // 양의 영향
+                } else if (weightVal < 0) {
+                    const alpha = Math.min(Math.abs(weightVal) / 1.5, 1.0);
+                    pixel.style.backgroundColor = `rgba(239, 68, 68, ${alpha})`; // 음의 영향
+                } else {
+                    pixel.style.backgroundColor = '#E2E2E6';
+                }
+                weightsGrid.appendChild(pixel);
+            }
+        }
+
+        function switchWeightTab(target) {
+            document.getElementById('tab-cat').classList.toggle('active', target === 'cat');
+            document.getElementById('tab-dog').classList.toggle('active', target === 'dog');
+            renderWeights(target);
+        }
+
+        // 마우스 드로잉 메커니즘
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+            processImage();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            
+            ctx.lineWidth = 20;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'white';
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+
+            processImage();
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function clearCanvas() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            processImage();
+        }
+
+        // 원본 이미지를 14x14 크기로 실시간 축소 연산하는 핵심 축소 알고리즘
+        function processImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = GRID_SIZE;
+            tempCanvas.height = GRID_SIZE;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.drawImage(canvas, 0, 0, 250, 250, 0, 0, GRID_SIZE, GRID_SIZE);
+            const imgData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
+            
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                const val = imgData.data[i * 4] / 255; 
+                inputVector[i] = val;
+                
+                const pixelEl = document.getElementById(`input-pixel-${i}`);
+                if (pixelEl) {
+                    const colorVal = Math.round(val * 255);
+                    pixelEl.style.backgroundColor = `rgb(${colorVal}, ${colorVal}, ${colorVal})`;
+                }
+            }
+            classify();
+        }
+
+        // 고해상도 이미지 데이터의 비동기 업로드 및 자동 스케일링 전처리
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                    const x = (canvas.width / 2) - (img.width / 2) * scale;
+                    const y = (canvas.height / 2) - (img.height / 2) * scale;
+                    
+                    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                    processImage();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 선형 조합 및 소프트맥스 함수 분류 예측 연산
+        function classify() {
+            let z_cat = b[0];
+            let z_dog = b[1];
+
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                z_cat += inputVector[i] * W[i][0];
+                z_dog += inputVector[i] * W[i][1];
+            }
+
+            const exp_cat = Math.exp(z_cat);
+            const exp_dog = Math.exp(z_dog);
+            const sum_exp = exp_cat + exp_dog;
+
+            const prob_cat = exp_cat / sum_exp;
+            const prob_dog = exp_dog / sum_exp;
+
+            // 라텍스 수식 및 텍스트 데이터 갱신
+            document.getElementById('linear-calc-output').innerHTML = 
+                `Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})`;
+
+            document.getElementById('softmax-calc-output').innerHTML = 
+                `P_{cat} = \\frac{e^{${z_cat.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_cat * 100).toFixed(1)}\\% <br>` +
+                `P_{dog} = \\frac{e^{${z_dog.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_dog * 100).toFixed(1)}\\%`;
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+
+            // 시각화 퍼센티지 바 차트 업데이트
+            document.getElementById('cat-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
+            document.getElementById('dog-prob').innerText = `${(prob_dog * 100).toFixed(1)}%`;
+
+            document.getElementById('cat-bar').style.width = `${prob_cat * 100}%`;
+            document.getElementById('dog-bar').style.width = `${prob_dog * 100}%`;
+        }
+
+        initGrids();
+        processImage();
+    </script>
+</body>
+</html>
