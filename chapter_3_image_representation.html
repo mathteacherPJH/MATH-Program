@@ -238,14 +238,14 @@
             padding: 25px 40px;
             display: flex;
             align-items: center;
-            gap: 45px;
+            gap: 35px;
             box-sizing: border-box;
             justify-content: center;
         }
 
-        /* 스크린 구조 */
+        /* 정보 표기 스크린 (가독성 개선을 위해 가로 폭 대폭 확장) */
         .tracker-info-screen {
-            width: 320px;
+            width: 420px; /* 기존 320px에서 420px로 확장 */
             padding: 25px;
             border-radius: 8px;
             background-color: #FAFAFA;
@@ -253,7 +253,7 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 20px;
         }
 
         .info-row {
@@ -261,7 +261,7 @@
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px dashed var(--c-border);
-            padding-bottom: 10px;
+            padding-bottom: 12px;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -272,13 +272,15 @@
             font-size: 15px;
             font-weight: bold;
             color: var(--c-text-muted);
+            white-space: nowrap;
         }
 
         .info-val {
-            font-size: 18px;
+            font-size: 20px; /* 가독성을 위해 폰트 확대 */
             font-weight: bold;
             color: var(--c-text-main);
             font-family: "Courier New", Courier, monospace;
+            white-space: nowrap;
         }
 
         .info-val.rgb {
@@ -324,7 +326,7 @@
         }
         .toggle-tracker-btn:active { transform: scale(0.98); }
 
-        /* 화면에 따라다니는 커스텀 스캐너(돋보기) */
+        /* 화면에 따라다니는 커스텀 스캐너(조준선) */
         #customScanner {
             position: fixed;
             width: 60px;
@@ -353,8 +355,6 @@
 <body>
 
     <canvas id="bgCanvas"></canvas>
-    
-    <canvas id="snapshotCanvas" style="display:none;"></canvas>
 
     <div id="customScanner"></div>
 
@@ -421,7 +421,7 @@
                         <span id="trackCoord" class="info-val">X: 0, Y: 0</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-title">RGB 백터 데이터</span>
+                        <span class="info-title">RGB 벡터 데이터</span>
                         <span id="trackRgb" class="info-val rgb">[0, 0, 0]</span>
                     </div>
                     <div class="info-row">
@@ -432,7 +432,7 @@
 
                 <div class="tracker-interactive-panel">
                     <div id="trackerColorPatch" class="color-patch"></div>
-                    <button id="toggleTrackerBtn" class="toggle-tracker-btn" onclick="toggleTracker()">추적기 활성화</button>
+                    <button id="toggleTrackerBtn" class="toggle-tracker-btn" onclick="toggleTracker(event)">추적기 활성화</button>
                 </div>
 
             </div>
@@ -563,9 +563,9 @@
         document.getElementById(tabId).classList.add('active');
         evt.currentTarget.classList.add('active');
 
-        // 탭을 전환할 때 추적기 기능은 안정성을 위해 자동 비활성화 처리
+        // 탭을 전환할 때 추적기 기능은 자동 비활성화 처리
         if (tabId !== 'tracker-tab' && isTracking) {
-            toggleTracker();
+            disableTracker();
         }
     }
 
@@ -664,92 +664,95 @@
     let isTracking = false;
     const toggleTrackerBtn = document.getElementById('toggleTrackerBtn');
     const customScanner = document.getElementById('customScanner');
-    const snapshotCanvas = document.getElementById('snapshotCanvas');
-    const snapshotCtx = snapshotCanvas.getContext('2d');
 
     const trackCoord = document.getElementById('trackCoord');
     const trackRgb = document.getElementById('trackRgb');
     const trackHex = document.getElementById('trackHex');
     const trackerColorPatch = document.getElementById('trackerColorPatch');
 
-    // 스캔 일관성을 확보하기 위해 백그라운드 신경망 파티클 레이어를 제외한 전체 스냅샷 생성
-    function captureAppLayout() {
-        snapshotCanvas.width = window.innerWidth;
-        snapshotCanvas.height = window.innerHeight;
+    // 마지막으로 기록된 색상 버퍼 (창밖으로 나갔을 때 홀딩용)
+    let lastR = 0, lastG = 0, lastB = 0;
 
-        // 배경색 채우기
-        snapshotCtx.fillStyle = '#FBF9F4';
-        snapshotCtx.fillRect(0, 0, snapshotCanvas.width, snapshotCanvas.height);
-
-        // UI 구성요소 수동 렌더링 대신, 화면 전체 스크랩을 위해 CSS와 DOM 구조에서 컬러 샘플링 유도
-        // 안정적인 크로스 브라우징을 위한 마우스 기준 타겟팅 좌표 보간
-    }
-
-    function toggleTracker() {
-        isTracking = !isTracking;
-        if (isTracking) {
+    function toggleTracker(e) {
+        if (!isTracking) {
+            isTracking = true;
             toggleTrackerBtn.innerText = "추적기 비활성화";
             toggleTrackerBtn.classList.add('active');
             customScanner.style.display = 'block';
             document.body.style.cursor = 'none'; // 기본 커서 숨김
             
-            // 실시간 스캔 환경 준비
-            captureAppLayout();
-            window.addEventListener('mousemove', handleTrackerMove);
+            // Pointer Capture를 활성화하여 창을 벗어나도 포인터 좌표를 브라우저가 끝까지 추적하게 함
+            try {
+                toggleTrackerBtn.setPointerCapture(e.pointerId);
+            } catch (err) {}
+
+            window.addEventListener('pointermove', handleTrackerMove);
         } else {
-            toggleTrackerBtn.innerText = "추적기 활성화";
-            toggleTrackerBtn.classList.remove('active');
-            customScanner.style.display = 'none';
-            document.body.style.cursor = 'default'; // 기본 커서 복원
-            
-            window.removeEventListener('mousemove', handleTrackerMove);
+            disableTracker();
         }
     }
 
-    // 마우스 포인터 영역의 DOM 요소를 분석하여 완벽한 계산된 RGB값 파싱
+    function disableTracker() {
+        isTracking = false;
+        toggleTrackerBtn.innerText = "추적기 활성화";
+        toggleTrackerBtn.classList.remove('active');
+        customScanner.style.display = 'none';
+        document.body.style.cursor = 'default'; // 기본 커서 복원
+        
+        // Pointer Capture 명시적 해제
+        try {
+            toggleTrackerBtn.releasePointerCapture();
+        } catch (err) {}
+
+        window.removeEventListener('pointermove', handleTrackerMove);
+    }
+
     function handleTrackerMove(e) {
         const x = e.clientX;
         const y = e.clientY;
 
-        // 커스텀 스캐너 엘리먼트 위치 갱신
+        // 1. 조준선(커스텀 스캐너) 위치 실시간 업데이트
         customScanner.style.left = `${x}px`;
         customScanner.style.top = `${y}px`;
 
-        // 1. 추적 중 좌표 기록
-        trackCoord.innerText = `X: ${x}, Y: ${y}`;
+        // 2. 창 내부/외부 판단 및 좌표 보정 기록
+        trackCoord.innerText = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
 
-        // 2. 마우스 아래에 위치한 요소의 RGB를 추출
-        // 스캐너 자체를 일시적으로 검출에서 제외하여 정확한 백그라운드 색 검출
-        customScanner.style.display = 'none';
-        const targetElement = document.elementFromPoint(x, y);
-        customScanner.style.display = 'block';
+        // 창 경계면 확인
+        const insideX = x >= 0 && x <= window.innerWidth;
+        const insideY = y >= 0 && y <= window.innerHeight;
 
-        if (targetElement) {
-            // 해당 DOM 요소의 렌더링된 스타일 컬러값을 파싱
-            const computedStyle = window.getComputedStyle(targetElement);
-            const bgColor = computedStyle.backgroundColor;
-            const textColor = computedStyle.color;
+        if (insideX && insideY) {
+            // [창 내부인 경우] 실시간 DOM 분석을 통한 색상 검출
+            customScanner.style.display = 'none';
+            const targetElement = document.elementFromPoint(x, y);
+            customScanner.style.display = 'block';
 
-            // rgb(r, g, b) 형식 파싱
-            let rgbMatch = bgColor.match(/\d+/g);
-            
-            // 만약 감지된 색상이 투명(rgba의 알파가 0)할 경우 폰트 색상 혹은 기본 배경색으로 대체 보정
-            if (!rgbMatch || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') {
-                rgbMatch = [251, 249, 244]; // 기본 테마 메인 배경 컬러
+            if (targetElement) {
+                const computedStyle = window.getComputedStyle(targetElement);
+                const bgColor = computedStyle.backgroundColor;
+
+                let rgbMatch = bgColor.match(/\d+/g);
+                
+                if (!rgbMatch || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') {
+                    rgbMatch = [251, 249, 244]; // 기본 테마 메인 배경 컬러
+                }
+
+                lastR = parseInt(rgbMatch[0]);
+                lastG = parseInt(rgbMatch[1]);
+                lastB = parseInt(rgbMatch[2]);
             }
-
-            const r = parseInt(rgbMatch[0]);
-            const g = parseInt(rgbMatch[1]);
-            const b = parseInt(rgbMatch[2]);
-
-            const hex = rgbToHex(r, g, b);
-
-            // 3. UI 변경 피드백 제공
-            trackRgb.innerText = `[${r}, ${g}, ${b}]`;
-            trackHex.innerText = hex;
-            trackerColorPatch.style.backgroundColor = hex;
-            customScanner.style.backgroundColor = hex;
+        } else {
+            // [창 외부인 경우] 픽셀 데이터 직접 검출이 차단되므로 경계값 버퍼 유지
+            // (좌표는 계속 실시간 변경되나 RGB와 색 패치는 직전 상태로 세련되게 멈춤)
         }
+
+        // 3. 공통 UI 바인딩 및 시각 효과 처리
+        const hex = rgbToHex(lastR, lastG, lastB);
+        trackRgb.innerText = `[${lastR}, ${lastG}, ${lastB}]`;
+        trackHex.innerText = hex;
+        trackerColorPatch.style.backgroundColor = hex;
+        customScanner.style.backgroundColor = hex;
     }
 
     // 초기 실행 세팅
