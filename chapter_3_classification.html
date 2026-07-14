@@ -15,10 +15,9 @@
             --c-accent: #2A5C45;
             --c-accent-hover: #1E4331;
             
-            /* 정치적 연상을 완벽히 배제한 세련된 자연 테마 컬러 조합 */
-            --color-cat: #D97706; /* 고양이: 따뜻한 앰버 토마토 */
-            --color-dog: #6366F1; /* 강아지: 차분한 미드나잇 인디고 퍼플 */
-            --c-btn-delete: #C2410C; /* 지우기: 은은한 주홍빛 레드 */
+            --color-cat: #D97706; 
+            --color-dog: #6366F1; 
+            --c-btn-delete: #C2410C; 
             --c-btn-delete-hover: #9A3412;
         }
 
@@ -88,38 +87,12 @@
             z-index: 2;
         }
 
-        .info-card {
-            background-color: var(--c-bg-card);
-            border: 1px dashed var(--c-accent);
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 4px 15px rgba(26, 61, 47, 0.03);
-        }
-
-        .info-card-icon { font-size: 1.8rem; }
-
-        .info-card-text h3 {
-            margin: 0 0 4px 0;
-            color: var(--c-accent);
-            font-size: 1rem;
-        }
-
-        .info-card-text p {
-            margin: 0;
-            font-size: 0.85rem;
-            color: var(--c-text-muted);
-            line-height: 1.5;
-        }
-
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
             gap: 25px;
             margin-bottom: 40px;
+            margin-top: 10px;
         }
 
         @media (min-width: 992px) {
@@ -136,16 +109,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-        }
-
-        .card h2 {
-            margin-top: 0;
-            font-size: 1.15rem;
-            border-left: 4px solid var(--c-accent);
-            padding-left: 10px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            color: var(--c-text-main);
+            min-height: 520px;
         }
 
         .interactive-zone {
@@ -163,7 +127,7 @@
             overflow: hidden;
             width: 100%; 
             height: 280px; 
-            cursor: none; /* 내장 포인터를 숨기고 사용자 브러시 가이드라인을 띄웁니다 */
+            cursor: none; 
             border-radius: 6px;
         }
 
@@ -174,22 +138,22 @@
             height: 100%;
         }
 
-        /* 브러시 가이드라인 레이어 */
         #brushGuide {
             position: absolute;
             border: 1px solid rgba(0, 0, 0, 0.6);
             background-color: rgba(0, 0, 0, 0.1);
-            pointer-events: none; /* 마우스 이벤트를 통과시켜 드로잉 방해 금지 */
-            transform: translate(-50%, -50%); /* 중심 정렬 */
+            pointer-events: none; 
+            transform: translate(-50%, -50%); 
             display: none;
             z-index: 10;
         }
 
+        /* 슬라이더 및 도구 버튼 정렬 패널 */
         .slider-panel {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             margin-top: 5px;
         }
 
@@ -200,12 +164,27 @@
             width: 100%;
         }
 
-        .slider-label {
+        /* 왼쪽 정렬되는 펜, 지우개 도구 버튼 설계 (너비 통일) */
+        .tool-btn {
+            width: 90px;
+            padding: 6px 0;
             font-size: 0.85rem;
             font-weight: bold;
-            color: var(--c-text-main);
-            width: 110px;
-            flex-shrink: 0;
+            border: 1px solid var(--c-border);
+            background-color: #F3F4F6;
+            color: var(--c-text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .tool-btn.active {
+            background-color: var(--c-accent);
+            color: #ffffff;
+            border-color: var(--c-accent);
+            box-shadow: 0 2px 5px rgba(42, 92, 69, 0.2);
         }
 
         .slider-control {
@@ -250,7 +229,6 @@
         }
         .btn-primary:hover { background-color: var(--c-accent-hover); }
 
-        /* 요청하신 대로 지우기 버튼을 레드 테마로 강조 수정했습니다 */
         .btn-danger {
             background-color: var(--c-btn-delete);
             color: white;
@@ -310,7 +288,6 @@
 
         .results-container { margin-top: 25px; }
         
-        /* ------------------ 요청하신 1개 통합 확률 바 디자인 시스템 ------------------ */
         .unified-bar-header {
             display: flex;
             justify-content: space-between;
@@ -401,24 +378,9 @@
     </div>
 
     <div class="container">
-        <div class="info-card">
-            <span class="info-card-icon">⚡</span>
-            <div class="info-card-text">
-                <h3>가변적 실시간 가중치 행렬 자동 설계 기술 (Auto-Matching Dimension)</h3>
-                <p>
-                    이 프로그램은 입력 해상도를 고정하지 않습니다! 업로드된 원본 이미지의 픽셀 수에 맞춰 **가중치 행렬 \(W\)의 구조를 수학적으로 즉시 재구성**합니다. 초고해상도 사진을 로드할 시 수백만 차원의 연산 처리를 시각적으로 체험해 보세요.
-                </p>
-            </div>
-        </div>
-
         <div class="grid-layout">
             <div class="card">
-                <h2>1단계: 실시간 이미지 규격 감지</h2>
                 <div class="interactive-zone">
-                    <p style="margin: 0; color: var(--c-text-muted); font-size: 0.8rem; text-align: center; line-height: 1.4;">
-                        캔버스 드로잉(동적 생성) 또는 어떤 해상도의 이미지든 제약 없이 로드해 보세요!
-                    </p>
-                    
                     <div class="canvas-container" id="canvasFrame">
                         <canvas id="drawCanvas"></canvas>
                         <div id="brushGuide"></div>
@@ -426,12 +388,12 @@
 
                     <div class="slider-panel">
                         <div class="slider-row">
-                            <span class="slider-label">드로잉 굵기</span>
+                            <button class="tool-btn active" id="btnPen" onclick="setToolMode('pen')">펜</button>
                             <input type="range" id="lineWidthSlider" class="slider-control" min="5" max="80" value="25">
                             <span class="slider-value" id="lineWidthVal">25 px</span>
                         </div>
                         <div class="slider-row">
-                            <span class="slider-label">포인트 곡 각도</span>
+                            <button class="tool-btn" id="btnEraser" onclick="setToolMode('eraser')">지우개</button>
                             <input type="range" id="borderRadiusSlider" class="slider-control" min="0" max="50" value="50">
                             <span class="slider-value" id="borderRadiusVal">50%</span>
                         </div>
@@ -467,8 +429,6 @@
 
             <div class="card">
                 <div>
-                    <h2>2단계: 동적 고차원 행렬 연산</h2>
-                    
                     <div class="math-flow">
                         <div>
                             <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
@@ -622,11 +582,18 @@
         let inputVector = [];
         const b = [0.08, -0.08]; 
 
-        // 가이드라인 브러시 크기 및 곡각도 반영 제어 함수
+        // 펜/지우개 도구 모드 상태 관리 변수 ('pen' or 'eraser')
+        let toolMode = 'pen';
+
+        function setToolMode(mode) {
+            toolMode = mode;
+            document.getElementById('btnPen').classList.toggle('active', mode === 'pen');
+            document.getElementById('btnEraser').classList.toggle('active', mode === 'eraser');
+            updateBrushGuideStyle();
+        }
+
         function updateBrushGuideStyle() {
             const size = parseInt(widthSlider.value);
-            
-            // 캔버스의 스케일 비율을 구하여 가이드라인 크기도 화면에 맞게 동기화 보정
             const rect = canvas.getBoundingClientRect();
             const scaleX = rect.width / canvas.width;
             const visualSize = size * scaleX;
@@ -636,6 +603,15 @@
             
             const pct = parseInt(radiusSlider.value);
             brushGuide.style.borderRadius = `${pct}%`;
+
+            // 지우개 모드일 때는 보더를 점선으로 시각적 구분을 해줍니다.
+            if (toolMode === 'eraser') {
+                brushGuide.style.border = '2px dashed rgba(220, 38, 38, 0.8)';
+                brushGuide.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+            } else {
+                brushGuide.style.border = '1px solid rgba(0, 0, 0, 0.6)';
+                brushGuide.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+            }
         }
 
         widthSlider.addEventListener('input', () => {
@@ -649,7 +625,6 @@
             updateBrushGuideStyle();
         });
 
-        // 가이드라인 포인터 트래킹 이벤트 리스너 바인딩
         canvasFrame.addEventListener('mousemove', (e) => {
             brushGuide.style.display = 'block';
             const rect = canvasFrame.getBoundingClientRect();
@@ -726,7 +701,7 @@
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × 2 차원`;
 
             const mathBox = document.getElementById('math-formula-box');
-            mathBox.innerHTML = `\\[Z_{(1 \\times 2)} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \\times 2)}\\]`;
+            mathBox.innerHTML = `\\[Z_{(1 \times 2)} = X_{(1 \times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \times 2)}\\]`;
         }
 
         function processDrawing() {
@@ -829,7 +804,6 @@
                 });
             }
 
-            // 통합 확률 바 텍스트 및 퍼센티지 너비 제어
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
             document.getElementById('dog-text-prob').innerText = `${(prob_dog * 100).toFixed(1)}%`;
 
@@ -858,7 +832,6 @@
             
             ctx.lineWidth = parseInt(widthSlider.value); 
             
-            // 요청하신 포인트 곡 각도 값에 따라 원형 또는 직각 사각형 펜 끝 처리 제어
             const pct = parseInt(radiusSlider.value);
             if (pct >= 40) {
                 ctx.lineCap = 'round';
@@ -868,7 +841,13 @@
                 ctx.lineJoin = 'miter';
             }
             
-            ctx.strokeStyle = '#000000'; 
+            // 툴 모드 상태에 따른 브러시의 색상 설정 (펜: 검은색, 지우개: 흰색)
+            if (toolMode === 'eraser') {
+                ctx.strokeStyle = '#ffffff'; 
+            } else {
+                ctx.strokeStyle = '#000000'; 
+            }
+            
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
             ctx.beginPath();
