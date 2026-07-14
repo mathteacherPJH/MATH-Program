@@ -48,6 +48,11 @@
             pointer-events: none;
         }
 
+        /* MathJax v2 하단 진행바 팝업 알림을 강제로 안 보이게 차단하는 CSS 치트키 */
+        #MathJax_Message {
+            display: none !important;
+        }
+
         .header-container {
             display: flex;
             justify-content: space-between;
@@ -88,7 +93,6 @@
             z-index: 2;
         }
 
-        /* [요청 반영] 좌우 창의 가로 합이 100%이면서, 두 창의 세로 높이가 완벽히 동일하게 stretch 되도록 설계 */
         .grid-layout {
             display: flex;
             flex-direction: column;
@@ -100,7 +104,7 @@
         @media (min-width: 992px) {
             .grid-layout { 
                 flex-direction: row;
-                align-items: stretch; /* 좌우 카드의 세로 길이를 완벽히 일치시킵니다 */
+                align-items: stretch; 
             }
         }
 
@@ -114,10 +118,9 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            flex: 1; /* 1:1 대칭 비율 유지 */
+            flex: 1; 
         }
 
-        /* 오른쪽 탭 연결 래퍼 */
         .right-pane-wrapper {
             display: flex;
             flex-direction: column;
@@ -127,7 +130,7 @@
         .card-right {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
-            flex: 1; /* 부모 래퍼 안에서 세로 꽉 차게 조절 */
+            flex: 1; 
         }
 
         .model-tab-header {
@@ -173,7 +176,7 @@
             border: 2px solid var(--c-text-main);
             overflow: hidden;
             width: 100%; 
-            height: 380px; /* 고정 확장 높이 스펙 유지 */
+            height: 380px; 
             cursor: none; 
             border-radius: 6px;
         }
@@ -493,7 +496,7 @@
                             </p>
                             <div class="math-box">
                                 <div id="math-formula-box" style="margin-bottom: 5px; font-size: 0.95rem; color: var(--c-text-muted);">
-                                    <div id="formula-dyn-1">$$Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}$$</div>
+                                    <div id="formula-dyn-1">$$Z_{(1 \times ${activeClassCount})} = X_{(1 \times D)} \cdot W_{(D \times ${activeClassCount})} + b_{(1 \times ${activeClassCount})}$$</div>
                                 </div>
                                 <div id="linear-calc-output-container">
                                     <div id="formula-dyn-2">$$Z_{cat} = 0.0000, \quad Z_{dog} = 0.0000$$</div>
@@ -619,7 +622,7 @@
         window.addEventListener('resize', resizeBgCanvas);
         window.addEventListener('load', () => { resizeBgCanvas(); animateParticles(); });
 
-        // ------------------ 가변 행렬 이미지 분류 AI 시스템 내부 엔진 ------------------
+        // ------------------ 이미지 분류 연산 자바스크립트 엔진 ------------------
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -642,14 +645,24 @@
         };
 
         let toolMode = 'pen';
+        
+        // [핵심 수정] MathJax 과부하 렉을 해결하기 위한 디바운스 타이머 전역 변수
+        let mathjaxTimer = null;
 
         function switchModelMode(classNum) {
             activeClassCount = classNum;
             document.getElementById('model-tab-2').classList.toggle('active', classNum === 2);
             document.getElementById('model-tab-3').classList.toggle('active', classNum === 3);
             
+            const mathBox = document.getElementById('softmax-math-box');
+            if(classNum === 2) {
+                mathBox.innerHTML = `<div id="formula-dyn-3">$$P_c = \\frac{e^{z_c / 5.0}}{\\sum_{j=1}^{2} e^{z_j / 5.0}}$$</div>`;
+            } else {
+                mathBox.innerHTML = `<div id="formula-dyn-3">$$P_c = \\frac{e^{z_c / 5.0}}{\\sum_{j=1}^{3} e^{z_j / 5.0}}$$</div>`;
+            }
+
             updateSpecDisplay();
-            classify(0); // 강제 제로 픽셀 초기화 분류 트리거
+            processDrawing(true); // 탭 전환 시에는 즉시 수식 빌드 트리거
         }
 
         function setToolMode(mode) {
@@ -734,7 +747,6 @@
                     const rRatio = r / h;
                     const cRatio = c / w;
 
-                    // 밀도를 높인 정밀 가우시안 마스크 학습 공식 커스텀 설계
                     const leftCatEar = Math.exp(-((Math.pow(rRatio - 0.22, 2) / 0.015) + (Math.pow(cRatio - 0.32, 2) / 0.008)));
                     const rightCatEar = Math.exp(-((Math.pow(rRatio - 0.22, 2) / 0.015) + (Math.pow(cRatio - 0.68, 2) / 0.008)));
                     catW += (leftCatEar + rightCatEar) * 4.5;
@@ -767,12 +779,11 @@
             document.getElementById('spec-vector').innerText = `1 × ${totalDimension.toLocaleString()} 차원`;
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × ${activeClassCount} 차원`;
 
-            // MathJax v2의 동적 업데이트 정밀 대응 방식 적용
             document.getElementById('math-formula-box').innerHTML = 
                 `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}$$</div>`;
         }
 
-        function processDrawing() {
+        function processDrawing(immediateMath = false) {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = currentWidth;
             tempCanvas.height = currentHeight;
@@ -786,9 +797,9 @@
                 const rVal = imgData.data[i * 4];
                 const activeVal = 1.0 - (rVal / 255.0);
                 inputVector[i] = activeVal;
-                if(activeVal > 0.05) activePixelCount += activeVal; // 단순 개수가 아닌 선의 세기 밀도 누적
+                if(activeVal > 0.05) activePixelCount += activeVal; 
             }
-            classify(activePixelCount);
+            classify(activePixelCount, immediateMath);
         }
 
         function handleImageUpload(event) {
@@ -831,7 +842,7 @@
                         }
 
                         updateSpecDisplay();
-                        classify(activePixelCount);
+                        classify(activePixelCount, true); // 이미지 업로드는 즉시 빌드
 
                         document.getElementById('loadingOverlay').classList.remove('active');
                     }, 50);
@@ -841,18 +852,16 @@
             reader.readAsDataURL(file);
         }
 
-        function classify(activePixelCount = 0) {
+        // [핵심 수정] 리렌더링 부하 차단 타이머 로직 바인딩 완료
+        function classify(activePixelCount = 0, immediateMath = false) {
             const totalDim = currentWidth * currentHeight;
             if (inputVector.length !== totalDim) return;
 
             const dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
             const currentBias = b_model[activeClassCount];
 
-            // [수학적 규제화 기법 탑재] 점 하나나 낙서가 너무 적을 땐 강제로 0에 수렴하게 밀도 게인을 조절 (50:50 상쇄 방어벽)
-            // 전체 화소 대비 그린 화소 비율이 최소 임계점(약 0.8%)을 넘어야 인공지능이 서서히 확신을 갖기 시작합니다.
             const minDrawingThreshold = totalDim * 0.008;
             const activationGain = activePixelCount < minDrawingThreshold ? (activePixelCount / minDrawingThreshold) : 1.0;
-
             const dynamicNoiseFactor = activeClassCount === 3 && activePixelCount > 0 ? Math.min(activePixelCount / (totalDim * 0.02), 3.0) : 0;
             const T = 5.0; 
 
@@ -867,7 +876,6 @@
                     z_dog_raw += inputVector[i] * dynamicW[i][1];
                 }
 
-                // 규제화 게인(activationGain)을 곱해 드로잉이 적을 땐 강제로 점수를 평형(0)으로 수축시킵니다
                 let z_cat = z_cat_raw * activationGain;
                 let z_dog = z_dog_raw * activationGain;
 
@@ -902,7 +910,6 @@
                     z_dog_raw += inputVector[i] * dynamicW[i][2];
                 }
 
-                // 3클래스 모드 규제화 수축 반영
                 let z_cat = z_cat_raw * activationGain;
                 let z_other = activePixelCount < minDrawingThreshold ? currentBias[1] : (z_other_raw * activationGain);
                 let z_dog = z_dog_raw * activationGain;
@@ -930,14 +937,17 @@
                 document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            // [MathJax 수식 무조건 렌더링 치트키 코드] v2 허브 대기열에 집어넣어 동적 수식을 무조건 완벽 강제 변환합니다.
-            if (window.MathJax && MathJax.Hub && MathJax.Hub.Queue) {
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "math-formula-box"]);
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "linear-calc-output-container"]);
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-math-box"]);
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-calc-output-container"]);
+            // [렉 차단 디바운싱 핵심 알고리즘] 
+            // 실시간 마우스 드로잉 중일 때는 0.08초 동안 마우스가 잠깐 멈출 때까지 수식 렌더링 작업을 지연 예약합니다.
+            if (mathjaxTimer) clearTimeout(mathjaxTimer);
+
+            if (immediateMath) {
+                triggerMathJax();
+            } else {
+                mathjaxTimer = setTimeout(triggerMathJax, 80); // 80ms 지연 정밀 조율 세팅
             }
 
+            // 게이지 바 그래프와 퍼센티지 텍스트는 끊김 없이 즉시 업데이트를 수행합니다.
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
             if (document.getElementById('other-text-prob')) {
                 document.getElementById('other-text-prob').innerText = `${(prob_other * 100).toFixed(1)}%`;
@@ -946,6 +956,16 @@
 
             document.getElementById('cat-bar-seg').style.width = `${prob_cat * 100}%`;
             document.getElementById('dog-bar-seg').style.width = `${prob_dog * 100}%`;
+        }
+
+        // 별도의 독립된 MathJax v2 트리거 허브 함수
+        function triggerMathJax() {
+            if (window.MathJax && MathJax.Hub && MathJax.Hub.Queue) {
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "math-formula-box"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "linear-calc-output-container"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-math-box"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-calc-output-container"]);
+            }
         }
 
         function getMousePos(e) {
@@ -960,7 +980,13 @@
         }
 
         function startDrawing(e) { isDrawing = true; draw(e); }
-        function stopDrawing() { isDrawing = false; ctx.beginPath(); processDrawing(); }
+        
+        // 드로잉을 끝내고 마우스를 떼는 순간에는 연산 결과를 수식으로 즉시(true) 밀어냅니다.
+        function stopDrawing() { 
+            isDrawing = false; 
+            ctx.beginPath(); 
+            processDrawing(true); 
+        }
 
         function draw(e) {
             if (!isDrawing) return;
@@ -987,7 +1013,7 @@
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-            processDrawing();
+            processDrawing(false); // 마우스 움직이며 칠하는 중엔 디바운스 대기 처리
         }
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -1002,12 +1028,12 @@
         function clearCanvas() {
             clearCanvasContent();
             clearInputBuffer(150, 100);
-            processDrawing();
+            processDrawing(true);
         }
 
         window.addEventListener('resize', () => {
             syncCanvasDisplaySize();
-            processDrawing();
+            processDrawing(true);
         });
         
         setTimeout(() => {
