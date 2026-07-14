@@ -204,6 +204,14 @@
                     <a href="chapter_3_blur_and_sharpening.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">강아지, 고양이 분류 프로그램</h4>
+                    </div>
+                    <a href="chapter_3_classification.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
                 <div class="program-node ch4 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#9B2226]/40 hover:shadow-lg hover:shadow-black/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#9B2226] bg-[#FDF0F0] border border-[#F5C6C6] px-2.5 py-0.5 rounded-xs">Chapter 04</span>
@@ -259,7 +267,7 @@
                 this.y = Math.random() * canvas.height;
                 this.vx = (Math.random() - 0.5) * 0.35;
                 this.vy = (Math.random() - 0.5) * 0.35;
-                this.radius = Math.random() * 2 + 1; // 입자 크기도 미니멀하게 리밸런싱
+                this.radius = Math.random() * 2 + 1;
             }
             update() {
                 this.x += this.vx;
@@ -280,7 +288,6 @@
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                // 💡 신경망 노드 투명도 원래의 연한 세팅으로 원복 (0.22 -> 0.10)
                 ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
                 ctx.fill();
             }
@@ -301,7 +308,7 @@
                 }
                 this.speed = Math.random() * 4 + 5; 
                 this.length = Math.random() * 100 + 60; 
-                this.opacity = Math.random() * 0.35 + 0.25; // 눈에 확 띄되 과하지 않게 선명화
+                this.opacity = Math.random() * 0.35 + 0.25;
             }
             update() {
                 this.x += this.speed;
@@ -323,7 +330,7 @@
                 ctx.moveTo(this.x, this.y);
                 ctx.lineTo(this.x - this.length, this.y - this.length * 0.75);
                 ctx.strokeStyle = grad;
-                ctx.lineWidth = 2.2; // 확실히 궤적이 인지되도록 보정한 최적의 두께
+                ctx.lineWidth = 2.2; 
                 ctx.stroke();
                 ctx.restore();
             }
@@ -354,7 +361,6 @@
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        // 💡 연결망 선명도 원래의 보이지 않는 선으로 복구 (0.10 -> 0.04)
                         ctx.strokeStyle = `rgba(27, 67, 50, ${0.04 * (1 - dist / 110)})`;
                         ctx.lineWidth = 0.8;
                         ctx.stroke();
@@ -362,7 +368,7 @@
                 }
             }
 
-            // 2. 💡 [시간 보정 핵심] 무작위 프레임 스폰 대신, 약 5초에 1번 꼴로 스폰되도록 확률 조정 (0.018 -> 0.0035 하향)
+            // 2. 평균 5초에 1번 꼴로 스폰되도록 조율된 무작위 연산
             if (Math.random() < 0.0035 && shootingStars.length < 2) {
                 shootingStars.push(new ShootingStar());
             }
