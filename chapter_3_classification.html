@@ -79,7 +79,7 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1400px; /* 더 넓은 화면을 사용하기 위해 컨테이너 최대 크기를 늘렸습니다 */
             margin: 0 auto;
             width: 100%;
             z-index: 2;
@@ -112,6 +112,7 @@
             line-height: 1.5;
         }
 
+        /* 1단계와 2단계 창의 가로 길이 합계가 전체 창의 너비가 되도록 1:1 비율 그리드 설정 */
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
@@ -120,7 +121,7 @@
         }
 
         @media (min-width: 992px) {
-            .grid-layout { grid-template-columns: 380px 1fr; }
+            .grid-layout { grid-template-columns: 1fr 1fr; }
         }
 
         .card {
@@ -130,6 +131,9 @@
             padding: 24px;
             box-shadow: 0 4px 15px rgba(26, 61, 47, 0.04);
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .card h2 {
@@ -147,28 +151,34 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
+            width: 100%;
         }
 
+        /* 캔버스 드로잉 창 가로 비율을 카드 크기에 맞게 100%로 키웠습니다 */
         .canvas-container {
             position: relative;
             background-color: #000;
             border: 2px solid var(--c-text-main);
             border-radius: 6px;
             overflow: hidden;
-            width: 250px;
-            height: 250px;
+            width: 100%;
+            max-width: 480px; /* 너무 세로로 길어지는 것을 방지하는 최대 가로폭 */
+            aspect-ratio: 1 / 1; /* 항상 정사각 비율 유지 */
             cursor: crosshair;
         }
 
         canvas#drawCanvas {
             image-rendering: pixelated;
             display: block;
+            width: 100%;
+            height: 100%;
         }
 
         .btn-group {
             display: flex;
             gap: 8px;
             width: 100%;
+            max-width: 480px;
         }
 
         .btn {
@@ -215,6 +225,7 @@
 
         .spec-table {
             width: 100%;
+            max-width: 480px;
             border-collapse: collapse;
             margin-top: 10px;
             font-size: 0.85rem;
@@ -271,7 +282,6 @@
         .bar-cat { background: linear-gradient(90deg, #3B82F6, var(--accent-cat)); }
         .bar-dog { background: linear-gradient(90deg, #EF4444, var(--accent-dog)); }
 
-        /* ------------------ 초고해상도 대응 로딩 인프라 UI ------------------ */
         #loadingOverlay {
             position: fixed;
             top: 0;
@@ -311,14 +321,9 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* 아래쪽 구분선 및 글자 푸터를 완전 삭제했습니다 */
         footer {
-            text-align: center;
-            padding: 30px 20px;
-            color: var(--c-text-muted);
-            border-top: 1px solid var(--c-border);
-            margin-top: 20px;
-            font-size: 0.85rem;
-            z-index: 2;
+            display: none;
         }
     </style>
 </head>
@@ -356,7 +361,7 @@
                     </p>
                     
                     <div class="canvas-container">
-                        <canvas id="drawCanvas" width="250" height="250"></canvas>
+                        <canvas id="drawCanvas" width="500" height="500"></canvas>
                     </div>
 
                     <div class="btn-group">
@@ -365,7 +370,7 @@
                         <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
                     </div>
 
-                    <p style="margin: 15px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main);">
+                    <p style="margin: 15px 0 2px 0; font-weight: bold; align-self: flex-start; font-size: 0.85rem; color: var(--c-text-main); width: 100%; max-width: 480px; margin-left: auto; margin-right: auto;">
                         동적 입력 데이터 규격 (Specification):
                     </p>
                     <table class="spec-table">
@@ -385,7 +390,7 @@
                 </div>
             </div>
 
-            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="card">
                 <div>
                     <h2>2단계: 동적 고차원 행렬 연산</h2>
                     
@@ -397,9 +402,11 @@
                             </p>
                             <div class="math-box">
                                 <div id="math-formula-box" style="margin-bottom: 10px; font-size: 0.95rem; color: var(--c-text-muted);">
-                                    $$Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}$$
+                                    \[Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}\]
                                 </div>
-                                <span id="linear-calc-output" style="color: var(--c-accent); font-size: 0.85rem; font-weight: bold;">연산 활성화 중...</span>
+                                <div id="linear-calc-output-container">
+                                    <span id="linear-calc-output" style="color: var(--c-accent); font-size: 0.85rem; font-weight: bold;">연산 활성화 중...</span>
+                                </div>
                             </div>
                         </div>
 
@@ -409,8 +416,12 @@
                                 차원 크기에 무관하게 최종 변환 스코어의 전체 총합 비율을 100%로 투영시킵니다.
                             </p>
                             <div class="math-box">
-                                $$P_c = \frac{e^{z_c}}{\sum_{j} e^{z_j}}$$
-                                <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">분석 중...</span>
+                                <div id="softmax-math-box" style="margin-bottom: 8px;">
+                                    \[P_c = \frac{e^{z_c}}{\sum_{j} e^{z_j}}\]
+                                </div>
+                                <div id="softmax-calc-output-container">
+                                    <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">분석 중...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -442,10 +453,6 @@
             </div>
         </div>
     </div>
-
-    <footer>
-        <p>수학 교육 및 가변 행렬 연산 모델 시뮬레이터</p>
-    </footer>
 
     <script>
         // --- 딥 그린 인터랙티브 배경 엔진 ---
@@ -596,19 +603,18 @@
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × 2 차원`;
 
             const mathBox = document.getElementById('math-formula-box');
-            mathBox.innerHTML = `$$Z_{(1 \times 2)} = X_{(1 \times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \times 2)}$$`;
-            if (window.MathJax && MathJax.typesetPromise) {
-                MathJax.typesetPromise();
-            }
+            // MathJax v3 전용 수식 갱신 코드 적용 (문법 노출 해결)
+            mathBox.innerHTML = `\\[Z_{(1 \\times 2)} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \\times 2)}\\]`;
         }
 
         function processDrawing() {
+            // 실제 드로잉 데이터를 설정된 가로/세로 해상도로 캡처
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = currentWidth;
             tempCanvas.height = currentHeight;
             const tempCtx = tempCanvas.getContext('2d');
             
-            tempCtx.drawImage(canvas, 0, 0, 250, 250, 0, 0, currentWidth, currentHeight);
+            tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, currentWidth, currentHeight);
             const imgData = tempCtx.getImageData(0, 0, currentWidth, currentHeight);
             
             for (let i = 0; i < currentWidth * currentHeight; i++) {
@@ -617,7 +623,6 @@
             classify();
         }
 
-        // 고해상도 이미지 업로드 시 UI 멈춤 현상을 차단하기 위한 비동기 헨들러 메커니즘
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -626,10 +631,8 @@
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    // 1. 비동기식 로딩 인프라 레이어 팝업 켜기
                     document.getElementById('loadingOverlay').classList.add('active');
 
-                    // 2. 브라우저가 화면에 로딩창을 렌더링할 틈을 준 뒤 연산 시작 (렉 방지 핵심)
                     setTimeout(() => {
                         currentWidth = img.width;
                         currentHeight = img.height;
@@ -659,7 +662,6 @@
                         updateSpecDisplay();
                         classify();
 
-                        // 3. 연산 완료 후 즉시 로딩 오버레이 레이어 닫기
                         document.getElementById('loadingOverlay').classList.remove('active');
                     }, 50);
                 };
@@ -689,15 +691,22 @@
             const prob_cat = exp_cat / sum_exp;
             const prob_dog = exp_dog / sum_exp;
 
+            // MathJax가 바뀐 문장 속 텍스트 수식을 올바르게 읽을 수 있도록 동적 HTML 교체
             document.getElementById('linear-calc-output').innerHTML = 
-                `Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})`;
+                `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
 
             document.getElementById('softmax-calc-output').innerHTML = 
-                `P_{cat} = \\frac{e^{${z_cat.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_cat * 100).toFixed(1)}\\% <br>` +
-                `P_{dog} = \\frac{e^{${z_dog.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_dog * 100).toFixed(1)}\\%`;
+                `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
 
+            // 중요: 동적 데이터 갱신 후 MathJax 리렌더링 비동기 강제 트리거 (수식 깨짐 해결)
             if (window.MathJax && MathJax.typesetPromise) {
-                MathJax.typesetPromise();
+                MathJax.typesetPromise([
+                    document.getElementById('math-formula-box'),
+                    document.getElementById('linear-calc-output-container'),
+                    document.getElementById('softmax-calc-output-container')
+                ]).catch(function (err) {
+                    console.log("MathJax typesetting failed: " + err.message);
+                });
             }
 
             document.getElementById('cat-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
@@ -710,11 +719,17 @@
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // 정사각 가로세로 동적 계산
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
+            
+            // 캔버스 자체 크기와 렌더링 스케일을 일치시키는 비율 보정식 적용
+            return { 
+                x: (clientX - rect.left) * (canvas.width / rect.width), 
+                y: (clientY - rect.top) * (canvas.height / rect.height) 
+            };
         }
 
         function startDrawing(e) { isDrawing = true; draw(e); }
@@ -724,7 +739,7 @@
             if (!isDrawing) return;
             e.preventDefault();
             const pos = getMousePos(e);
-            ctx.lineWidth = 18;
+            ctx.lineWidth = 35; // 캔버스가 커진 비례에 맞춰 드로잉 선 두께를 보정했습니다.
             ctx.lineCap = 'round';
             ctx.strokeStyle = 'white';
             ctx.lineTo(pos.x, pos.y);
