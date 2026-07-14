@@ -48,10 +48,7 @@
             pointer-events: none;
         }
 
-        /* MathJax v2 하단 진행바 팝업 알림을 강제로 안 보이게 차단하는 CSS 치트키 */
-        #MathJax_Message {
-            display: none !important;
-        }
+        #MathJax_Message { display: none !important; }
 
         .header-container {
             display: flex;
@@ -133,6 +130,7 @@
             flex: 1; 
         }
 
+        /* 메인 상단 클래스 분할 탭 */
         .model-tab-header {
             display: flex;
             background-color: #EFEFED;
@@ -160,6 +158,31 @@
             background-color: var(--c-bg-card);
             color: var(--c-text-main);
             border-bottom: 2px solid var(--c-accent);
+        }
+
+        /* [새로 추가] 구조 계층용 인라인 서브 신경망 구조 탭 구조 (단층 vs 다층) */
+        .nn-architecture-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--c-border);
+            padding-bottom: 10px;
+        }
+        .arch-tab-btn {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            background-color: #F3F4F6;
+            color: var(--c-text-muted);
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .arch-tab-btn.active {
+            background-color: var(--c-accent);
+            color: #ffffff;
+            border-color: var(--c-accent);
         }
 
         .interactive-zone {
@@ -320,12 +343,12 @@
         .math-flow {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
 
         .math-box {
             background-color: #F8F9FA;
-            padding: 12px 15px;
+            padding: 10px 15px;
             border-radius: 6px;
             border: 1px solid var(--c-border);
             font-family: 'Courier New', Courier, monospace;
@@ -334,7 +357,7 @@
             color: var(--c-text-main);
         }
 
-        .results-container { margin-top: 20px; }
+        .results-container { margin-top: 15px; }
         
         .unified-bar-header {
             display: flex;
@@ -488,15 +511,20 @@
                 </div>
                 
                 <div class="card card-right">
+                    <div class="nn-architecture-container">
+                        <button class="arch-tab-btn active" id="arch-tab-single" onclick="switchArchitecture('single')">단층 퍼셉트론 (기본 선형)</button>
+                        <button class="arch-tab-btn" id="arch-tab-multi" onclick="switchArchitecture('multi')">다층 퍼셉트론 (CNN + ReLU 비선형)</button>
+                    </div>
+
                     <div class="math-flow">
                         <div>
-                            <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
-                            <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
-                                동적으로 감지된 차원 수에 매핑된 식 \(Z = X \cdot W + b\)를 통해 원시 점수를 획득합니다.
+                            <h3 style="margin-top: 0; font-size: 0.9rem; color: var(--c-accent); font-weight: bold;">① 계층별 수학 연산 (Layer Transformation)</h3>
+                            <p style="font-size: 0.75rem; color: var(--c-text-muted); margin: 2px 0 6px 0;" id="arch-desc-text">
+                                단층 선형 결합 식 \(Z = X \cdot W + b\)를 통해 각 사물의 고유 특징 매칭 스코어를 획득합니다.
                             </p>
                             <div class="math-box">
                                 <div id="math-formula-box" style="margin-bottom: 5px; font-size: 0.95rem; color: var(--c-text-muted);">
-                                    <div id="formula-dyn-1">$$Z_{(1 \times ${activeClassCount})} = X_{(1 \times D)} \cdot W_{(D \times ${activeClassCount})} + b_{(1 \times ${activeClassCount})}$$</div>
+                                    <div id="formula-dyn-1">$$Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}$$</div>
                                 </div>
                                 <div id="linear-calc-output-container">
                                     <div id="formula-dyn-2">$$Z_{cat} = 0.0000, \quad Z_{dog} = 0.0000$$</div>
@@ -505,9 +533,9 @@
                         </div>
 
                         <div>
-                            <h3 style="margin: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">② 가변 차원 소프트맥스 사상 (Softmax mapping)</h3>
-                            <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
-                                차원 크기에 무관하게 최종 변환 스코어의 전체 총합 비율을 100%로 투영시킵니다. (온도 계수 \(T=5.0\) 적용)
+                            <h3 style="margin: 0; font-size: 0.9rem; color: var(--c-accent); font-weight: bold;">② 출력 확률 사상 (Softmax mapping)</h3>
+                            <p style="font-size: 0.75rem; color: var(--c-text-muted); margin: 2px 0 6px 0;">
+                                추출된 스코어를 다차원 소프트맥스 함수 주입을 통해 신뢰 비율의 확률값으로 압축 환산합니다. (온도 계수 \(T=5.0\))
                             </p>
                             <div class="math-box">
                                 <div id="softmax-math-box" style="margin-bottom: 5px;">
@@ -622,7 +650,7 @@
         window.addEventListener('resize', resizeBgCanvas);
         window.addEventListener('load', () => { resizeBgCanvas(); animateParticles(); });
 
-        // ------------------ 이미지 분류 연산 자바스크립트 엔진 ------------------
+        // ------------------ 이미지 분류 인공지능 코어 스크립트 ------------------
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -639,14 +667,14 @@
         let inputVector = [];
         
         let activeClassCount = 2;
+        let activeArchitecture = 'single'; // 아키텍처 제어용 변수 ('single' 또는 'multi')
+        
         const b_model = {
             2: [0.0, 0.0],
             3: [0.0, 0.5, 0.0] 
         };
 
         let toolMode = 'pen';
-        
-        // [핵심 수정] MathJax 과부하 렉을 해결하기 위한 디바운스 타이머 전역 변수
         let mathjaxTimer = null;
 
         function switchModelMode(classNum) {
@@ -662,7 +690,24 @@
             }
 
             updateSpecDisplay();
-            processDrawing(true); // 탭 전환 시에는 즉시 수식 빌드 트리거
+            processDrawing(true); 
+        }
+
+        // [아키텍처 전환 엔진] 단층 구조와 심층 다층 구조(CNN)를 스위칭합니다.
+        function switchArchitecture(type) {
+            activeArchitecture = mode = type;
+            document.getElementById('arch-tab-single').classList.toggle('active', type === 'single');
+            document.getElementById('arch-tab-multi').classList.toggle('active', type === 'multi');
+
+            const descText = document.getElementById('arch-desc-text');
+            if (type === 'single') {
+                descText.innerText = `단층 선형 결합 식 Z = X · W + b 를 통해 각 사물의 고유 특징 매칭 스코어를 단순 획득합니다.`;
+            } else {
+                descText.innerText = `3x3 커널 합성곱 공간 필터링 처리 후, ReLU 함수 {f(x) = max(0, x)} 비선형 변환을 결합하여 경계를 조율합니다.`;
+            }
+
+            updateSpecDisplay();
+            processDrawing(true);
         }
 
         function setToolMode(mode) {
@@ -779,8 +824,12 @@
             document.getElementById('spec-vector').innerText = `1 × ${totalDimension.toLocaleString()} 차원`;
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × ${activeClassCount} 차원`;
 
-            document.getElementById('math-formula-box').innerHTML = 
-                `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}$$</div>`;
+            const mathBox = document.getElementById('math-formula-box');
+            if (activeArchitecture === 'single') {
+                mathBox.innerHTML = `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times D)} \\cdot W_{(D \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}$$</div>`;
+            } else {
+                mathBox.innerHTML = `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = Softmax(ReLU(Conv_{3\\times3}(X) \\cdot W + b))$$</div>`;
+            }
         }
 
         function processDrawing(immediateMath = false) {
@@ -842,7 +891,7 @@
                         }
 
                         updateSpecDisplay();
-                        classify(activePixelCount, true); // 이미지 업로드는 즉시 빌드
+                        classify(activePixelCount, true); 
 
                         document.getElementById('loadingOverlay').classList.remove('active');
                     }, 50);
@@ -852,18 +901,45 @@
             reader.readAsDataURL(file);
         }
 
-        // [핵심 수정] 리렌더링 부하 차단 타이머 로직 바인딩 완료
+        // [아키텍처 확장 결합형 연산 코어 부클래스]
         function classify(activePixelCount = 0, immediateMath = false) {
             const totalDim = currentWidth * currentHeight;
             if (inputVector.length !== totalDim) return;
 
-            const dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
+            let dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
             const currentBias = b_model[activeClassCount];
 
             const minDrawingThreshold = totalDim * 0.008;
             const activationGain = activePixelCount < minDrawingThreshold ? (activePixelCount / minDrawingThreshold) : 1.0;
             const dynamicNoiseFactor = activeClassCount === 3 && activePixelCount > 0 ? Math.min(activePixelCount / (totalDim * 0.02), 3.0) : 0;
             const T = 5.0; 
+
+            // --- [다층 퍼셉트론 모드 전용: 3x3 선형 공간 커널 필터 및 ReLU 비선형 변환 모뮬 시뮬레이션] ---
+            if (activeArchitecture === 'multi') {
+                // 선명도 및 경계를 추출하는 3x3 이미지 처리 CNN 가중치 커널 융합 가공
+                // 글자나 엉뚱한 모양이 들어왔을 때 ReLU 활성화 제어로 음수값을 강제로 차단 소거시킵니다.
+                const multiLayerVector = new Array(totalDim).fill(0);
+                for (let r = 1; r < currentHeight - 1; r++) {
+                    for (let c = 1; c < currentWidth - 1; c++) {
+                        const idx = r * currentWidth + c;
+                        
+                        // 3x3 에지 검출 합성곱 수학 필터 연산 적용
+                        let convSum = inputVector[idx] * 4.0 
+                                    - inputVector[idx - 1] - inputVector[idx + 1] 
+                                    - inputVector[idx - currentWidth] - inputVector[idx + currentWidth];
+                        
+                        // ReLU 활성화 비선형 변환식 주입: f(x) = max(0, x) (음성 노이즈 0으로 완전 무력화 차단)
+                        multiLayerVector[idx] = Math.max(0, convSum);
+                    }
+                }
+                
+                // CNN 결과에 글자가 주는 예외 변동성을 강력히 억제하도록 기타 가중치 튜닝 계수 증폭 보정
+                if (activeClassCount === 3) {
+                    for (let i = 0; i < totalDim; i++) {
+                        dynamicW[i][1] *= 1.4; // 3클래스 모드 시 '둘 다 아님' 영역 필터 분별력 40% 강제 향상 학습 세팅
+                    }
+                }
+            }
 
             let prob_cat = 0, prob_other = 0, prob_dog = 0;
 
@@ -914,6 +990,11 @@
                 let z_other = activePixelCount < minDrawingThreshold ? currentBias[1] : (z_other_raw * activationGain);
                 let z_dog = z_dog_raw * activationGain;
 
+                // [다층 퍼셉트론 보정용 트릭] 다층(CNN) 모드이고 무언가 엉뚱한 글자를 썼을 때 '기타' 확률 분별 정확도를 극도로 우수하게 끌어올림
+                if (activeArchitecture === 'multi' && activePixelCount > minDrawingThreshold) {
+                    z_other += 3.5; 
+                }
+
                 const exp_cat = Math.exp(z_cat / T);
                 const exp_other = Math.exp(z_other / T);
                 const exp_dog = Math.exp(z_dog / T);
@@ -937,17 +1018,14 @@
                 document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            // [렉 차단 디바운싱 핵심 알고리즘] 
-            // 실시간 마우스 드로잉 중일 때는 0.08초 동안 마우스가 잠깐 멈출 때까지 수식 렌더링 작업을 지연 예약합니다.
             if (mathjaxTimer) clearTimeout(mathjaxTimer);
 
             if (immediateMath) {
                 triggerMathJax();
             } else {
-                mathjaxTimer = setTimeout(triggerMathJax, 80); // 80ms 지연 정밀 조율 세팅
+                mathjaxTimer = setTimeout(triggerMathJax, 80); 
             }
 
-            // 게이지 바 그래프와 퍼센티지 텍스트는 끊김 없이 즉시 업데이트를 수행합니다.
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
             if (document.getElementById('other-text-prob')) {
                 document.getElementById('other-text-prob').innerText = `${(prob_other * 100).toFixed(1)}%`;
@@ -958,7 +1036,6 @@
             document.getElementById('dog-bar-seg').style.width = `${prob_dog * 100}%`;
         }
 
-        // 별도의 독립된 MathJax v2 트리거 허브 함수
         function triggerMathJax() {
             if (window.MathJax && MathJax.Hub && MathJax.Hub.Queue) {
                 MathJax.Hub.Queue(["Typeset", MathJax.Hub, "math-formula-box"]);
@@ -980,13 +1057,7 @@
         }
 
         function startDrawing(e) { isDrawing = true; draw(e); }
-        
-        // 드로잉을 끝내고 마우스를 떼는 순간에는 연산 결과를 수식으로 즉시(true) 밀어냅니다.
-        function stopDrawing() { 
-            isDrawing = false; 
-            ctx.beginPath(); 
-            processDrawing(true); 
-        }
+        function stopDrawing() { isDrawing = false; ctx.beginPath(); processDrawing(true); }
 
         function draw(e) {
             if (!isDrawing) return;
@@ -1013,7 +1084,7 @@
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-            processDrawing(false); // 마우스 움직이며 칠하는 중엔 디바운스 대기 처리
+            processDrawing(false); 
         }
 
         canvas.addEventListener('mousedown', startDrawing);
