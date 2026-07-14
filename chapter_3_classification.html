@@ -82,13 +82,12 @@
         }
 
         .container {
-            max-width: 100%; /* 좌우 창 합이 전체 창 너비와 완전히 일치하도록 100% 설정 */
+            max-width: 100%; 
             margin: 0;
             width: 100%;
             z-index: 2;
         }
 
-        /* 1:1 완전 분할 좌우 대칭 그리드 구조 */
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
@@ -111,10 +110,9 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 580px; /* 균형을 맞춘 고정 높이 */
+            min-height: 580px; 
         }
 
-        /* 오른쪽 카드 전용 테두리 둥글기 리셋 (상단 내장 탭과 조화되도록 세팅) */
         .card-right {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
@@ -128,7 +126,6 @@
             width: 100%;
         }
 
-        /* [요청 피드백] 우측 창 길어짐에 따라 균형을 완벽히 맞추기 위해 세로 높이를 380px로 상향 보정 */
         .canvas-container {
             position: relative;
             background-color: #ffffff; 
@@ -276,7 +273,6 @@
             text-align: right;
         }
 
-        /* [요청 피드백] 오른쪽 창에 내장 합치기 되도록 수정된 탭 레이아웃 */
         .right-pane-wrapper {
             display: flex;
             flex-direction: column;
@@ -641,6 +637,7 @@
 
         let toolMode = 'pen';
 
+        // [안정성 수정] 자바스크립트 내장 탭 수식 문자열 이스케이프 보강
         function switchModelMode(classNum) {
             activeClassCount = classNum;
             document.getElementById('model-tab-2').classList.toggle('active', classNum === 2);
@@ -648,9 +645,9 @@
             
             const mathBox = document.getElementById('softmax-math-box');
             if(classNum === 2) {
-                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c / T}}{\\sum_{j=1}^{2} e^{z_j / T}}\\]`;
+                mathBox.innerHTML = `\\\\[P_c = \\\\frac{e^{z_c / T}}{\\\\sum_{j=1}^{2} e^{z_j / T}}\\\\]`;
             } else {
-                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c / T}}{\\sum_{j=1}^{3} e^{z_j / T}}\\]`;
+                mathBox.innerHTML = `\\\\[P_c = \\\\frac{e^{z_c / T}}{\\\\sum_{j=1}^{3} e^{z_j / T}}\\\\]`;
             }
 
             updateSpecDisplay();
@@ -765,6 +762,7 @@
             return dynamicW;
         }
 
+        // [안정성 수정] 정보 테이블 내부 LaTeX 수식 문자열 이스케이프 보강
         function updateSpecDisplay() {
             const totalDimension = currentWidth * currentHeight;
             document.getElementById('spec-resolution').innerText = `${currentWidth.toLocaleString()} x ${currentHeight.toLocaleString()} px`;
@@ -772,7 +770,7 @@
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × ${activeClassCount} 차원`;
 
             const mathBox = document.getElementById('math-formula-box');
-            mathBox.innerHTML = `\\[Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}\\]`;
+            mathBox.innerHTML = `\\\\[Z_{(1 \\\\times ${activeClassCount})} = X_{(1 \\\\times {${totalDimension.toLocaleString()}})} \\\\cdot W_{({${totalDimension.toLocaleString()}} \\\\times ${activeClassCount})} + b_{(1 \\\\times ${activeClassCount})}\\\\]`;
         }
 
         function processDrawing() {
@@ -844,6 +842,7 @@
             reader.readAsDataURL(file);
         }
 
+        // [안정성 수정] 분류 연산 출력 스크립트 내부 LaTeX 이스케이프(\\\\)를 완벽히 종결 수정했습니다.
         function classify(activePixelCount = 0) {
             const totalDim = currentWidth * currentHeight;
             if (inputVector.length !== totalDim) return;
@@ -874,10 +873,10 @@
                 prob_other = 0; 
 
                 document.getElementById('linear-calc-output').innerHTML = 
-                    `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
+                    `\\\\[Z_{cat} = (${z_cat.toFixed(4)}), \\\\quad Z_{dog} = (${z_dog.toFixed(4)})\\\\]`;
 
                 document.getElementById('softmax-calc-output').innerHTML = 
-                    `\\[P_{cat} = \\frac{e^{z_{cat} / 5.0}}{\\sum e^{z_j / 5.0}} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{z_{dog} / 5.0}}{\\sum e^{z_j / 5.0}} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
+                    `\\\\[P_{cat} = \\\\frac{e^{z_{cat} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_cat * 100).toFixed(1)}\\\\%  \\\\quad | \\\\quad P_{dog} = \\\\frac{e^{z_{dog} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_dog * 100).toFixed(1)}\\\\% \\\\]`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -906,10 +905,10 @@
                 prob_dog = exp_dog / sum_exp;
 
                 document.getElementById('linear-calc-output').innerHTML = 
-                    `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{other} = (${z_other.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
+                    `\\\\[Z_{cat} = (${z_cat.toFixed(4)}), \\\\quad Z_{other} = (${z_other.toFixed(4)}), \\\\quad Z_{dog} = (${z_dog.toFixed(4)})\\\\]`;
 
                 document.getElementById('softmax-calc-output').innerHTML = 
-                    `\\[P_{cat} = \\frac{e^{z_{cat} / 5.0}}{\\sum e^{z_j / 5.0}} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{other} = \\frac{e^{z_{other} / 5.0}}{\\sum e^{z_j / 5.0}} = ${(prob_other * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = \\frac{e^{z_{dog} / 5.0}}{\\sum e^{z_j / 5.0}} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
+                    `\\\\[P_{cat} = \\\\frac{e^{z_{cat} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_cat * 100).toFixed(1)}\\\\%  \\\\quad | \\\\quad P_{other} = \\\\frac{e^{z_{other} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_other * 100).toFixed(1)}\\\\% \\\\quad | \\\\quad P_{dog} = \\\\frac{e^{z_{dog} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_dog * 100).toFixed(1)}\\\\% \\\\]`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -919,7 +918,7 @@
                 document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            // [안정성 보강 정밀 렌더러] 비동기 동적 바인딩 후 MathJax 강제 리프레시 수행 (수식 깨짐 해결 핵심)
+            // MathJax 프라미스 리프레시 호출
             if (window.MathJax && MathJax.typesetPromise) {
                 MathJax.typesetPromise([
                     document.getElementById('math-formula-box'),
@@ -927,7 +926,7 @@
                     document.getElementById('linear-calc-output-container'),
                     document.getElementById('softmax-calc-output-container')
                 ]).catch(function (err) {
-                    console.log("MathJax typesetting failed: " + err.message);
+                    console.log("MathJax error: " + err.message);
                 });
             }
 
