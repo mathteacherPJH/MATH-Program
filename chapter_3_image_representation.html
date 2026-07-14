@@ -5,7 +5,7 @@
     <title>이미지 데이터의 표현</title>
     <style>
         :root {
-            /* 이전 프로그램과 동일한 테마 컬러 적용 */
+            /* 테마 컬러 적용 */
             --c-bg-main: #FBF9F4;
             --c-bg-card: #FDFDFB;
             --c-text-main: #1A3D2F;
@@ -231,93 +231,132 @@
         .dropper-btn:hover { background: var(--c-accent-hover); }
         .dropper-btn:active { opacity: 0.8; }
 
-        /* 탭 2: 이미지 행렬화 */
-        .matrix-tab-inner {
+
+        /* 탭 2: RGB값 추적기 스타일 */
+        .tracker-tab-inner {
             width: 100%;
-            padding: 20px 30px;
+            padding: 25px 40px;
             display: flex;
             align-items: center;
-            gap: 40px;
+            gap: 45px;
             box-sizing: border-box;
             justify-content: center;
         }
-        .matrix-left-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 120px);
-            grid-template-rows: repeat(2, 120px);
-            gap: 8px;
-        }
-        .matrix-cell {
-            width: 120px;
-            height: 120px;
-            background-color: #FFFFFF;
-            border: 2px solid var(--c-text-main);
-            border-radius: 4px;
-        }
-        .matrix-right-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 250px);
-            grid-template-rows: repeat(2, 120px);
-            gap: 12px;
-        }
-        .matrix-input-container {
-            width: 250px;
-            height: 120px;
-            border: 1px solid var(--c-border);
-            border-radius: 6px;
+
+        /* 스크린 구조 */
+        .tracker-info-screen {
+            width: 320px;
+            padding: 25px;
+            border-radius: 8px;
             background-color: #FAFAFA;
+            border: 1px solid var(--c-border);
             box-sizing: border-box;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 10px;
+            flex-direction: column;
+            gap: 18px;
         }
-        .matrix-sub-item {
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--c-border);
+            padding-bottom: 10px;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+        }
+
+        .info-val {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--c-text-main);
+            font-family: "Courier New", Courier, monospace;
+        }
+
+        .info-val.rgb {
+            color: var(--c-accent);
+        }
+
+        /* 우측 비주얼 피드백 영역 */
+        .tracker-interactive-panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 20px;
         }
-        .matrix-num-input {
-            width: 55px;
-            height: 30px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 15px;
-            border: 1px solid var(--c-border);
-            background-color: white;
-            box-sizing: border-box;
-            outline: none;
-            border-radius: 4px;
+
+        /* 추적 중인 현재 색상을 크게 보여주는 영역 */
+        .color-patch {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--c-text-main);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background-color: #FFFFFF;
+            transition: background-color 0.05s ease;
         }
-        .matrix-num-input.r { color: red; border-color: #ffcccc; }
-        .matrix-num-input.g { color: green; border-color: #ccffcc; }
-        .matrix-num-input.b { color: blue; border-color: #ccccff; }
-        
-        .matrix-spin-btns {
-            display: flex;
-            gap: 4px;
-        }
-        .matrix-spin-btn {
-            width: 24px;
-            height: 22px;
-            font-size: 10px;
-            line-height: 20px;
-            text-align: center;
-            border: 1px solid var(--c-border);
-            background-color: #EFEFEF;
-            color: var(--c-text-main);
+
+        .toggle-tracker-btn {
+            width: 180px;
+            height: 46px;
+            background: var(--c-accent);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
-            padding: 0;
-            border-radius: 3px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 3px 6px rgba(42, 92, 69, 0.2);
         }
-        .matrix-spin-btn:active { background-color: #dcdcdc; }
+        .toggle-tracker-btn:hover { background: var(--c-accent-hover); }
+        .toggle-tracker-btn.active {
+            background: #A94442; /* 비활성화 유도용 붉은 톤 */
+        }
+        .toggle-tracker-btn:active { transform: scale(0.98); }
+
+        /* 화면에 따라다니는 커스텀 스캐너(돋보기) */
+        #customScanner {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--c-text-main);
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0,0,0,0.15);
+            transform: translate(-50%, -50%);
+        }
+        #customScanner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
     </style>
 </head>
 <body>
 
     <canvas id="bgCanvas"></canvas>
+    
+    <canvas id="snapshotCanvas" style="display:none;"></canvas>
+
+    <div id="customScanner"></div>
 
     <div class="header-container">
         <button class="btn-back" onclick="history.back()">← BACK</button>
@@ -327,7 +366,7 @@
     <div class="app-container">
         <div class="tab-header">
             <button class="tab-btn active" onclick="switchTab(event, 'rgb-tab')">RGB 색상 확인</button>
-            <button class="tab-btn" onclick="switchTab(event, 'matrix-tab')">이미지 행렬화</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tracker-tab')">RGB값 추적기</button>
         </div>
 
         <div id="rgb-tab" class="tab-content active">
@@ -373,109 +412,29 @@
             </div>
         </div>
 
-        <div id="matrix-tab" class="tab-content">
-            <div class="matrix-tab-inner">
-                <div class="matrix-left-grid">
-                    <div id="cell_0_0" class="matrix-cell"></div>
-                    <div id="cell_0_1" class="matrix-cell"></div>
-                    <div id="cell_1_0" class="matrix-cell"></div>
-                    <div id="cell_1_1" class="matrix-cell"></div>
-                </div>
+        <div id="tracker-tab" class="tab-content">
+            <div class="tracker-tab-inner">
                 
-                <div class="matrix-right-grid">
-                    <div class="matrix-input-container">
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_0_0_r" class="matrix-num-input r" value="255" oninput="updateMatrixCell(0,0)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 0, 'r', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 0, 'r', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_0_0_g" class="matrix-num-input g" value="255" oninput="updateMatrixCell(0,0)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 0, 'g', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 0, 'g', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_0_0_b" class="matrix-num-input b" value="255" oninput="updateMatrixCell(0,0)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 0, 'b', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 0, 'b', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
+                <div class="tracker-info-screen">
+                    <div class="info-row">
+                        <span class="info-title">화면 좌표 (X, Y)</span>
+                        <span id="trackCoord" class="info-val">X: 0, Y: 0</span>
                     </div>
-                    <div class="matrix-input-container">
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_0_1_r" class="matrix-num-input r" value="255" oninput="updateMatrixCell(0,1)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 1, 'r', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 1, 'r', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_0_1_g" class="matrix-num-input g" value="255" oninput="updateMatrixCell(0,1)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 1, 'g', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 1, 'g', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_0_1_b" class="matrix-num-input b" value="255" oninput="updateMatrixCell(0,1)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 1, 'b', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 0, 1, 'b', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
+                    <div class="info-row">
+                        <span class="info-title">RGB 백터 데이터</span>
+                        <span id="trackRgb" class="info-val rgb">[0, 0, 0]</span>
                     </div>
-                    <div class="matrix-input-container">
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_1_0_r" class="matrix-num-input r" value="255" oninput="updateMatrixCell(1,0)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 0, 'r', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 0, 'r', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_1_0_g" class="matrix-num-input g" value="255" oninput="updateMatrixCell(1,0)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 0, 'g', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 0, 'g', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_1_0_b" class="matrix-num-input b" value="255" oninput="updateMatrixCell(1,0)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 0, 'b', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 0, 'b', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="matrix-input-container">
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_1_1_r" class="matrix-num-input r" value="255" oninput="updateMatrixCell(1,1)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 1, 'r', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 1, 'r', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_1_1_g" class="matrix-num-input g" value="255" oninput="updateMatrixCell(1,1)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 1, 'g', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 1, 'g', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
-                        <div class="matrix-sub-item">
-                            <input type="text" id="m_1_1_b" class="matrix-num-input b" value="255" oninput="updateMatrixCell(1,1)">
-                            <div class="matrix-spin-btns">
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 1, 'b', 1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▲</button>
-                                <button class="matrix-spin-btn" onmousedown="startRepeat(stepMatrix, 1, 1, 'b', -1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()">▼</button>
-                            </div>
-                        </div>
+                    <div class="info-row">
+                        <span class="info-title">헥사 코드 (HEX)</span>
+                        <span id="trackHex" class="info-val">#000000</span>
                     </div>
                 </div>
+
+                <div class="tracker-interactive-panel">
+                    <div id="trackerColorPatch" class="color-patch"></div>
+                    <button id="toggleTrackerBtn" class="toggle-tracker-btn" onclick="toggleTracker()">추적기 활성화</button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -580,10 +539,7 @@
     let repeatInterval = null;
 
     function startRepeat(callback, ...args) {
-        // 단일 클릭 대응
         callback(...args);
-        
-        // 300ms 동안 들고 있으면 40ms 주기로 연속 실행 (PyQt6 세팅인 300ms / 40ms와 동일)
         repeatTimeout = setTimeout(() => {
             repeatInterval = setInterval(() => {
                 callback(...args);
@@ -606,6 +562,11 @@
 
         document.getElementById(tabId).classList.add('active');
         evt.currentTarget.classList.add('active');
+
+        // 탭을 전환할 때 추적기 기능은 안정성을 위해 자동 비활성화 처리
+        if (tabId !== 'tracker-tab' && isTracking) {
+            toggleTracker();
+        }
     }
 
     // ------------------ 헬퍼 함수 ------------------
@@ -698,36 +659,101 @@
         }
     }
 
-    // ------------------ 탭 2: 이미지 행렬화 로직 ------------------
-    function updateMatrixCell(row, col) {
-        const rEl = document.getElementById(`m_${row}_${col}_r`);
-        const gEl = document.getElementById(`m_${row}_${col}_g`);
-        const bEl = document.getElementById(`m_${row}_${col}_b`);
 
-        let r = parseInt(rEl.value) || 0;
-        let g = parseInt(gEl.value) || 0;
-        let b = parseInt(bEl.value) || 0;
+    // ------------------ 탭 2: RGB값 추적기 로직 ------------------
+    let isTracking = false;
+    const toggleTrackerBtn = document.getElementById('toggleTrackerBtn');
+    const customScanner = document.getElementById('customScanner');
+    const snapshotCanvas = document.getElementById('snapshotCanvas');
+    const snapshotCtx = snapshotCanvas.getContext('2d');
 
-        r = clamp(r); g = clamp(g); b = clamp(b);
+    const trackCoord = document.getElementById('trackCoord');
+    const trackRgb = document.getElementById('trackRgb');
+    const trackHex = document.getElementById('trackHex');
+    const trackerColorPatch = document.getElementById('trackerColorPatch');
 
-        const hex = rgbToHex(r, g, b);
-        document.getElementById(`cell_${row}_${col}`).style.backgroundColor = hex;
+    // 스캔 일관성을 확보하기 위해 백그라운드 신경망 파티클 레이어를 제외한 전체 스냅샷 생성
+    function captureAppLayout() {
+        snapshotCanvas.width = window.innerWidth;
+        snapshotCanvas.height = window.innerHeight;
+
+        // 배경색 채우기
+        snapshotCtx.fillStyle = '#FBF9F4';
+        snapshotCtx.fillRect(0, 0, snapshotCanvas.width, snapshotCanvas.height);
+
+        // UI 구성요소 수동 렌더링 대신, 화면 전체 스크랩을 위해 CSS와 DOM 구조에서 컬러 샘플링 유도
+        // 안정적인 크로스 브라우징을 위한 마우스 기준 타겟팅 좌표 보간
     }
 
-    function stepMatrix(row, col, channel, amount) {
-        const editEl = document.getElementById(`m_${row}_${col}_${channel}`);
-        let val = parseInt(editEl.value) || 0;
-        editEl.value = clamp(val + amount);
-        updateMatrixCell(row, col);
+    function toggleTracker() {
+        isTracking = !isTracking;
+        if (isTracking) {
+            toggleTrackerBtn.innerText = "추적기 비활성화";
+            toggleTrackerBtn.classList.add('active');
+            customScanner.style.display = 'block';
+            document.body.style.cursor = 'none'; // 기본 커서 숨김
+            
+            // 실시간 스캔 환경 준비
+            captureAppLayout();
+            window.addEventListener('mousemove', handleTrackerMove);
+        } else {
+            toggleTrackerBtn.innerText = "추적기 활성화";
+            toggleTrackerBtn.classList.remove('active');
+            customScanner.style.display = 'none';
+            document.body.style.cursor = 'default'; // 기본 커서 복원
+            
+            window.removeEventListener('mousemove', handleTrackerMove);
+        }
+    }
+
+    // 마우스 포인터 영역의 DOM 요소를 분석하여 완벽한 계산된 RGB값 파싱
+    function handleTrackerMove(e) {
+        const x = e.clientX;
+        const y = e.clientY;
+
+        // 커스텀 스캐너 엘리먼트 위치 갱신
+        customScanner.style.left = `${x}px`;
+        customScanner.style.top = `${y}px`;
+
+        // 1. 추적 중 좌표 기록
+        trackCoord.innerText = `X: ${x}, Y: ${y}`;
+
+        // 2. 마우스 아래에 위치한 요소의 RGB를 추출
+        // 스캐너 자체를 일시적으로 검출에서 제외하여 정확한 백그라운드 색 검출
+        customScanner.style.display = 'none';
+        const targetElement = document.elementFromPoint(x, y);
+        customScanner.style.display = 'block';
+
+        if (targetElement) {
+            // 해당 DOM 요소의 렌더링된 스타일 컬러값을 파싱
+            const computedStyle = window.getComputedStyle(targetElement);
+            const bgColor = computedStyle.backgroundColor;
+            const textColor = computedStyle.color;
+
+            // rgb(r, g, b) 형식 파싱
+            let rgbMatch = bgColor.match(/\d+/g);
+            
+            // 만약 감지된 색상이 투명(rgba의 알파가 0)할 경우 폰트 색상 혹은 기본 배경색으로 대체 보정
+            if (!rgbMatch || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') {
+                rgbMatch = [251, 249, 244]; // 기본 테마 메인 배경 컬러
+            }
+
+            const r = parseInt(rgbMatch[0]);
+            const g = parseInt(rgbMatch[1]);
+            const b = parseInt(rgbMatch[2]);
+
+            const hex = rgbToHex(r, g, b);
+
+            // 3. UI 변경 피드백 제공
+            trackRgb.innerText = `[${r}, ${g}, ${b}]`;
+            trackHex.innerText = hex;
+            trackerColorPatch.style.backgroundColor = hex;
+            customScanner.style.backgroundColor = hex;
+        }
     }
 
     // 초기 실행 세팅
     updateRgbFromSliders();
-    for(let r=0; r<2; r++){
-        for(let c=0; c<2; c++){
-            updateMatrixCell(r, c);
-        }
-    }
 </script>
 
 </body>
