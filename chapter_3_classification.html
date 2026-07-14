@@ -308,16 +308,27 @@
         }
         .btn-danger:hover { background-color: var(--c-btn-delete-hover); }
 
-        /* [새로 추가] 우측 카드 하단 수식 계산 버튼 전용 스타일 */
-        .btn-calculate {
+        /* [요청 피드백 반영] 왼쪽 위에 예쁘게 들어가는 아담한 계산기 전용 소형 고정형 버튼 스타일 */
+        .btn-calc-mini {
+            float: right; /* 제목 라인 우상단/좌상단 배치를 위해 정렬 조절 */
             background-color: var(--c-btn-calc);
             color: white;
-            width: 100%;
-            margin-top: 15px;
-            padding: 12px 10px;
-            font-size: 14px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 5px;
         }
-        .btn-calculate:hover { background-color: var(--c-btn-calc-hover); }
+        .btn-calc-mini:hover { background-color: var(--c-btn-calc-hover); }
+
+        .header-with-btn {
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
 
         #image-upload { display: none; }
 
@@ -359,6 +370,7 @@
             gap: 15px;
         }
 
+        /* [요청 피드백 반영] 수식이 바뀔 때 세로가 울렁거리며 흔들리는 현상을 막기 위해 최소 고정 높이(min-height)를 적용했습니다. */
         .math-box {
             background-color: #F8F9FA;
             padding: 12px 15px;
@@ -368,6 +380,8 @@
             overflow-x: auto;
             border-left: 3px solid var(--c-accent);
             color: var(--c-text-main);
+            min-height: 75px; /* 수식 리렌더링 시 세로 가변 현상 방지 배리어 고정 스펙 */
+            box-sizing: border-box;
         }
 
         .results-container { margin-top: 20px; }
@@ -533,7 +547,11 @@
                 <div class="card card-right">
                     <div class="math-flow">
                         <div>
-                            <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
+                            <div class="header-with-btn">
+                                <button class="btn-calc-mini" onclick="executeClassification()">수식 계산하기</button>
+                                <h3 style="margin: 4px 0 0 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold; line-height: 24px;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
+                            </div>
+                            
                             <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;" id="arch-desc-text">
                                 단층 선형 결합 식 Z = X · W + b 를 통해 각 사물의 고유 특징 매칭 스코어를 단순 획득합니다.
                             </p>
@@ -572,8 +590,6 @@
                             <div class="unified-bar-segment segment-dog" id="dog-bar-seg"></div>
                         </div>
                     </div>
-
-                    <button class="btn btn-primary btn-calculate" onclick="executeClassification()">수식 계산하기</button>
                 </div>
             </div>
 
@@ -581,7 +597,6 @@
     </div>
 
     <script>
-        // --- 딥 그린 인터랙티브 배경 엔진 ---
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas.getContext('2d');
         let particles = [];
@@ -706,7 +721,7 @@
             }
 
             updateSpecDisplay();
-            resetDisplayToCenter(); // 탭 전환 시 화면 연산 상태 평형 초기화
+            resetDisplayToCenter(); 
         }
 
         function switchArchitecture(type) {
@@ -847,7 +862,6 @@
             }
         }
 
-        // [버튼 전용 트리거 기동식 전환 완료] 드로잉 중에는 백그라운드 연산 버퍼(inputVector)만 세팅하며 렉을 완전 차단합니다.
         function syncDrawingMatrix() {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = currentWidth;
@@ -862,9 +876,8 @@
             }
         }
 
-        // [수식 계산하기] 버튼 전용 대형 통합 핸들러 메소드
         function executeClassification() {
-            syncDrawingMatrix(); // 최종 도화지 드로잉 상태 연산 벡터에 로드
+            syncDrawingMatrix(); 
 
             let activePixelCount = 0;
             for (let i = 0; i < inputVector.length; i++) {
@@ -974,7 +987,6 @@
                 document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            // 버튼을 누른 타이밍에만 MathJax 수식 변환을 확정 트리거합니다.
             triggerMathJax();
 
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
@@ -987,7 +999,6 @@
             document.getElementById('dog-bar-seg').style.width = `${prob_dog * 100}%`;
         }
 
-        // 초기화 수식 매핑 함수
         function resetDisplayToCenter() {
             document.getElementById('linear-calc-output-container').innerHTML = 
                 activeClassCount === 2 ? `<div id="formula-dyn-2">$$Z_{cat} = 0.0000, \\quad Z_{dog} = 0.0000$$</div>`
@@ -1074,7 +1085,7 @@
                         }
 
                         updateSpecDisplay();
-                        executeClassification(); // 파일 업로드 시에는 편의상 자동 계산 작동
+                        executeClassification(); 
 
                         document.getElementById('loadingOverlay').classList.remove('active');
                     }, 50);
@@ -1123,7 +1134,6 @@
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-            // 실시간 연산 구역을 통째로 생략하여 렉을 완전히 제거했습니다.
         }
 
         canvas.addEventListener('mousedown', startDrawing);
