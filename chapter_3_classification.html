@@ -15,8 +15,9 @@
             --c-accent: #2A5C45;
             --c-accent-hover: #1E4331;
             
-            --color-cat: #D97706; 
-            --color-dog: #6366F1; 
+            --color-cat: #D97706;   
+            --color-other: #94A3B8; 
+            --color-dog: #6366F1;   
             --c-btn-delete: #C2410C; 
             --c-btn-delete-hover: #9A3412;
         }
@@ -87,12 +88,41 @@
             z-index: 2;
         }
 
+        /* 교육용 내장형 모델 선택 상단 탭 디자인 스펙 */
+        .model-tab-header {
+            display: flex;
+            background-color: #EFEFED;
+            border: 1px solid var(--c-border);
+            border-bottom: none;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .model-tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            outline: none;
+        }
+        .model-tab-btn.active {
+            background-color: var(--c-bg-card);
+            color: var(--c-text-main);
+            border-bottom: 2px solid var(--c-accent);
+        }
+
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
             gap: 25px;
             margin-bottom: 40px;
-            margin-top: 10px;
         }
 
         @media (min-width: 992px) {
@@ -102,7 +132,8 @@
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
-            border-radius: 8px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
             padding: 24px;
             box-shadow: 0 4px 15px rgba(26, 61, 47, 0.04);
             box-sizing: border-box;
@@ -148,7 +179,6 @@
             z-index: 10;
         }
 
-        /* 슬라이더 및 도구 버튼 정렬 패널 */
         .slider-panel {
             width: 100%;
             display: flex;
@@ -164,7 +194,6 @@
             width: 100%;
         }
 
-        /* 왼쪽 정렬되는 펜, 지우개 도구 버튼 설계 (너비 통일) */
         .tool-btn {
             width: 90px;
             padding: 6px 0;
@@ -291,7 +320,7 @@
         .unified-bar-header {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: bold;
             margin-bottom: 8px;
         }
@@ -314,6 +343,11 @@
         .segment-cat {
             background: linear-gradient(90deg, #F59E0B, var(--color-cat));
             width: 50%;
+        }
+
+        .segment-other {
+            background-color: var(--color-other);
+            width: 0%; /* 클래스 모드에 따라 0%와 33.3% 동적 조절 */
         }
 
         .segment-dog {
@@ -378,6 +412,11 @@
     </div>
 
     <div class="container">
+        <div class="model-tab-header">
+            <button class="model-tab-btn active" id="model-tab-2" onclick="switchModelMode(2)">2클래스 분류 모델 (이진 분류)</button>
+            <button class="model-tab-btn" id="model-tab-3" onclick="switchModelMode(3)">3클래스 분류 모델 (다중 예외 차원)</button>
+        </div>
+
         <div class="grid-layout">
             <div class="card">
                 <div class="interactive-zone">
@@ -421,7 +460,7 @@
                         </tr>
                         <tr>
                             <td>실시간 생성 가중치 크기 (행렬 \(W\))</td>
-                            <td class="spec-val" id="spec-weights">15,000 × 2 차원</td>
+                            <td class="spec-val" id="spec-weights">15,000 × 2 차원</td> 
                         </tr>
                     </table>
                 </div>
@@ -452,7 +491,7 @@
                             </p>
                             <div class="math-box">
                                 <div id="softmax-math-box" style="margin-bottom: 8px;">
-                                    \[P_c = \frac{e^{z_c}}{\sum_{j} e^{z_j}}\]
+                                    \[P_c = \frac{e^{z_c}}{\sum_{j=1}^{2} e^{z_j}}\]
                                 </div>
                                 <div id="softmax-calc-output-container">
                                     <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">분석 중...</span>
@@ -462,12 +501,11 @@
                     </div>
 
                     <div class="results-container">
-                        <div class="unified-bar-header">
-                            <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">50.0%</span>)</span>
-                            <span style="color: var(--color-dog);">강아지 (<span id="dog-text-prob">50.0%</span>) 🐶</span>
-                        </div>
+                        <div class="unified-bar-header" id="bar-header-container">
+                            </div>
                         <div class="unified-bar-outer">
                             <div class="unified-bar-segment segment-cat" id="cat-bar-seg"></div>
+                            <div class="unified-bar-segment segment-other" id="other-bar-seg"></div>
                             <div class="unified-bar-segment segment-dog" id="dog-bar-seg"></div>
                         </div>
                     </div>
@@ -580,10 +618,33 @@
         let currentWidth = 150; 
         let currentHeight = 100;
         let inputVector = [];
-        const b = [0.08, -0.08]; 
+        
+        // 전역 모델 모드 차원 선택 제어 변수 (2 또는 3)
+        let activeClassCount = 2;
+        const b_model = {
+            2: [0.08, -0.08],
+            3: [0.08, 0.05, -0.08]
+        };
 
-        // 펜/지우개 도구 모드 상태 관리 변수 ('pen' or 'eraser')
         let toolMode = 'pen';
+
+        // 2클래스 <-> 3클래스 전환 동적 모듈 컨트롤러 함수
+        function switchModelMode(classNum) {
+            activeClassCount = classNum;
+            document.getElementById('model-tab-2').classList.toggle('active', classNum === 2);
+            document.getElementById('model-tab-3').classList.toggle('active', classNum === 3);
+            
+            // 수식 틀 형태 1차 변경
+            const mathBox = document.getElementById('softmax-math-box');
+            if(classNum === 2) {
+                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c}}{\\sum_{j=1}^{2} e^{z_j}}\\]`;
+            } else {
+                mathBox.innerHTML = `\\[P_c = \\frac{e^{z_c}}{\\sum_{j=1}^{3} e^{z_j}}\\]`;
+            }
+
+            updateSpecDisplay();
+            classify();
+        }
 
         function setToolMode(mode) {
             toolMode = mode;
@@ -604,7 +665,6 @@
             const pct = parseInt(radiusSlider.value);
             brushGuide.style.borderRadius = `${pct}%`;
 
-            // 지우개 모드일 때는 보더를 점선으로 시각적 구분을 해줍니다.
             if (toolMode === 'eraser') {
                 brushGuide.style.border = '2px dashed rgba(220, 38, 38, 0.8)';
                 brushGuide.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
@@ -657,38 +717,55 @@
             updateSpecDisplay();
         }
 
-        function generateDynamicWeights(w, h) {
+        // 가변 차원에 연동되는 2열 / 3열 가중치 생성엔진 구현
+        function generateDynamicWeights(w, h, cols) {
             const dynamicW = [];
             for (let r = 0; r < h; r++) {
                 for (let c = 0; c < w; c++) {
                     let catW = 0;
+                    let otherW = 0;
                     let dogW = 0;
 
                     const rRatio = r / h;
                     const cRatio = c / w;
 
+                    // 고양이 특징 귀 맵핑
                     if ((rRatio >= 0.05 && rRatio <= 0.3) && ((cRatio >= 0.22 && cRatio <= 0.38) || (cRatio >= 0.62 && cRatio <= 0.78))) {
-                        catW += 1.8;
-                        dogW -= 0.9;
+                        catW += 2.0;
+                        dogW -= 1.0;
+                        otherW -= 0.5;
                     }
                     if (rRatio >= 0.45 && rRatio <= 0.65 && cRatio >= 0.25 && cRatio <= 0.75) {
                         catW += 0.5;
                     }
 
+                    // 강아지 특징 귀/주둥이 맵핑
                     if ((rRatio >= 0.2 && rRatio <= 0.55) && (cRatio <= 0.22 || cRatio >= 0.78)) {
-                        dogW += 1.5;
-                        catW -= 0.6;
+                        dogW += 1.8;
+                        catW -= 0.8;
+                        otherW -= 0.5;
                     }
                     if (rRatio >= 0.6 && rRatio <= 0.85 && cRatio >= 0.42 && cRatio <= 0.58) {
-                        dogW += 2.0;
-                        catW -= 1.1;
+                        dogW += 2.2;
+                        catW -= 1.2;
+                        otherW -= 0.5;
                     }
 
                     if (rRatio <= 0.22 && cRatio >= 0.42 && cRatio <= 0.58) {
                         catW -= 1.5;
                     }
 
-                    dynamicW.push([catW, dogW]);
+                    // 3클래스일 때만 노이즈/외곽 픽셀 예외 차원 활성화
+                    if (cols === 3) {
+                        if (rRatio >= 0.85 || cRatio <= 0.1 || cRatio >= 0.9) {
+                            otherW += 1.3; 
+                            catW -= 0.8;
+                            dogW -= 0.8;
+                        }
+                        dynamicW.push([catW, otherW, dogW]);
+                    } else {
+                        dynamicW.push([catW, dogW]);
+                    }
                 }
             }
             return dynamicW;
@@ -698,10 +775,10 @@
             const totalDimension = currentWidth * currentHeight;
             document.getElementById('spec-resolution').innerText = `${currentWidth.toLocaleString()} x ${currentHeight.toLocaleString()} px`;
             document.getElementById('spec-vector').innerText = `1 × ${totalDimension.toLocaleString()} 차원`;
-            document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × 2 차원`;
+            document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × ${activeClassCount} 차원`;
 
             const mathBox = document.getElementById('math-formula-box');
-            mathBox.innerHTML = `\\[Z_{(1 \times 2)} = X_{(1 \times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times 2)} + b_{(1 \times 2)}\\]`;
+            mathBox.innerHTML = `\\[Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}\\]`;
         }
 
         function processDrawing() {
@@ -771,29 +848,79 @@
             const totalDim = currentWidth * currentHeight;
             if (inputVector.length !== totalDim) return;
 
-            const dynamicW = generateDynamicWeights(currentWidth, currentHeight);
+            const dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
+            const currentBias = b_model[activeClassCount];
 
-            let z_cat = b[0];
-            let z_dog = b[1];
+            let prob_cat = 0, prob_other = 0, prob_dog = 0;
 
-            for (let i = 0; i < totalDim; i++) {
-                z_cat += inputVector[i] * dynamicW[i][0];
-                z_dog += inputVector[i] * dynamicW[i][1];
+            if (activeClassCount === 2) {
+                // --- 2클래스 이진 연산 모드 ---
+                let z_cat = currentBias[0];
+                let z_dog = currentBias[1];
+
+                for (let i = 0; i < totalDim; i++) {
+                    z_cat += inputVector[i] * dynamicW[i][0];
+                    z_dog += inputVector[i] * dynamicW[i][1];
+                }
+
+                const exp_cat = Math.exp(z_cat);
+                const exp_dog = Math.exp(z_dog);
+                const sum_exp = exp_cat + exp_dog;
+
+                prob_cat = exp_cat / sum_exp;
+                prob_dog = exp_dog / sum_exp;
+                prob_other = 0; // 2클래스일 땐 예외 처리 차원 소멸
+
+                document.getElementById('linear-calc-output').innerHTML = 
+                    `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
+
+                document.getElementById('softmax-calc-output').innerHTML = 
+                    `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(1)}}}{Sum} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(1)}}}{Sum} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
+
+                // 2클래스 바 레이아웃 동적 주입
+                document.getElementById('bar-header-container').innerHTML = `
+                    <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
+                    <span style="color: var(--color-dog);">강아지 (<span id="dog-text-prob">0.0%</span>) 🐶</span>
+                `;
+                document.getElementById('other-bar-seg').style.width = `0%`;
+
+            } else {
+                // --- 3클래스 다중 예외 연산 모드 ---
+                let z_cat = currentBias[0];
+                let z_other = currentBias[1];
+                let z_dog = currentBias[2];
+
+                for (let i = 0; i < totalDim; i++) {
+                    z_cat += inputVector[i] * dynamicW[i][0];
+                    z_other += inputVector[i] * dynamicW[i][1];
+                    z_dog += inputVector[i] * dynamicW[i][2];
+                }
+
+                const exp_cat = Math.exp(z_cat);
+                const exp_other = Math.exp(z_other);
+                const exp_dog = Math.exp(z_dog);
+                const sum_exp = exp_cat + exp_other + exp_dog;
+
+                prob_cat = exp_cat / sum_exp;
+                prob_other = exp_other / sum_exp;
+                prob_dog = exp_dog / sum_exp;
+
+                document.getElementById('linear-calc-output').innerHTML = 
+                    `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{other} = (${z_other.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
+
+                document.getElementById('softmax-calc-output').innerHTML = 
+                    `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(1)}}}{Sum} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{other} = \\frac{e^{${z_other.toFixed(1)}}}{Sum} = ${(prob_other * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(1)}}}{Sum} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
+
+                // 3클래스 바 레이아웃 동적 주입
+                document.getElementById('bar-header-container').innerHTML = `
+                    <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
+                    <span style="color: var(--color-other);">❔ 둘 다 아님 (<span id="other-text-prob">0.0%</span>)</span>
+                    <span style="color: var(--color-dog);">강아지 (<span id="dog-text-prob">0.0%</span>) 🐶</span>
+                `;
+                document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            const exp_cat = Math.exp(z_cat);
-            const exp_dog = Math.exp(z_dog);
-            const sum_exp = exp_cat + exp_dog;
-
-            const prob_cat = exp_cat / sum_exp;
-            const prob_dog = exp_dog / sum_exp;
-
-            document.getElementById('linear-calc-output').innerHTML = 
-                `\\[Z_{cat} = (${z_cat.toFixed(4)}), \\quad Z_{dog} = (${z_dog.toFixed(4)})\\]`;
-
-            document.getElementById('softmax-calc-output').innerHTML = 
-                `\\[P_{cat} = \\frac{e^{${z_cat.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_cat * 100).toFixed(1)}\\%  \\quad | \\quad P_{dog} = \\frac{e^{${z_dog.toFixed(2)}}}{e^{${z_cat.toFixed(2)}} + e^{${z_dog.toFixed(2)}}} = ${(prob_dog * 100).toFixed(1)}\\% \\]`;
-
+            // MathJax 비동기 수식 출력 업데이트 안정화
             if (window.MathJax && MathJax.typesetPromise) {
                 MathJax.typesetPromise([
                     document.getElementById('math-formula-box'),
@@ -804,7 +931,11 @@
                 });
             }
 
+            // 실시간 통합 텍스트 및 퍼센티지 연동 바 너비 반영
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
+            if (document.getElementById('other-text-prob')) {
+                document.getElementById('other-text-prob').innerText = `${(prob_other * 100).toFixed(1)}%`;
+            }
             document.getElementById('dog-text-prob').innerText = `${(prob_dog * 100).toFixed(1)}%`;
 
             document.getElementById('cat-bar-seg').style.width = `${prob_cat * 100}%`;
@@ -829,7 +960,6 @@
             if (!isDrawing) return;
             e.preventDefault();
             const pos = getMousePos(e);
-            
             ctx.lineWidth = parseInt(widthSlider.value); 
             
             const pct = parseInt(radiusSlider.value);
@@ -841,7 +971,6 @@
                 ctx.lineJoin = 'miter';
             }
             
-            // 툴 모드 상태에 따른 브러시의 색상 설정 (펜: 검은색, 지우개: 흰색)
             if (toolMode === 'eraser') {
                 ctx.strokeStyle = '#ffffff'; 
             } else {
@@ -878,7 +1007,7 @@
         setTimeout(() => {
             syncCanvasDisplaySize();
             clearInputBuffer(150, 100);
-            processDrawing();
+            switchModelMode(2); // 처음에 2클래스 이진 모드로 시작하도록 설정
         }, 100);
     </script>
 </body>
