@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>강아지, 고양이 분류 프로그램</title>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/Mathjax.js"></script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <style>
         :root {
             --c-bg-main: #FBF9F4;
@@ -88,16 +88,20 @@
             z-index: 2;
         }
 
+        /* [요청 반영] 좌우 창의 가로 합이 100%이면서, 두 창의 세로 높이가 완벽히 동일하게 stretch 되도록 설계 */
         .grid-layout {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
             width: 100%;
             box-sizing: border-box;
         }
 
         @media (min-width: 992px) {
-            .grid-layout { grid-template-columns: 1fr 1fr; }
+            .grid-layout { 
+                flex-direction: row;
+                align-items: stretch; /* 좌우 카드의 세로 길이를 완벽히 일치시킵니다 */
+            }
         }
 
         .card {
@@ -110,12 +114,49 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 580px; 
+            flex: 1; /* 1:1 대칭 비율 유지 */
+        }
+
+        /* 오른쪽 탭 연결 래퍼 */
+        .right-pane-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
         }
 
         .card-right {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
+            flex: 1; /* 부모 래퍼 안에서 세로 꽉 차게 조절 */
+        }
+
+        .model-tab-header {
+            display: flex;
+            background-color: #EFEFED;
+            border: 1px solid var(--c-border);
+            border-bottom: none;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .model-tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            outline: none;
+        }
+        .model-tab-btn.active {
+            background-color: var(--c-bg-card);
+            color: var(--c-text-main);
+            border-bottom: 2px solid var(--c-accent);
         }
 
         .interactive-zone {
@@ -132,7 +173,7 @@
             border: 2px solid var(--c-text-main);
             overflow: hidden;
             width: 100%; 
-            height: 380px; 
+            height: 380px; /* 고정 확장 높이 스펙 유지 */
             cursor: none; 
             border-radius: 6px;
         }
@@ -271,41 +312,6 @@
             font-weight: bold;
             color: var(--c-accent);
             text-align: right;
-        }
-
-        .right-pane-wrapper {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .model-tab-header {
-            display: flex;
-            background-color: #EFEFED;
-            border: 1px solid var(--c-border);
-            border-bottom: none;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            overflow: hidden;
-            width: 100%;
-        }
-        .model-tab-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            background: transparent;
-            font-size: 0.95rem;
-            font-weight: bold;
-            color: var(--c-text-muted);
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            outline: none;
-        }
-        .model-tab-btn.active {
-            background-color: var(--c-bg-card);
-            color: var(--c-text-main);
-            border-bottom: 2px solid var(--c-accent);
         }
 
         .math-flow {
@@ -487,10 +493,10 @@
                             </p>
                             <div class="math-box">
                                 <div id="math-formula-box" style="margin-bottom: 5px; font-size: 0.95rem; color: var(--c-text-muted);">
-                                    \[Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}\]
+                                    <div id="formula-dyn-1">$$Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}$$</div>
                                 </div>
                                 <div id="linear-calc-output-container">
-                                    <span id="linear-calc-output" style="color: var(--c-accent); font-size: 0.85rem; font-weight: bold;">연산 활성화 중...</span>
+                                    <div id="formula-dyn-2">$$Z_{cat} = 0.0000, \quad Z_{dog} = 0.0000$$</div>
                                 </div>
                             </div>
                         </div>
@@ -502,10 +508,10 @@
                             </p>
                             <div class="math-box">
                                 <div id="softmax-math-box" style="margin-bottom: 5px;">
-                                    \[P_c = \frac{e^{z_c / T}}{\sum_{j} e^{z_j / T}}\]
+                                    <div id="formula-dyn-3">$$P_c = \frac{e^{z_c / 5.0}}{\sum_{j} e^{z_j / 5.0}}$$</div>
                                 </div>
                                 <div id="softmax-calc-output-container">
-                                    <span id="softmax-calc-output" style="color: var(--c-text-main); font-size: 0.8rem; line-height: 1.5;">분석 중...</span>
+                                    <div id="formula-dyn-4">$$P_{cat} = 50.0\% \quad | \quad P_{dog} = 50.0\%$$</div>
                                 </div>
                             </div>
                         </div>
@@ -613,7 +619,7 @@
         window.addEventListener('resize', resizeBgCanvas);
         window.addEventListener('load', () => { resizeBgCanvas(); animateParticles(); });
 
-        // ------------------ 가변 행듈 이미지 분류 시스템 스크립트 ------------------
+        // ------------------ 가변 행렬 이미지 분류 AI 시스템 내부 엔진 ------------------
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -632,26 +638,18 @@
         let activeClassCount = 2;
         const b_model = {
             2: [0.0, 0.0],
-            3: [0.0, 1.2, 0.0] 
+            3: [0.0, 0.5, 0.0] 
         };
 
         let toolMode = 'pen';
 
-        // [안정성 수정] 자바스크립트 내장 탭 수식 문자열 이스케이프 보강
         function switchModelMode(classNum) {
             activeClassCount = classNum;
             document.getElementById('model-tab-2').classList.toggle('active', classNum === 2);
             document.getElementById('model-tab-3').classList.toggle('active', classNum === 3);
             
-            const mathBox = document.getElementById('softmax-math-box');
-            if(classNum === 2) {
-                mathBox.innerHTML = `\\\\[P_c = \\\\frac{e^{z_c / T}}{\\\\sum_{j=1}^{2} e^{z_j / T}}\\\\]`;
-            } else {
-                mathBox.innerHTML = `\\\\[P_c = \\\\frac{e^{z_c / T}}{\\\\sum_{j=1}^{3} e^{z_j / T}}\\\\]`;
-            }
-
             updateSpecDisplay();
-            classify();
+            classify(0); // 강제 제로 픽셀 초기화 분류 트리거
         }
 
         function setToolMode(mode) {
@@ -736,22 +734,23 @@
                     const rRatio = r / h;
                     const cRatio = c / w;
 
-                    const leftCatEar = Math.exp(-((Math.pow(rRatio - 0.18, 2) / 0.02) + (Math.pow(cRatio - 0.30, 2) / 0.01)));
-                    const rightCatEar = Math.exp(-((Math.pow(rRatio - 0.18, 2) / 0.02) + (Math.pow(cRatio - 0.70, 2) / 0.01)));
-                    catW += (leftCatEar + rightCatEar) * 3.5;
+                    // 밀도를 높인 정밀 가우시안 마스크 학습 공식 커스텀 설계
+                    const leftCatEar = Math.exp(-((Math.pow(rRatio - 0.22, 2) / 0.015) + (Math.pow(cRatio - 0.32, 2) / 0.008)));
+                    const rightCatEar = Math.exp(-((Math.pow(rRatio - 0.22, 2) / 0.015) + (Math.pow(cRatio - 0.68, 2) / 0.008)));
+                    catW += (leftCatEar + rightCatEar) * 4.5;
 
-                    const leftDogEar = Math.exp(-((Math.pow(rRatio - 0.38, 2) / 0.03) + (Math.pow(cRatio - 0.12, 2) / 0.008)));
-                    const rightDogEar = Math.exp(-((Math.pow(rRatio - 0.38, 2) / 0.03) + (Math.pow(cRatio - 0.88, 2) / 0.008)));
-                    const dogSnout = Math.exp(-((Math.pow(rRatio - 0.72, 2) / 0.02) + (Math.pow(cRatio - 0.50, 2) / 0.015)));
-                    dogW += (leftDogEar + rightDogEar) * 2.5 + dogSnout * 4.0;
+                    const leftDogEar = Math.exp(-((Math.pow(rRatio - 0.42, 2) / 0.02) + (Math.pow(cRatio - 0.15, 2) / 0.006)));
+                    const rightDogEar = Math.exp(-((Math.pow(rRatio - 0.42, 2) / 0.02) + (Math.pow(cRatio - 0.85, 2) / 0.006)));
+                    const dogSnout = Math.exp(-((Math.pow(rRatio - 0.75, 2) / 0.015) + (Math.pow(cRatio - 0.50, 2) / 0.012)));
+                    dogW += (leftDogEar + rightDogEar) * 3.0 + dogSnout * 5.0;
 
-                    catW -= dogSnout * 1.5;
-                    dogW -= (leftCatEar + rightCatEar) * 1.5;
+                    catW -= dogSnout * 2.0;
+                    dogW -= (leftCatEar + rightCatEar) * 2.0;
 
                     if (cols === 3) {
-                        otherW += (1.0 - leftCatEar - rightCatEar - dogSnout) * 0.8;
-                        if (rRatio >= 0.88 || rRatio <= 0.05 || cRatio <= 0.08 || cRatio >= 0.92) {
-                            otherW += 2.0;
+                        otherW += (1.0 - leftCatEar - rightCatEar - dogSnout) * 0.5;
+                        if (rRatio >= 0.85 || rRatio <= 0.05 || cRatio <= 0.05 || cRatio >= 0.95) {
+                            otherW += 2.5;
                         }
                         dynamicW.push([catW, otherW, dogW]);
                     } else {
@@ -762,15 +761,15 @@
             return dynamicW;
         }
 
-        // [안정성 수정] 정보 테이블 내부 LaTeX 수식 문자열 이스케이프 보강
         function updateSpecDisplay() {
             const totalDimension = currentWidth * currentHeight;
             document.getElementById('spec-resolution').innerText = `${currentWidth.toLocaleString()} x ${currentHeight.toLocaleString()} px`;
             document.getElementById('spec-vector').innerText = `1 × ${totalDimension.toLocaleString()} 차원`;
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × ${activeClassCount} 차원`;
 
-            const mathBox = document.getElementById('math-formula-box');
-            mathBox.innerHTML = `\\\\[Z_{(1 \\\\times ${activeClassCount})} = X_{(1 \\\\times {${totalDimension.toLocaleString()}})} \\\\cdot W_{({${totalDimension.toLocaleString()}} \\\\times ${activeClassCount})} + b_{(1 \\\\times ${activeClassCount})}\\\\]`;
+            // MathJax v2의 동적 업데이트 정밀 대응 방식 적용
+            document.getElementById('math-formula-box').innerHTML = 
+                `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times {${totalDimension.toLocaleString()}})} \\cdot W_{({${totalDimension.toLocaleString()}} \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}$$</div>`;
         }
 
         function processDrawing() {
@@ -787,7 +786,7 @@
                 const rVal = imgData.data[i * 4];
                 const activeVal = 1.0 - (rVal / 255.0);
                 inputVector[i] = activeVal;
-                if(activeVal > 0.1) activePixelCount++;
+                if(activeVal > 0.05) activePixelCount += activeVal; // 단순 개수가 아닌 선의 세기 밀도 누적
             }
             classify(activePixelCount);
         }
@@ -828,7 +827,7 @@
                             const brightness = (r + g + bVal) / 3 / 255;
                             const activeVal = 1.0 - brightness;
                             inputVector[i] = activeVal; 
-                            if(activeVal > 0.1) activePixelCount++;
+                            if(activeVal > 0.05) activePixelCount += activeVal;
                         }
 
                         updateSpecDisplay();
@@ -842,7 +841,6 @@
             reader.readAsDataURL(file);
         }
 
-        // [안정성 수정] 분류 연산 출력 스크립트 내부 LaTeX 이스케이프(\\\\)를 완벽히 종결 수정했습니다.
         function classify(activePixelCount = 0) {
             const totalDim = currentWidth * currentHeight;
             if (inputVector.length !== totalDim) return;
@@ -850,19 +848,28 @@
             const dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
             const currentBias = b_model[activeClassCount];
 
-            const dynamicNoiseFactor = activePixelCount > 0 ? Math.min(activePixelCount / (totalDim * 0.03), 2.5) : 0;
+            // [수학적 규제화 기법 탑재] 점 하나나 낙서가 너무 적을 땐 강제로 0에 수렴하게 밀도 게인을 조절 (50:50 상쇄 방어벽)
+            // 전체 화소 대비 그린 화소 비율이 최소 임계점(약 0.8%)을 넘어야 인공지능이 서서히 확신을 갖기 시작합니다.
+            const minDrawingThreshold = totalDim * 0.008;
+            const activationGain = activePixelCount < minDrawingThreshold ? (activePixelCount / minDrawingThreshold) : 1.0;
+
+            const dynamicNoiseFactor = activeClassCount === 3 && activePixelCount > 0 ? Math.min(activePixelCount / (totalDim * 0.02), 3.0) : 0;
             const T = 5.0; 
 
             let prob_cat = 0, prob_other = 0, prob_dog = 0;
 
             if (activeClassCount === 2) {
-                let z_cat = currentBias[0];
-                let z_dog = currentBias[1];
+                let z_cat_raw = currentBias[0];
+                let z_dog_raw = currentBias[1];
 
                 for (let i = 0; i < totalDim; i++) {
-                    z_cat += inputVector[i] * dynamicW[i][0];
-                    z_dog += inputVector[i] * dynamicW[i][1];
+                    z_cat_raw += inputVector[i] * dynamicW[i][0];
+                    z_dog_raw += inputVector[i] * dynamicW[i][1];
                 }
+
+                // 규제화 게인(activationGain)을 곱해 드로잉이 적을 땐 강제로 점수를 평형(0)으로 수축시킵니다
+                let z_cat = z_cat_raw * activationGain;
+                let z_dog = z_dog_raw * activationGain;
 
                 const exp_cat = Math.exp(z_cat / T);
                 const exp_dog = Math.exp(z_dog / T);
@@ -872,11 +879,11 @@
                 prob_dog = exp_dog / sum_exp;
                 prob_other = 0; 
 
-                document.getElementById('linear-calc-output').innerHTML = 
-                    `\\\\[Z_{cat} = (${z_cat.toFixed(4)}), \\\\quad Z_{dog} = (${z_dog.toFixed(4)})\\\\]`;
+                document.getElementById('linear-calc-output-container').innerHTML = 
+                    `<div id="formula-dyn-2">$$Z_{cat} = ${z_cat.toFixed(4)}, \\quad Z_{dog} = ${z_dog.toFixed(4)}$$</div>`;
 
-                document.getElementById('softmax-calc-output').innerHTML = 
-                    `\\\\[P_{cat} = \\\\frac{e^{z_{cat} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_cat * 100).toFixed(1)}\\\\%  \\\\quad | \\\\quad P_{dog} = \\\\frac{e^{z_{dog} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_dog * 100).toFixed(1)}\\\\% \\\\]`;
+                document.getElementById('softmax-calc-output-container').innerHTML = 
+                    `<div id="formula-dyn-4">$$P_{cat} = \\frac{e^{${(z_cat/T).toFixed(2)}}}{\\sum e^{z_j/T}} = ${(prob_cat * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = \\frac{e^{${(z_dog/T).toFixed(2)}}}{\\sum e^{z_j/T}} = ${(prob_dog * 100).toFixed(1)}\\%$$</div>`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -885,15 +892,20 @@
                 document.getElementById('other-bar-seg').style.width = `0%`;
 
             } else {
-                let z_cat = currentBias[0];
-                let z_other = currentBias[1] + dynamicNoiseFactor; 
-                let z_dog = currentBias[2];
+                let z_cat_raw = currentBias[0];
+                let z_other_raw = currentBias[1] + dynamicNoiseFactor; 
+                let z_dog_raw = currentBias[2];
 
                 for (let i = 0; i < totalDim; i++) {
-                    z_cat += inputVector[i] * dynamicW[i][0];
-                    z_other += inputVector[i] * dynamicW[i][1];
-                    z_dog += inputVector[i] * dynamicW[i][2];
+                    z_cat_raw += inputVector[i] * dynamicW[i][0];
+                    z_other_raw += inputVector[i] * dynamicW[i][1];
+                    z_dog_raw += inputVector[i] * dynamicW[i][2];
                 }
+
+                // 3클래스 모드 규제화 수축 반영
+                let z_cat = z_cat_raw * activationGain;
+                let z_other = activePixelCount < minDrawingThreshold ? currentBias[1] : (z_other_raw * activationGain);
+                let z_dog = z_dog_raw * activationGain;
 
                 const exp_cat = Math.exp(z_cat / T);
                 const exp_other = Math.exp(z_other / T);
@@ -904,11 +916,11 @@
                 prob_other = exp_other / sum_exp;
                 prob_dog = exp_dog / sum_exp;
 
-                document.getElementById('linear-calc-output').innerHTML = 
-                    `\\\\[Z_{cat} = (${z_cat.toFixed(4)}), \\\\quad Z_{other} = (${z_other.toFixed(4)}), \\\\quad Z_{dog} = (${z_dog.toFixed(4)})\\\\]`;
+                document.getElementById('linear-calc-output-container').innerHTML = 
+                    `<div id="formula-dyn-2">$$Z_{cat} = ${z_cat.toFixed(4)}, \\quad Z_{other} = ${z_other.toFixed(4)}, \\quad Z_{dog} = ${z_dog.toFixed(4)}$$</div>`;
 
-                document.getElementById('softmax-calc-output').innerHTML = 
-                    `\\\\[P_{cat} = \\\\frac{e^{z_{cat} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_cat * 100).toFixed(1)}\\\\%  \\\\quad | \\\\quad P_{other} = \\\\frac{e^{z_{other} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_other * 100).toFixed(1)}\\\\% \\\\quad | \\\\quad P_{dog} = \\\\frac{e^{z_{dog} / 5.0}}{\\\\sum e^{z_j / 5.0}} = ${(prob_dog * 100).toFixed(1)}\\\\% \\\\]`;
+                document.getElementById('softmax-calc-output-container').innerHTML = 
+                    `<div id="formula-dyn-4">$$P_{cat} = ${(prob_cat * 100).toFixed(1)}\\% \\quad | \\quad P_{other} = ${(prob_other * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = ${(prob_dog * 100).toFixed(1)}\\%$$</div>`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -918,16 +930,12 @@
                 document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            // MathJax 프라미스 리프레시 호출
-            if (window.MathJax && MathJax.typesetPromise) {
-                MathJax.typesetPromise([
-                    document.getElementById('math-formula-box'),
-                    document.getElementById('softmax-math-box'),
-                    document.getElementById('linear-calc-output-container'),
-                    document.getElementById('softmax-calc-output-container')
-                ]).catch(function (err) {
-                    console.log("MathJax error: " + err.message);
-                });
+            // [MathJax 수식 무조건 렌더링 치트키 코드] v2 허브 대기열에 집어넣어 동적 수식을 무조건 완벽 강제 변환합니다.
+            if (window.MathJax && MathJax.Hub && MathJax.Hub.Queue) {
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "math-formula-box"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "linear-calc-output-container"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-math-box"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-calc-output-container"]);
             }
 
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
