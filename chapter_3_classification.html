@@ -20,6 +20,8 @@
             --color-dog: #6366F1;   
             --c-btn-delete: #C2410C; 
             --c-btn-delete-hover: #9A3412;
+            --c-btn-calc: #2563EB;
+            --c-btn-calc-hover: #1D4ED8;
         }
 
         body {
@@ -130,30 +132,24 @@
             flex: 1; 
         }
 
-        /* [요청 피드백] 예시 사진처럼 동일한 크기로 계층화된 2단 탭 디자인 시스템 */
         .tab-group-wrapper {
             display: flex;
             flex-direction: column;
             width: 100%;
-            background-color: #EFEFED;
-            border: 1px solid var(--c-border);
-            border-bottom: none;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            overflow: hidden;
+            box-sizing: border-box;
         }
 
         .model-tab-header {
             display: flex;
             width: 100%;
-            border-bottom: 1px solid var(--c-border);
+            margin-bottom: 10px; 
         }
 
         .model-tab-btn {
             flex: 1;
             padding: 14px 20px;
-            border: none;
-            background: #EAF0EC; /* 구분감을 주는 차분한 미색 베이스 */
+            border: 1px solid var(--c-border);
+            background: #EAF0EC; 
             font-size: 0.95rem;
             font-weight: bold;
             color: var(--c-text-muted);
@@ -161,25 +157,30 @@
             transition: all 0.2s;
             text-align: center;
             outline: none;
+            border-radius: 6px;
+        }
+
+        .tab-btn-left {
+            margin-right: 8px;
         }
 
         .model-tab-btn.active {
             background-color: var(--c-bg-card);
             color: var(--c-text-main);
+            border: 2px solid var(--c-accent);
         }
 
-        /* 하부 서브 탭 헤더 */
         .sub-tab-header {
             display: flex;
             width: 100%;
-            background-color: #F3F4F6;
+            margin-bottom: 12px;
         }
 
         .sub-tab-btn {
             flex: 1;
             padding: 12px 20px;
-            border: none;
-            background: transparent;
+            border: 1px solid var(--c-border);
+            background: #F3F4F6;
             font-size: 0.9rem;
             font-weight: bold;
             color: var(--c-text-muted);
@@ -187,12 +188,13 @@
             transition: all 0.2s;
             text-align: center;
             outline: none;
+            border-radius: 6px;
         }
 
         .sub-tab-btn.active {
             background-color: var(--c-bg-card);
             color: var(--c-text-main);
-            border-bottom: 2px solid var(--c-accent);
+            border: 2px solid var(--c-accent);
         }
 
         .interactive-zone {
@@ -219,16 +221,6 @@
             display: block;
             width: 100%;
             height: 100%;
-        }
-
-        #brushGuide {
-            position: absolute;
-            border: 1px solid rgba(0, 0, 0, 0.6);
-            background-color: rgba(0, 0, 0, 0.1);
-            pointer-events: none; 
-            transform: translate(-50%, -50%); 
-            display: none;
-            z-index: 10;
         }
 
         .slider-panel {
@@ -315,6 +307,17 @@
             color: white;
         }
         .btn-danger:hover { background-color: var(--c-btn-delete-hover); }
+
+        /* [새로 추가] 우측 카드 하단 수식 계산 버튼 전용 스타일 */
+        .btn-calculate {
+            background-color: var(--c-btn-calc);
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px 10px;
+            font-size: 14px;
+        }
+        .btn-calculate:hover { background-color: var(--c-btn-calc-hover); }
 
         #image-upload { display: none; }
 
@@ -515,13 +518,14 @@
             </div>
 
             <div class="right-pane-wrapper">
+                
                 <div class="tab-group-wrapper">
                     <div class="model-tab-header">
-                        <button class="model-tab-btn active" id="arch-tab-single" onclick="switchArchitecture('single')">단층 퍼셉트론</button>
+                        <button class="model-tab-btn tab-btn-left active" id="arch-tab-single" onclick="switchArchitecture('single')">단층 퍼셉트론</button>
                         <button class="model-tab-btn" id="arch-tab-multi" onclick="switchArchitecture('multi')">다층 퍼셉트론</button>
                     </div>
                     <div class="sub-tab-header">
-                        <button class="sub-tab-btn active" id="model-tab-2" onclick="switchModelMode(2)">2클래스 분류 모델</button>
+                        <button class="sub-tab-btn tab-btn-left active" id="model-tab-2" onclick="switchModelMode(2)">2클래스 분류 모델</button>
                         <button class="sub-tab-btn" id="model-tab-3" onclick="switchModelMode(3)">3클래스 분류 모델</button>
                     </div>
                 </div>
@@ -531,7 +535,7 @@
                         <div>
                             <h3 style="margin-top: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
                             <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;" id="arch-desc-text">
-                                단층 선형 결합 식 \(Z = X \cdot W + b\)를 통해 각 사물의 고유 특징 매칭 스코어를 단순 획득합니다.
+                                단층 선형 결합 식 Z = X · W + b 를 통해 각 사물의 고유 특징 매칭 스코어를 단순 획득합니다.
                             </p>
                             <div class="math-box">
                                 <div id="math-formula-box" style="margin-bottom: 5px; font-size: 0.95rem; color: var(--c-text-muted);">
@@ -568,6 +572,8 @@
                             <div class="unified-bar-segment segment-dog" id="dog-bar-seg"></div>
                         </div>
                     </div>
+
+                    <button class="btn btn-primary btn-calculate" onclick="executeClassification()">수식 계산하기</button>
                 </div>
             </div>
 
@@ -686,7 +692,6 @@
         };
 
         let toolMode = 'pen';
-        let mathjaxTimer = null;
 
         function switchModelMode(classNum) {
             activeClassCount = classNum;
@@ -701,7 +706,7 @@
             }
 
             updateSpecDisplay();
-            processDrawing(true); 
+            resetDisplayToCenter(); // 탭 전환 시 화면 연산 상태 평형 초기화
         }
 
         function switchArchitecture(type) {
@@ -717,7 +722,7 @@
             }
 
             updateSpecDisplay();
-            processDrawing(true);
+            resetDisplayToCenter();
         }
 
         function setToolMode(mode) {
@@ -842,7 +847,8 @@
             }
         }
 
-        function processDrawing(immediateMath = false) {
+        // [버튼 전용 트리거 기동식 전환 완료] 드로잉 중에는 백그라운드 연산 버퍼(inputVector)만 세팅하며 렉을 완전 차단합니다.
+        function syncDrawingMatrix() {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = currentWidth;
             tempCanvas.height = currentHeight;
@@ -851,70 +857,21 @@
             tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, currentWidth, currentHeight);
             const imgData = tempCtx.getImageData(0, 0, currentWidth, currentHeight);
             
-            let activePixelCount = 0;
             for (let i = 0; i < currentWidth * currentHeight; i++) {
-                const rVal = imgData.data[i * 4];
-                const activeVal = 1.0 - (rVal / 255.0);
-                inputVector[i] = activeVal;
-                if(activeVal > 0.05) activePixelCount += activeVal; 
+                inputVector[i] = 1.0 - (imgData.data[i * 4] / 255.0);
             }
-            classify(activePixelCount, immediateMath);
         }
 
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // [수식 계산하기] 버튼 전용 대형 통합 핸들러 메소드
+        function executeClassification() {
+            syncDrawingMatrix(); // 최종 도화지 드로잉 상태 연산 벡터에 로드
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    document.getElementById('loadingOverlay').classList.add('active');
+            let activePixelCount = 0;
+            for (let i = 0; i < inputVector.length; i++) {
+                if (inputVector[i] > 0.05) activePixelCount += inputVector[i];
+            }
 
-                    setTimeout(() => {
-                        currentWidth = img.width;
-                        currentHeight = img.height;
-                        
-                        clearCanvasContent();
-                        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-                        const x = (canvas.width / 2) - (img.width / 2) * scale;
-                        const y = (canvas.height / 2) - (img.height / 2) * scale;
-                        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-
-                        inputVector = new Array(currentWidth * currentHeight);
-                        const rawCanvas = document.createElement('canvas');
-                        rawCanvas.width = currentWidth;
-                        rawCanvas.height = currentHeight;
-                        const rawCtx = rawCanvas.getContext('2d');
-                        rawCtx.drawImage(img, 0, 0);
-                        
-                        let activePixelCount = 0;
-                        const imgData = rawCtx.getImageData(0, 0, currentWidth, currentHeight);
-                        for (let i = 0; i < currentWidth * currentHeight; i++) {
-                            const r = imgData.data[i * 4];
-                            const g = imgData.data[i * 4 + 1];
-                            const bVal = imgData.data[i * 4 + 2];
-                            const brightness = (r + g + bVal) / 3 / 255;
-                            const activeVal = 1.0 - brightness;
-                            inputVector[i] = activeVal; 
-                            if(activeVal > 0.05) activePixelCount += activeVal;
-                        }
-
-                        updateSpecDisplay();
-                        classify(activePixelCount, true); 
-
-                        document.getElementById('loadingOverlay').classList.remove('active');
-                    }, 50);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function classify(activePixelCount = 0, immediateMath = false) {
             const totalDim = currentWidth * currentHeight;
-            if (inputVector.length !== totalDim) return;
-
             let dynamicW = generateDynamicWeights(currentWidth, currentHeight, activeClassCount);
             const currentBias = b_model[activeClassCount];
 
@@ -1017,13 +974,8 @@
                 document.getElementById('other-bar-seg').style.width = `${prob_other * 100}%`;
             }
 
-            if (mathjaxTimer) clearTimeout(mathjaxTimer);
-
-            if (immediateMath) {
-                triggerMathJax();
-            } else {
-                mathjaxTimer = setTimeout(triggerMathJax, 80); 
-            }
+            // 버튼을 누른 타이밍에만 MathJax 수식 변환을 확정 트리거합니다.
+            triggerMathJax();
 
             document.getElementById('cat-text-prob').innerText = `${(prob_cat * 100).toFixed(1)}%`;
             if (document.getElementById('other-text-prob')) {
@@ -1033,6 +985,32 @@
 
             document.getElementById('cat-bar-seg').style.width = `${prob_cat * 100}%`;
             document.getElementById('dog-bar-seg').style.width = `${prob_dog * 100}%`;
+        }
+
+        // 초기화 수식 매핑 함수
+        function resetDisplayToCenter() {
+            document.getElementById('linear-calc-output-container').innerHTML = 
+                activeClassCount === 2 ? `<div id="formula-dyn-2">$$Z_{cat} = 0.0000, \\quad Z_{dog} = 0.0000$$</div>`
+                                       : `<div id="formula-dyn-2">$$Z_{cat} = 0.0000, \\quad Z_{other} = 0.0000, \\quad Z_{dog} = 0.0000$$</div>`;
+            
+            document.getElementById('softmax-calc-output-container').innerHTML = 
+                activeClassCount === 2 ? `<div id="formula-dyn-4">$$P_{cat} = 50.0\\% \\quad | \\quad P_{dog} = 50.0\\%$$</div>`
+                                       : `<div id="formula-dyn-4">$$P_{cat} = 33.3\\% \\quad | \\quad P_{other} = 33.3\\% \\quad | \\quad P_{dog} = 33.3\\%$$</div>`;
+
+            document.getElementById('bar-header-container').innerHTML = activeClassCount === 2 ? `
+                <span style="color: var(--color-cat);">🐱 고양이 (50.0%)</span>
+                <span style="color: var(--color-dog);">강아지 (50.0%) 🐶</span>
+            ` : `
+                <span style="color: var(--color-cat);">🐱 고양이 (33.3%)</span>
+                <span style="color: var(--color-other);">❔ 둘 다 아님 (33.3%)</span>
+                <span style="color: var(--color-dog);">강아지 (33.3%) 🐶</span>
+            `;
+
+            document.getElementById('cat-bar-seg').style.width = activeClassCount === 2 ? `50%` : `33.33%`;
+            document.getElementById('other-bar-seg').style.width = activeClassCount === 2 ? `0%` : `33.33%`;
+            document.getElementById('dog-bar-seg').style.width = activeClassCount === 2 ? `50%` : `33.33%`;
+
+            triggerMathJax();
         }
 
         function toggleMathJaxVisibility(show) {
@@ -1060,6 +1038,52 @@
             }
         }
 
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    document.getElementById('loadingOverlay').classList.add('active');
+
+                    setTimeout(() => {
+                        currentWidth = img.width;
+                        currentHeight = img.height;
+                        
+                        clearCanvasContent();
+                        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                        const x = (canvas.width / 2) - (img.width / 2) * scale;
+                        const y = (canvas.height / 2) - (img.height / 2) * scale;
+                        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+                        inputVector = new Array(currentWidth * currentHeight);
+                        const rawCanvas = document.createElement('canvas');
+                        rawCanvas.width = currentWidth;
+                        rawCanvas.height = currentHeight;
+                        const rawCtx = rawCanvas.getContext('2d');
+                        rawCtx.drawImage(img, 0, 0);
+                        
+                        const imgData = rawCtx.getImageData(0, 0, currentWidth, currentHeight);
+                        for (let i = 0; i < currentWidth * currentHeight; i++) {
+                            const r = imgData.data[i * 4];
+                            const g = imgData.data[i * 4 + 1];
+                            const bVal = imgData.data[i * 4 + 2];
+                            inputVector[i] = 1.0 - ((r + g + bVal) / 3 / 255);
+                        }
+
+                        updateSpecDisplay();
+                        executeClassification(); // 파일 업로드 시에는 편의상 자동 계산 작동
+
+                        document.getElementById('loadingOverlay').classList.remove('active');
+                    }, 50);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1072,7 +1096,7 @@
         }
 
         function startDrawing(e) { isDrawing = true; draw(e); }
-        function stopDrawing() { isDrawing = false; ctx.beginPath(); processDrawing(true); }
+        function stopDrawing() { isDrawing = false; ctx.beginPath(); }
 
         function draw(e) {
             if (!isDrawing) return;
@@ -1099,7 +1123,7 @@
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-            processDrawing(false); 
+            // 실시간 연산 구역을 통째로 생략하여 렉을 완전히 제거했습니다.
         }
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -1114,12 +1138,12 @@
         function clearCanvas() {
             clearCanvasContent();
             clearInputBuffer(150, 100);
-            processDrawing(true);
+            resetDisplayToCenter();
         }
 
         window.addEventListener('resize', () => {
             syncCanvasDisplaySize();
-            processDrawing(true);
+            resetDisplayToCenter();
         });
         
         setTimeout(() => {
