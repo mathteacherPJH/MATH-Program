@@ -22,6 +22,7 @@
             --c-btn-delete-hover: #9A3412;
             --c-btn-calc: #2563EB;
             --c-btn-calc-hover: #1D4ED8;
+            --c-bg-node: #F1F5F9;
         }
 
         body {
@@ -160,9 +161,7 @@
             border-radius: 6px;
         }
 
-        .tab-btn-left {
-            margin-right: 8px;
-        }
+        .tab-btn-left { margin-right: 8px; }
 
         .model-tab-btn.active {
             background-color: var(--c-bg-card);
@@ -221,6 +220,16 @@
             display: block;
             width: 100%;
             height: 100%;
+        }
+
+        #brushGuide {
+            position: absolute;
+            border: 1px solid rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.1);
+            pointer-events: none; 
+            transform: translate(-50%, -50%); 
+            display: none;
+            z-index: 10;
         }
 
         .slider-panel {
@@ -308,13 +317,12 @@
         }
         .btn-danger:hover { background-color: var(--c-btn-delete-hover); }
 
-        /* [요청 피드백 반영] 왼쪽 위에 예쁘게 들어가는 아담한 계산기 전용 소형 고정형 버튼 스타일 */
         .btn-calc-mini {
-            float: right; /* 제목 라인 우상단/좌상단 배치를 위해 정렬 조절 */
+            float: right; 
             background-color: var(--c-btn-calc);
             color: white;
-            padding: 4px 10px;
-            font-size: 11px;
+            padding: 4px 14px;
+            font-size: 12px;
             font-weight: bold;
             border-radius: 4px;
             border: none;
@@ -327,26 +335,10 @@
         .header-with-btn {
             width: 100%;
             overflow: hidden;
-            margin-bottom: 4px;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed var(--c-border);
+            padding-bottom: 8px;
         }
-
-        #image-upload { display: none; }
-
-        .upload-label {
-            display: block;
-            width: 100%;
-            padding: 8px 10px; 
-            background-color: #3B82F6;
-            color: white;
-            text-align: center;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            box-sizing: border-box;
-            transition: background 0.2s;
-        }
-        .upload-label:hover { background-color: #2563EB; }
 
         .spec-table {
             width: 100%;
@@ -364,24 +356,54 @@
             text-align: right;
         }
 
-        .math-flow {
+        /* ------------------ [새로 개편 완료된 뉴런 도식화 대시보드 CSS] ------------------ */
+        .diagram-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 14px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        /* [요청 피드백 반영] 수식이 바뀔 때 세로가 울렁거리며 흔들리는 현상을 막기 위해 최소 고정 높이(min-height)를 적용했습니다. */
-        .math-box {
+        .diagram-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
             background-color: #F8F9FA;
-            padding: 12px 15px;
-            border-radius: 6px;
             border: 1px solid var(--c-border);
-            font-family: 'Courier New', Courier, monospace;
-            overflow-x: auto;
-            border-left: 3px solid var(--c-accent);
-            color: var(--c-text-main);
-            min-height: 75px; /* 수식 리렌더링 시 세로 가변 현상 방지 배리어 고정 스펙 */
+            border-radius: 6px;
+            padding: 10px 14px;
             box-sizing: border-box;
+            min-height: 80px; /* 고정 세로 정렬 가변 방지 */
+        }
+
+        .layer-title {
+            width: 110px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--c-accent);
+            border-right: 2px solid var(--c-border);
+            padding-right: 8px;
+            flex-shrink: 0;
+            line-height: 1.3;
+        }
+
+        .layer-flow-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-left: 10px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        /* 흐름 연결 화살표 기호 */
+        .flow-arrow {
+            color: var(--c-text-muted);
+            font-weight: bold;
+            margin: 0 10px;
+            font-size: 1.1rem;
         }
 
         .results-container { margin-top: 20px; }
@@ -440,10 +462,7 @@
             pointer-events: none;
             transition: opacity 0.2s ease;
         }
-        #loadingOverlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        #loadingOverlay.active { opacity: 1; pointer-events: auto; }
         .spinner {
             width: 50px;
             height: 50px;
@@ -453,16 +472,10 @@
             animation: spin 1s linear infinite;
             margin-bottom: 15px;
         }
-        .loading-text {
-            font-weight: bold;
-            color: var(--c-text-main);
-            font-size: 1.1rem;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .loading-text { font-weight: bold; color: var(--c-text-main); font-size: 1.1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        #image-upload { display: none; }
         footer { display: none; }
     </style>
 </head>
@@ -545,39 +558,52 @@
                 </div>
                 
                 <div class="card card-right">
-                    <div class="math-flow">
-                        <div>
-                            <div class="header-with-btn">
-                                <button class="btn-calc-mini" onclick="executeClassification()">수식 계산하기</button>
-                                <h3 style="margin: 4px 0 0 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold; line-height: 24px;">① 선형대수 곱셈 연산 (Linear Transformation)</h3>
-                            </div>
-                            
-                            <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;" id="arch-desc-text">
-                                단층 선형 결합 식 Z = X · W + b 를 통해 각 사물의 고유 특징 매칭 스코어를 단순 획득합니다.
-                            </p>
-                            <div class="math-box">
-                                <div id="math-formula-box" style="margin-bottom: 5px; font-size: 0.95rem; color: var(--c-text-muted);">
-                                    <div id="formula-dyn-1">$$Z_{(1 \times 2)} = X_{(1 \times D)} \cdot W_{(D \times 2)} + b_{(1 \times 2)}$$</div>
-                                </div>
-                                <div id="linear-calc-output-container">
-                                    <div id="formula-dyn-2">$$Z_{cat} = 0.0000, \quad Z_{dog} = 0.0000$$</div>
-                                </div>
-                            </div>
+                    <div>
+                        <div class="header-with-btn">
+                            <button class="btn-calc-mini" onclick="executeClassification()">수식 계산하기</button>
+                            <h3 style="margin: 4px 0 0 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold; line-height: 24px;">신경망 연산 프로세스 도식화</h3>
                         </div>
 
-                        <div>
-                            <h3 style="margin: 0; font-size: 0.95rem; color: var(--c-accent); font-weight: bold;">② 가변 차원 소프트맥스 사상 (Softmax mapping)</h3>
-                            <p style="font-size: 0.8rem; color: var(--c-text-muted); margin: 3px 0 8px 0;">
-                                차원 크기에 무관하게 최종 변환 스코어의 전체 총합 비율을 100%로 투영시킵니다. (온도 계수 \(T=5.0\) 적용)
-                            </p>
-                            <div class="math-box">
-                                <div id="softmax-math-box" style="margin-bottom: 5px;">
-                                    <div id="formula-dyn-3">$$P_c = \frac{e^{z_c / 5.0}}{\sum_{j} e^{z_j / 5.0}}$$</div>
-                                </div>
-                                <div id="softmax-calc-output-container">
-                                    <div id="formula-dyn-4">$$P_{cat} = 50.0\% \quad | \quad P_{dog} = 50.0\%$$</div>
+                        <div class="diagram-container">
+                            
+                            <div class="diagram-row">
+                                <div class="layer-title">INPUT LAYER<br>(입력 행렬화)</div>
+                                <div class="layer-flow-box" id="disp-layer-1">
+                                    $$X = [x_1, x_2, ..., x_{15,000}]$$
                                 </div>
                             </div>
+
+                            <div class="diagram-row" id="row-hidden-layer" style="display: none; background-color: #F0FDF4; border-color: #BBF7D0;">
+                                <div class="layer-title" style="color: #166534;">HIDDEN LAYER<br>(CNN 특징 추출)</div>
+                                <div class="layer-flow-box" id="disp-layer-hidden">
+                                    $$Conv_{3\times3}(X)$$ <span class="flow-arrow">➔</span> $$ReLU(f(x))$$
+                                </div>
+                            </div>
+
+                            <div class="diagram-row">
+                                <div class="layer-title">LINEAR LAYER<br>(가중치 선형 변환)</div>
+                                <div class="layer-flow-box" id="disp-layer-2">
+                                    <div id="formula-dyn-1">$$Z = X \cdot W + b$$</div>
+                                    <span class="flow-arrow" id="flow-arr-1">➔</span>
+                                    <div id="linear-calc-output-container">
+                                        <div id="formula-dyn-2">$$Z_{cat}=0.000, \, Z_{dog}=0.000$$</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="diagram-row">
+                                <div class="layer-title">OUTPUT LAYER<br>(소프트맥스 확률)</div>
+                                <div class="layer-flow-box" id="disp-layer-3">
+                                    <div id="softmax-math-box">
+                                        $$P_c = \frac{e^{z_c / 5.0}}{\sum e^{z_j / 5.0}}$$
+                                    </div>
+                                    <span class="flow-arrow">➔</span>
+                                    <div id="softmax-calc-output-container">
+                                        <div id="formula-dyn-4">$$P_{cat}=50.0\% \, | \, P_{dog}=50.0\%$$</div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -597,6 +623,7 @@
     </div>
 
     <script>
+        // --- 딥 그린 인터랙티브 배경 엔진 ---
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas.getContext('2d');
         let particles = [];
@@ -715,9 +742,9 @@
             
             const mathBox = document.getElementById('softmax-math-box');
             if(classNum === 2) {
-                mathBox.innerHTML = `<div id="formula-dyn-3">$$P_c = \\frac{e^{z_c / 5.0}}{\\sum_{j=1}^{2} e^{z_j / 5.0}}$$</div>`;
+                mathBox.innerHTML = `$$P_c = \\frac{e^{z_c / 5.0}}{\\sum_{j=1}^{2} e^{z_j / 5.0}}$$`;
             } else {
-                mathBox.innerHTML = `<div id="formula-dyn-3">$$P_c = \\frac{e^{z_c / 5.0}}{\\sum_{j=1}^{3} e^{z_j / 5.0}}$$</div>`;
+                mathBox.innerHTML = `$$P_c = \\frac{e^{z_c / 5.0}}{\\sum_{j=1}^{3} e^{z_j / 5.0}}$$`;
             }
 
             updateSpecDisplay();
@@ -729,11 +756,12 @@
             document.getElementById('arch-tab-single').classList.toggle('active', type === 'single');
             document.getElementById('arch-tab-multi').classList.toggle('active', type === 'multi');
 
-            const descText = document.getElementById('arch-desc-text');
-            if (type === 'single') {
-                descText.innerText = `단층 선형 결합 식 Z = X · W + b 를 통해 각 사물의 고유 특징 매칭 스코어를 단순 획득합니다.`;
+            // 다층 신경망(CNN) 선택 시 은닉층 레이어 행을 동적으로 노출합니다.
+            const hiddenRow = document.getElementById('row-hidden-layer');
+            if (type === 'multi') {
+                hiddenRow.style.display = 'flex';
             } else {
-                descText.innerText = `3x3 커널 합성곱 공간 필터링 처리 후, ReLU 함수 {f(x) = max(0, x)} 비선형 변환을 결합하여 경계를 조율합니다.`;
+                hiddenRow.style.display = 'none';
             }
 
             updateSpecDisplay();
@@ -854,11 +882,14 @@
             document.getElementById('spec-vector').innerText = `1 × ${totalDimension.toLocaleString()} 차원`;
             document.getElementById('spec-weights').innerText = `${totalDimension.toLocaleString()} × ${activeClassCount} 차원`;
 
-            const mathBox = document.getElementById('math-formula-box');
+            document.getElementById('disp-layer-1').innerHTML = `$$X = [x_1, x_2, ..., x_{${totalDimension.toLocaleString()}}]$$`;
+
+            const formulaBox = document.getElementById('formula-dyn-1');
             if (activeArchitecture === 'single') {
-                mathBox.innerHTML = `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = X_{(1 \\times D)} \\cdot W_{(D \\times ${activeClassCount})} + b_{(1 \\times ${activeClassCount})}$$</div>`;
+                formulaBox.innerHTML = `$$Z_{(1 \\times ${activeClassCount})} = X \\cdot W + b$$`;
             } else {
-                mathBox.innerHTML = `<div id="formula-dyn-1">$$Z_{(1 \\times ${activeClassCount})} = Softmax(ReLU(Conv_{3\\times3}(X) \\cdot W + b))$$</div>`;
+                // CNN 전용 결합 수식 사상
+                formulaBox.innerHTML = `$$Z_{(1 \\times ${activeClassCount})} = ReLU(Conv(X)) \\cdot W + b$$`;
             }
         }
 
@@ -934,10 +965,10 @@
                 prob_other = 0; 
 
                 document.getElementById('linear-calc-output-container').innerHTML = 
-                    `<div id="formula-dyn-2">$$Z_{cat} = ${z_cat.toFixed(4)}, \\quad Z_{dog} = ${z_dog.toFixed(4)}$$</div>`;
+                    `<div id="formula-dyn-2">$$Z_{cat} = ${z_cat.toFixed(2)}, \\, Z_{dog} = ${z_dog.toFixed(2)}$$</div>`;
 
                 document.getElementById('softmax-calc-output-container').innerHTML = 
-                    `<div id="formula-dyn-4">$$P_{cat} = \\frac{e^{${(z_cat/T).toFixed(2)}}}{\\sum e^{z_j/T}} = ${(prob_cat * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = \\frac{e^{${(z_dog/T).toFixed(2)}}}{\\sum e^{z_j/T}} = ${(prob_dog * 100).toFixed(1)}\\%$$</div>`;
+                    `<div id="formula-dyn-4">$$P_{cat} = ${(prob_cat * 100).toFixed(1)}\\%, \\, P_{dog} = ${(prob_dog * 100).toFixed(1)}\\%$$</div>`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -974,10 +1005,10 @@
                 prob_dog = exp_dog / sum_exp;
 
                 document.getElementById('linear-calc-output-container').innerHTML = 
-                    `<div id="formula-dyn-2">$$Z_{cat} = ${z_cat.toFixed(4)}, \\quad Z_{other} = ${z_other.toFixed(4)}, \\quad Z_{dog} = ${z_dog.toFixed(4)}$$</div>`;
+                    `<div id="formula-dyn-2">$$Z_{cat} = ${z_cat.toFixed(2)}, \\, Z_{oth} = ${z_other.toFixed(2)}, \\, Z_{dog} = ${z_dog.toFixed(2)}$$</div>`;
 
                 document.getElementById('softmax-calc-output-container').innerHTML = 
-                    `<div id="formula-dyn-4">$$P_{cat} = ${(prob_cat * 100).toFixed(1)}\\% \\quad | \\quad P_{other} = ${(prob_other * 100).toFixed(1)}\\% \\quad | \\quad P_{dog} = ${(prob_dog * 100).toFixed(1)}\\%$$</div>`;
+                    `<div id="formula-dyn-4">$$P_{cat} = ${(prob_cat * 100).toFixed(1)}\\%, \\, P_{oth} = ${(prob_other * 100).toFixed(1)}\\%, \\, P_{dog} = ${(prob_dog * 100).toFixed(1)}\\%$$</div>`;
 
                 document.getElementById('bar-header-container').innerHTML = `
                     <span style="color: var(--color-cat);">🐱 고양이 (<span id="cat-text-prob">0.0%</span>)</span>
@@ -1001,12 +1032,12 @@
 
         function resetDisplayToCenter() {
             document.getElementById('linear-calc-output-container').innerHTML = 
-                activeClassCount === 2 ? `<div id="formula-dyn-2">$$Z_{cat} = 0.0000, \\quad Z_{dog} = 0.0000$$</div>`
-                                       : `<div id="formula-dyn-2">$$Z_{cat} = 0.0000, \\quad Z_{other} = 0.0000, \\quad Z_{dog} = 0.0000$$</div>`;
+                activeClassCount === 2 ? `<div id="formula-dyn-2">$$Z_{cat} = 0.00, \\quad Z_{dog} = 0.00$$</div>`
+                                       : `<div id="formula-dyn-2">$$Z_{cat} = 0.00, \\quad Z_{oth} = 0.00, \\quad Z_{dog} = 0.00$$</div>`;
             
             document.getElementById('softmax-calc-output-container').innerHTML = 
                 activeClassCount === 2 ? `<div id="formula-dyn-4">$$P_{cat} = 50.0\\% \\quad | \\quad P_{dog} = 50.0\\%$$</div>`
-                                       : `<div id="formula-dyn-4">$$P_{cat} = 33.3\\% \\quad | \\quad P_{other} = 33.3\\% \\quad | \\quad P_{dog} = 33.3\\%$$</div>`;
+                                       : `<div id="formula-dyn-4">$$P_{cat} = 33.3\\% \\quad | \\quad P_{oth} = 33.3\\% \\quad | \\quad P_{dog} = 33.3\\%$$</div>`;
 
             document.getElementById('bar-header-container').innerHTML = activeClassCount === 2 ? `
                 <span style="color: var(--color-cat);">🐱 고양이 (50.0%)</span>
@@ -1027,18 +1058,21 @@
         function toggleMathJaxVisibility(show) {
             const m1 = document.getElementById('formula-dyn-1');
             const m2 = document.getElementById('formula-dyn-2');
-            const m3 = document.getElementById('formula-dyn-3');
             const m4 = document.getElementById('formula-dyn-4');
-            if(m1&&m2&&m3&&m4) {
+            const lyr1 = document.getElementById('disp-layer-1');
+            const lyrH = document.getElementById('disp-layer-hidden');
+            if(m1&&m2&&m4&&lyr1&&lyrH) {
                 const val = show ? "visible" : "hidden";
-                m1.style.visibility = val; m2.style.visibility = val;
-                m3.style.visibility = val; m4.style.visibility = val;
+                m1.style.visibility = val; m2.style.visibility = val; m4.style.visibility = val;
+                lyr1.style.visibility = val; lyrH.style.visibility = val;
             }
         }
 
         function triggerMathJax() {
             if (window.MathJax && MathJax.Hub && MathJax.Hub.Queue) {
                 toggleMathJaxVisibility(false);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "disp-layer-1"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "disp-layer-hidden"]);
                 MathJax.Hub.Queue(["Typeset", MathJax.Hub, "math-formula-box"]);
                 MathJax.Hub.Queue(["Typeset", MathJax.Hub, "linear-calc-output-container"]);
                 MathJax.Hub.Queue(["Typeset", MathJax.Hub, "softmax-math-box"]);
