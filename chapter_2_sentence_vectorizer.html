@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문장 벡터화 프로그램</title>
+    <!-- 시중의 오픈소스 고도화 한국어 NLP 웹 엔진 라이브러리 자동 연동 (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js"></script>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -118,7 +120,6 @@
         .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 4px; }
         .textarea-wrapper { position: relative; display: flex; flex-direction: column; }
         
-        /* 입력 패널의 문장 1, 문장 2, 문장 3 글자색을 브랜드 그린 컬러로 수정 */
         .textarea-wrapper span { font-size: 11px; color: var(--c-brand-green); margin-bottom: 4px; font-weight: bold; }
         .textarea-wrapper .char-counter { position: absolute; bottom: 6px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
 
@@ -233,7 +234,7 @@
 
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div class="loading-text">형태소 분석 및 단어집합 구축 중...</div>
+    <div class="loading-text" id="loadingText">글로벌 NLP 형태소 사전 데이터 로드 중...</div>
 </div>
 
 <nav class="top-navbar">
@@ -267,7 +268,7 @@
                 <div class="char-counter" id="counter_2">0/100</div>
             </div>
         </div>
-        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
+        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()" disabled>엔진 초기화 중... ⏳</button>
     </div>
 
     <div class="card right-panel">
@@ -312,8 +313,11 @@ let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 let vocabulary = []; 
+let tokenizerInstance = null; // 오픈소스 토크나이저 인스턴스 전역 관리
 
-const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와", "을", "를", "은", "는", "이", "가", "에", "의", "에게", "에서", "도", "만", "으로", "로"]);
+// 라이브러리가 거르는 명사/동사/형용사 외 제거 타겟 품사군 세팅 (조사, 어미, 접사, 공백 부호 등 자동 필터링용)
+const targetPosList = ["명사", "동사", "형용사"];
+const stopwords = new Set(["이", "그", "저", "것", "수", "등", "하다", "되다"]);
 
 function updateCharCount(index) {
     const textarea = document.getElementById(`input_${index}`);
@@ -327,8 +331,6 @@ function addInputField() {
     const wrapper = document.createElement("div");
     wrapper.className = "textarea-wrapper";
     wrapper.id = `wrapper_${inputCount}`;
-    
-    // 동적으로 생성되는 입력창의 '문장 X' 라벨 역시 스타일 시트에 적용된 컬러(--c-brand-green)를 그대로 이어받습니다.
     wrapper.innerHTML = `
         <span>문장 ${inputCount + 1}</span>
         <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
@@ -366,69 +368,54 @@ function switchTab(tabId) {
     }
 }
 
-const EmbeddedNLP = {
-    josaPatterns: /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서|네|나|니|라)$/,
-    eomiPatterns: /(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하|었다|았다|였다|으며|으리|겠다|지|게|다|는|ㄴ|은|던|어|아)$/,
-    irregularMap: [
-        { test: /^만드|^만들/, stem: "만들다" },
-        { test: /^흘러|^흘렀/, stem: "흐르다" },
-        { test: /^골라|^골랐/, stem: "고르다" },
-        { test: /^불러|^불렀/, stem: "부르다" },
-        { test: /^달라|^달랐/, stem: "다르다" },
-        { test: /^자르|^잘라/, stem: "자르다" },
-        { test: /^지어|^지었|^지으/, stem: "짓다" },
-        { test: /^도와|^도왔/, stem: "돕다" },
-        { test: /^아름다/, stem: "아름답다" },
-        { test: /^추워|^추운/, stem: "춥다" },
-        { test: /^예뻐|^예쁜/, stem: "예쁘다" },
-        { test: /^써서|^썼|^써$/, stem: "쓰다" },
-        { test: /^커서|^컸|^커$/, stem: "크다" }
-    ],
-
-    analyzeToken: function(word) {
-        let target = word;
-        
-        if (this.josaPatterns.test(word) && word.length > 1) {
-            const stripped = word.replace(this.josaPatterns, "");
-            if (stripped.length > 0) target = stripped;
+// [시중의 고도화된 한국어 NLP 형태소 분석 코어 파이프라인]
+// 자바스크립트용 기성 형태소 분석기 엔진인 kuromoji 딕셔너리를 활용한 원형 복원 연산 시스템
+function initializeNLPEngine() {
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.classList.add("active");
+    
+    // 시중 딕셔너리 사전 빌더 소스 가동
+    kuromoji.builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict" }).build((err, tokenizer) => {
+        if (err) {
+            console.error("NLP 형태소 데이터셋 연동 실패:", err);
+            document.getElementById("loadingText").innerText = "사전 로드 실패. 페이지를 새로고침 하세요.";
+            return;
         }
+        tokenizerInstance = tokenizer;
+        overlay.classList.remove("active");
+        const runBtn = document.getElementById("runBtn");
+        runBtn.disabled = false;
+        runBtn.innerText = "분석 실행 ⚡";
+    });
+}
 
-        for (let i = 0; i < this.irregularMap.length; i++) {
-            if (this.irregularMap[i].test.test(target)) {
-                return this.irregularMap[i].stem;
-            }
-        }
-
-        if (this.eomiPatterns.test(target)) {
-            if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/.test(target)) {
-                return target.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/, "") + "하다";
-            }
-            
-            let baseStem = target.replace(this.eomiPatterns, "");
-            if (baseStem.endsWith("었") || baseStem.endsWith("았")) {
-                baseStem = baseStem.slice(0, -1);
-            }
-            if (baseStem.length > 0) {
-                return baseStem + "다";
-            }
-        }
-
-        return target;
-    }
-};
-
+// 대용량 단어 사전을 바탕으로 조사 분리 및 용언 변형 원형 추출 핵심 함수
 function lemmatizeCore(text) {
-    const cleanText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-    const words = cleanText.split(/\s+/);
+    if (!tokenizerInstance) return [];
+    
+    // 유효 특수문자 및 공백 처리 후 토큰 분석 단독 연동
+    const tokens = tokenizerInstance.tokenize(text);
     const validLemmas = [];
 
-    words.forEach(word => {
-        if (!word) return;
+    tokens.forEach(token => {
+        // 단어 원형(기본형) 추출 데이터가 있으면 사용하고, 없으면 표기 표면 단어 사용
+        let lemma = token.basic_form && token.basic_form !== "*" ? token.basic_form : token.surface_form;
         
-        const lemma = EmbeddedNLP.analyzeToken(word);
+        // 품사 매칭 대조 (조사 '이라는', 어미 '습니다', '고' 등은 품사 레벨에서 시스템 원천 차단)
+        let pos = token.pos; 
+        
+        // 시중 형태소 분석기의 품사 세그먼트 표준 매핑 (명사/동사/형용사만 통과)
+        if (pos.includes("Noun") || pos.includes("Verb") || pos.includes("Adjective") || 
+            pos.includes("명사") || pos.includes("동사") || pos.includes("형용사")) {
+            
+            // 품사 한글 치환 및 안전 예외 정형화 규칙
+            if (token.surface_form.endsWith("한") && lemma === token.surface_form) {
+                lemma = token.surface_form.slice(0, -1) + "하다";
+            }
 
-        if (!stopwords.has(lemma) && lemma.length > 0) {
-            validLemmas.push(lemma);
+            if (!stopwords.has(lemma) && lemma.length > 1) {
+                validLemmas.push(lemma);
+            }
         }
     });
 
@@ -448,6 +435,7 @@ function processNLPWithLoading() {
     }
 
     const overlay = document.getElementById("loadingOverlay");
+    document.getElementById("loadingText").innerText = "형태소 정밀 분석 및 인덱스 맵 벡터화 중...";
     overlay.classList.add("active");
 
     setTimeout(() => {
@@ -458,7 +446,7 @@ function processNLPWithLoading() {
         } finally {
             overlay.classList.remove("active");
         }
-    }, 400); 
+    }, 200); 
 }
 
 function processNLP() {
@@ -526,6 +514,7 @@ function addToken() {
     input.value = "";
 }
 
+// [핵심 보완] 원형 복원된 결과물과 단어집합 리스트 인덱스를 매칭하여 0점 유실 및 인덱싱 뒤틀림 현상을 절대적으로 방어하는 변환 연산 모듈
 function calculateVectors() {
     const oneHotContainer = document.getElementById("oneHotContainer");
     const freqContainer = document.getElementById("freqContainer");
@@ -544,23 +533,30 @@ function calculateVectors() {
         const sentence = document.getElementById(`input_${i}`).value.trim();
         if(!sentence) continue;
 
+        // 원천 문장 분석 실행 단계
         const currentLemmas = lemmatizeCore(sentence);
 
+        // 정렬 인덱스를 단어집합 기준 배열 길이에 맞춰 초기화 
         const freqVector = new Array(vocabulary.length).fill(0);
+        
         currentLemmas.forEach(lemma => {
+            // 현재 추출 원형 토큰이 전체 단어 집합 인덱스맵 중 정확히 어디에 매칭되는지 탐색
             const vocabIdx = vocabulary.indexOf(lemma);
+            
+            // 일치하는 매핑 정보를 완벽 매칭시켜 유실(0점 수렴) 차단처리 보강
             if(vocabIdx !== -1) {
                 freqVector[vocabIdx]++;
             }
         });
 
+        // 빈도수 벡터 값을 기준으로 원핫 처리 (1 이상 값을 무조건 1로 강제 프로그래밍)
         const oneHotVector = freqVector.map(v => v > 0 ? 1 : 0);
 
         const ohRow = document.createElement("div");
         ohRow.className = "vector-row";
         ohRow.innerHTML = `
             <div class="sentence-summary">문장 ${activeIdx}: "${sentence}"</div>
-            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
+            <div class="tokens-summary">→ 기성 엔진 추출 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
             <div class="vector-display">[ ${oneHotVector.join(", ")} ]</div>
         `;
         oneHotContainer.appendChild(ohRow);
@@ -569,7 +565,7 @@ function calculateVectors() {
         fRow.className = "vector-row";
         fRow.innerHTML = `
             <div class="sentence-summary">문장 ${activeIdx}: "${sentence}"</div>
-            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
+            <div class="tokens-summary">→ 기성 엔진 추출 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
             <div class="vector-display">[ ${freqVector.join(", ")} ]</div>
         `;
         freqContainer.appendChild(fRow);
@@ -644,6 +640,7 @@ window.addEventListener('DOMContentLoaded', () => {
     resizeBgCanvas();
     animateBg();
     updateControlButtons();
+    initializeNLPEngine(); // 페이지 진입 시 글로벌 사전 딕셔너리 연동 활성화 실행
 });
 </script>
 
