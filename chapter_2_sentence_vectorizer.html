@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정밀 한국어 정규화 및 벡터 변환 시스템</title>
+    <title>문장 벡터화 프로그램</title>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -183,15 +183,58 @@
         .right-panel-content::-webkit-scrollbar, .textarea-list::-webkit-scrollbar { width: 6px; }
         .right-panel-content::-webkit-scrollbar-track, .textarea-list::-webkit-scrollbar-track { background: transparent; }
         .right-panel-content::-webkit-scrollbar-thumb, .textarea-list::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(251, 249, 244, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(27, 67, 50, 0.1);
+            border-left-color: var(--c-brand-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        .loading-text {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+            letter-spacing: 0.05em;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
 <canvas id="neural-canvas"></canvas>
 
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">형태소 정규화 및 단어집합 구축 중...</div>
+</div>
+
 <nav class="top-navbar">
     <button onclick="history.back()" class="back-btn">← BACK</button>
-    <div class="navbar-brand-text">UNIFIED LEMMA VECTORIZER</div>
+    <div class="navbar-brand-text">SENTENCE VECTORIZER</div>
 </nav>
 
 <div class="main-layout">
@@ -206,27 +249,27 @@
         <div class="textarea-list" id="textareaList">
             <div class="textarea-wrapper" id="wrapper_0">
                 <span>문장 1</span>
-                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)" placeholder="예: 맛있는 인형을 만드는 사람을 보았다."></textarea>
+                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)" placeholder="분석할 첫 번째 문장을 입력하세요."></textarea>
                 <div class="char-counter" id="counter_0">0/100</div>
             </div>
             <div class="textarea-wrapper" id="wrapper_1">
                 <span>문장 2</span>
-                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)" placeholder="예: 집을 예쁘게 지었으나 강물이 흘러 무너졌다."></textarea>
+                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)" placeholder="분석할 두 번째 문장을 입력하세요."></textarea>
                 <div class="char-counter" id="counter_1">0/100</div>
             </div>
             <div class="textarea-wrapper" id="wrapper_2">
                 <span>문장 3</span>
-                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)" placeholder="예: 나를 기꺼이 도와서 물건을 만들다."></textarea>
+                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)" placeholder="분석할 세 번째 문장을 입력하세요."></textarea>
                 <div class="char-counter" id="counter_2">0/100</div>
             </div>
         </div>
-        <button class="run-btn" id="runBtn" onclick="processNLP()">불규칙 원형 분석 및 변환 실행 ⚡</button>
+        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
     </div>
 
     <div class="card right-panel">
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
-            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 복원 단어집합</button>
+            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 단어집합</button>
             <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 원-핫 벡터</button>
             <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 빈도수 벡터</button>
         </div>
@@ -234,7 +277,7 @@
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
                 <div class="header-flex">
-                    <h3>1. 조사 제거 및 기본 표제어 정규화 단어집합</h3>
+                    <h3>1. 단어집합</h3>
                     <div class="add-section">
                         <input type="text" id="newWordInput" class="add-input" placeholder="새 원형 단어">
                         <button class="add-btn" onclick="addToken()">추가</button>
@@ -244,7 +287,7 @@
             </div>
 
             <div id="sec_2" class="result-section">
-                <h3>2. 원-핫 인코딩 벡터 (One-Hot Vector)</h3>
+                <h3>2. 원-핫 벡터 (One-Hot Vector)</h3>
                 <div class="result-box" style="display:block;">
                     <div class="vector-container" id="oneHotContainer">원형 기준의 원-핫 시퀀스가 출력됩니다.</div>
                 </div>
@@ -266,7 +309,6 @@ const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 let vocabulary = []; 
 
-// 필터링할 부사 및 조사를 포함한 불용어 모음
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와", "을", "를", "은", "는", "이", "가", "에", "의", "에게", "에서", "도", "만", "으로", "로"]);
 
 function updateCharCount(index) {
@@ -283,7 +325,7 @@ function addInputField() {
     wrapper.id = `wrapper_${inputCount}`;
     wrapper.innerHTML = `
         <span>문장 ${inputCount + 1}</span>
-        <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})" placeholder="문장을 입력하세요."></textarea>
+        <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})" placeholder="분석할 문장을 입력하세요."></textarea>
         <div class="char-counter" id="counter_${inputCount}">0/100</div>
     `;
     container.appendChild(wrapper);
@@ -318,10 +360,6 @@ function switchTab(tabId) {
     }
 }
 
-/**
- * 🌟 고정식 정밀 어간 형태소 역추적 코어 엔진
- * 불규칙 활용 예외 규칙 완전 정규화 기법 적용
- */
 function lemmatizeCore(text) {
     const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
     const validLemmas = [];
@@ -330,7 +368,6 @@ function lemmatizeCore(text) {
         if (!word) return;
         if (stopwords.has(word)) return;
 
-        // 1단계: 조사 완벽 격리 분리
         const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서)$/;
         let target = word;
         const matchJosa = word.match(josaRegex);
@@ -343,38 +380,25 @@ function lemmatizeCore(text) {
         let lemma = target;
         let found = false;
 
-        // 2단계: 과거형/선어말 종결어미 복원
-        if (/(했다|했습니다|하였다|합니다|한다)$/.test(target)) {
-            lemma = target.replace(/(했다|했습니다|하였다|합니다|한다)$/, "") + "하다";
+        if (/(했다|했습니다|하였다|했다|한다)$/.test(target)) {
+            lemma = target.replace(/(했다|했습니다|하였다|했다|한다)$/, "") + "하다";
             found = true;
         }
 
-        // 3단계: 특수 불규칙 규칙 대입 매트릭스
         if (!found) {
-            // [ㄹ 불규칙 복원] 만드는, 만든, 만드니, 만듭니다 -> 만들다
-            if (/^만드/.test(target) || /^만들/.test(target)) {
-                lemma = "만들다"; found = true;
-            }
-            // [르 불규칙 복원] 흘러, 흘렀고, 흘러서 -> 흐르다 / 골라 -> 고르다
+            if (/^만드/.test(target) || /^만들/.test(target)) { lemma = "만들다"; found = true; }
             else if (target.startsWith("흘러") || target.startsWith("흘렀")) { lemma = "흐르다"; found = true; }
             else if (target.startsWith("골라") || target.startsWith("골랐")) { lemma = "고르다"; found = true; }
             else if (target.startsWith("불러") || target.startsWith("불렀")) { lemma = "부르다"; found = true; }
             else if (target.startsWith("달라") || target.startsWith("달랐")) { lemma = "다르다"; found = true; }
-            
-            // [ㅅ 불규칙 복원] 지어, 지었으나, 지으니 -> 짓다
             else if (/^지어/.test(target) || /^지었/.test(target) || /^지으/.test(target)) { lemma = "짓다"; found = true; }
-            
-            // [ㅂ 불규칙 복원] 도와, 도왔고 -> 돕다 / 아름다워 -> 아름답다
             else if (target.startsWith("도와") || target.startsWith("도왔")) { lemma = "돕다"; found = true; }
             else if (target.startsWith("아름다")) { lemma = "아름답다"; found = true; }
             else if (target.startsWith("추워") || target.startsWith("추운")) { lemma = "춥다"; found = true; }
-            
-            // [ㅡ 탈락 복원] 예쁜, 예뻐 -> 예쁘다
             else if (target.startsWith("예뻐") || target.startsWith("예쁜")) { lemma = "예쁘다"; found = true; }
             else if (target === "써" || target === "써서") { lemma = "쓰다"; found = true; }
             else if (target === "커" || target === "커서") { lemma = "크다"; found = true; }
 
-            // 서술형 어미 처리 기법 (원형화 유도)
             if (!found && /(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ)$/.test(target)) {
                 let stem = target.replace(/(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ)$/, "");
                 if (stem.endsWith("었") || stem.endsWith("았")) stem = stem.slice(0, -1);
@@ -393,8 +417,7 @@ function lemmatizeCore(text) {
     return validLemmas;
 }
 
-// 프로세스 제어부
-function processNLP() {
+function processNLPWithLoading() {
     const textFields = [];
     for(let i=0; i<inputCount; i++) {
         const val = document.getElementById(`input_${i}`).value.trim();
@@ -404,6 +427,27 @@ function processNLP() {
     if (textFields.length === 0) {
         alert("최소 하나 이상의 분석 문장을 입력해 주세요!");
         return;
+    }
+
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.classList.add("active");
+
+    setTimeout(() => {
+        try {
+            processNLP();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            overlay.classList.remove("active");
+        }
+    }, 400); 
+}
+
+function processNLP() {
+    const textFields = [];
+    for(let i=0; i<inputCount; i++) {
+        const val = document.getElementById(`input_${i}`).value.trim();
+        if(val) textFields.push(val);
     }
 
     const vocabSet = new Set();
@@ -464,7 +508,6 @@ function addToken() {
     input.value = "";
 }
 
-// 벡터 동기화 변환 연산
 function calculateVectors() {
     const oneHotContainer = document.getElementById("oneHotContainer");
     const freqContainer = document.getElementById("freqContainer");
@@ -485,7 +528,6 @@ function calculateVectors() {
 
         const currentLemmas = lemmatizeCore(sentence);
 
-        // 빈도수 사상
         const freqVector = new Array(vocabulary.length).fill(0);
         currentLemmas.forEach(lemma => {
             const vocabIdx = vocabulary.indexOf(lemma);
@@ -494,7 +536,6 @@ function calculateVectors() {
             }
         });
 
-        // 원핫 이진 스위치 매핑
         const oneHotVector = freqVector.map(v => v > 0 ? 1 : 0);
 
         const ohRow = document.createElement("div");
@@ -519,7 +560,6 @@ function calculateVectors() {
     }
 }
 
-// 파티클 백그라운드 신경망 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
