@@ -37,7 +37,7 @@
             position: relative;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* 전체 페이지 스크롤 방지, 내부 스크롤 사용 */
+            overflow: hidden; /* 전체 페이지 스크롤 방지 */
         }
 
         #neural-canvas {
@@ -93,10 +93,10 @@
             text-transform: uppercase; 
         }
 
-        /* 메인 레이아웃 가로폭 화면 일치 및 여백 최적화 */
+        /* 메인 레이아웃 */
         .main-layout {
             display: flex;
-            width: 100%; /* 좌우 창 가로 합이 화면창 전체 크기와 동일하게 연동 */
+            width: 100%; 
             height: calc(100vh - 110px); 
             gap: 20px;
             position: relative;
@@ -168,13 +168,23 @@
             opacity: 0.9;
         }
 
-        /* 오른쪽 섹션: 완벽한 양쪽 대칭 여백 구조 개편 */
+        /* 오른쪽 섹션: 틀은 고정하고 내부만 스크롤되도록 고도화 */
         .right-panel {
             flex: 2;
             height: 100%;
-            overflow-y: auto; 
-            padding: 24px 18px 24px 24px; /* 우측 스크롤바 영역을 감안하여 양쪽 시각적 균형 일치 */
+            overflow: hidden; /* 카드가 늘어나는 것을 절대 방지 */
+        }
+
+        /* 실제 스크롤이 일어나는 내부 컨테이너 */
+        .right-panel-content {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto; /* 내용이 넘치면 이곳에만 스크롤바 생성 */
+            display: flex;
+            flex-direction: column;
             gap: 18px;
+            padding-right: 6px; /* 스크롤바와 여백 균형 조정 */
+            box-sizing: border-box;
         }
 
         /* 결과 섹션 개별 스타일 */
@@ -203,7 +213,7 @@
             align-items: center;
             border: 1px solid var(--c-border);
             box-sizing: border-box;
-            width: 100%; /* 오른쪽 여백 침범 방지 고정 */
+            width: 100%; 
         }
         
         /* 토큰 태그 스타일 */
@@ -258,7 +268,7 @@
         }
         .add-btn:hover { background-color: var(--c-accent-hover); }
 
-        /* 수정 태그 4열 고정형 너비 계산 방식 교정 (우측 여백 마진 확보) */
+        /* 수정 태그 반응형 너비 계산 */
         .editable-tag { 
             display: inline-flex; 
             align-items: center; 
@@ -298,14 +308,14 @@
             line-height: 1;
         }
 
-        /* 스크롤바 슬림 디자인 (대칭 균형 훼손 방지) */
-        .right-panel::-webkit-scrollbar {
+        /* 내부 스크롤바 슬림 고딕 디자인 */
+        .right-panel-content::-webkit-scrollbar {
             width: 6px;
         }
-        .right-panel::-webkit-scrollbar-track {
+        .right-panel-content::-webkit-scrollbar-track {
             background: transparent;
         }
-        .right-panel::-webkit-scrollbar-thumb {
+        .right-panel-content::-webkit-scrollbar-thumb {
             background: rgba(44, 42, 41, 0.15);
             border-radius: 3px;
         }
@@ -337,42 +347,44 @@
         <button class="run-btn" onclick="processNLP()">분석 및 변환 실행 ⚡</button>
     </div>
 
-    <!-- 오른쪽: 순차적 프로세스 제어판 (양쪽 여백 대칭 교정) -->
+    <!-- 오른쪽: 순차적 프로세스 제어판 (내부 내용만 스크롤 고정) -->
     <div class="card right-panel">
-        
-        <div class="result-section">
-            <h3>1. 형태소 분석 결과</h3>
-            <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
-        </div>
+        <div class="right-panel-content">
+            
+            <div class="result-section">
+                <h3>1. 형태소 분석 결과</h3>
+                <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
+            </div>
 
-        <div class="result-section">
-            <h3>2. 불용어 제거 결과</h3>
-            <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
-        </div>
+            <div class="result-section">
+                <h3>2. 불용어 제거 결과</h3>
+                <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
+            </div>
 
-        <div class="result-section">
-            <h3>3. 기본형 변환</h3>
-            <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
-        </div>
+            <div class="result-section">
+                <h3>3. 기본형 변환</h3>
+                <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
+            </div>
 
-        <div class="result-section">
-            <div class="header-flex">
-                <h3>4. 사용자 수정 및 단어집합 구성</h3>
-                <div class="add-section">
-                    <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
-                    <button class="add-btn" onclick="addToken()">추가</button>
+            <div class="result-section">
+                <div class="header-flex">
+                    <h3>4. 사용자 수정 및 단어집합 구성</h3>
+                    <div class="add-section">
+                        <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
+                        <button class="add-btn" onclick="addToken()">추가</button>
+                    </div>
+                </div>
+                <div class="result-box" id="editorContainer">
+                    분석을 실행하면 수정/삭제 가능한 토큰이 여기에 생성됩니다.
                 </div>
             </div>
-            <div class="result-box" id="editorContainer">
-                분석을 실행하면 수정/삭제 가능한 토큰이 여기에 생성됩니다.
-            </div>
-        </div>
 
+        </div>
     </div>
 </div>
 
 <script>
-// 내부 분석 로직 보존
+// 내부 분석 로직 완전 보존
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
 let finalTokens = [];
 
@@ -538,7 +550,7 @@ function addToken() {
     input.value = "";
 }
 
-// 배경 애니메이션 스크립트 보존
+// 배경 애니메이션 스크립트
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
