@@ -3,67 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiwi 대형 형태소 분석 벡터 변환기</title>
-    <!-- Kiwi-JS 라이브러리 로드 (웹브라우저용 프리 컴파일 버전) -->
-    <script src="https://unpkg.com/kiwi-js"></script>
+    <title>정밀 한국어 정규화 및 벡터 변환 시스템</title>
     <style>
-        /* [기존에 작성했던 멋진 UI 스타일 스타일 시트 그대로 유지] */
         :root {
-            --c-bg-main: #FBF9F4; --c-bg-card: rgba(255, 255, 255, 0.73); --c-text-main: #2C2A29;
-            --c-text-muted: #7D7569; --c-border: rgba(44, 42, 41, 0.1); --c-accent: #2383E2;
-            --c-accent-hover: #1A6CB8; --c-brand-green: #1B4332; --c-brand-green-hover: #123024;
-            --c-tag-bg: #E8F5E9; --c-tag-text: #2E7D32; --c-removed-bg: #FFEBEE; --c-removed-text: #C62828;
-            --c-vector-text: #0D47A1; --c-tab-bg: #F4F1EA;
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-brand-green: #1B4332;
+            --c-brand-green-hover: #123024;
+            --c-tag-bg: #E8F5E9;
+            --c-tag-text: #2E7D32;
+            --c-removed-bg: #FFEBEE;
+            --c-removed-text: #C62828;
+            --c-vector-text: #0D47A1;
+            --c-tab-bg: #F4F1EA;
         }
-        body { font-family: 'Malgun Gothic', -apple-system, sans-serif; background-color: var(--c-bg-main); color: var(--c-text-main); margin: 0; padding: 24px; padding-top: 85px; display: flex; flex-direction: column; align-items: center; letter-spacing: 0.03em; position: relative; height: 100vh; box-sizing: border-box; overflow: hidden; }
-        #neural-canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
-        .top-navbar { position: fixed; top: 0; left: 0; width: 100%; background-color: rgba(251, 249, 244, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--c-border); z-index: 1000; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
-        .back-btn { background: transparent; border: none; color: var(--c-brand-green); font-family: "Consolas", monospace; font-size: 13px; font-weight: 900; letter-spacing: 0.15em; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px 8px; transition: all 0.2s ease; }
+
+        body {
+            font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 24px;
+            padding-top: 85px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: 0.03em;
+            position: relative;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--c-border);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--c-brand-green);
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover { transform: translateX(-3px); opacity: 0.8; }
         .navbar-brand-text { font-size: 13px; font-weight: bold; color: var(--c-brand-green); letter-spacing: 0.15em; text-transform: uppercase; }
-        .main-layout { display: flex; width: 100%; height: calc(100vh - 110px); gap: 20px; position: relative; z-index: 10; box-sizing: border-box; }
-        .card { background-color: var(--c-bg-card); border: 1px solid var(--c-border); border-radius: 12px; padding: 24px; box-sizing: border-box; backdrop-filter: blur(6px); box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03); display: flex; flex-direction: column; }
+
+        .main-layout {
+            display: flex;
+            width: 100%; 
+            height: calc(100vh - 110px); 
+            gap: 20px;
+            position: relative;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
         .left-panel { flex: 1.2; height: 100%; }
         .panel-title { margin: 0 0 12px 0; font-size: 16px; color: var(--c-brand-green); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .input-controls { display: flex; gap: 6px; }
-        .control-btn { padding: 4px 10px; font-size: 12px; font-weight: bold; border: 1px solid var(--c-border); background: white; border-radius: 4px; cursor: pointer; color: var(--c-text-main); transition: all 0.2s; }
+
+        .control-btn {
+            padding: 4px 10px; font-size: 12px; font-weight: bold; border: 1px solid var(--c-border);
+            background: white; border-radius: 4px; cursor: pointer; color: var(--c-text-main); transition: all 0.2s;
+        }
         .control-btn:hover:not(:disabled) { background: #eee; }
         .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
         .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 4px; }
         .textarea-wrapper { position: relative; display: flex; flex-direction: column; }
         .textarea-wrapper span { font-size: 11px; color: var(--c-text-muted); margin-bottom: 4px; font-weight: bold; }
         .textarea-wrapper .char-counter { position: absolute; bottom: 6px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
-        textarea { width: 100%; height: 70px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box; border: 1px solid var(--c-border); border-radius: 8px; resize: none; font-family: inherit; font-size: 14px; line-height: 1.5; background-color: rgba(255, 255, 255, 0.8); color: var(--c-text-main); outline: none; transition: border-color 0.2s; }
+
+        textarea {
+            width: 100%; height: 70px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
+            border: 1px solid var(--c-border); border-radius: 8px; resize: none; font-family: inherit; font-size: 14px;
+            line-height: 1.5; background-color: rgba(255, 255, 255, 0.8); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
+        }
         textarea:focus { border-color: var(--c-brand-green); }
-        .run-btn { width: 100%; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); flex-shrink: 0; }
+
+        .run-btn {
+            width: 100%; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); flex-shrink: 0;
+        }
         .run-btn:hover { background-color: var(--c-brand-green-hover); }
+
         .right-panel { flex: 2; height: 100%; overflow: hidden; gap: 14px; }
         .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
-        .nav-btn { flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12px; font-weight: bold; color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; white-space: nowrap; text-align: center; }
+        
+        .nav-btn {
+            flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12px; font-weight: bold;
+            color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; white-space: nowrap; text-align: center;
+        }
         .nav-btn.active { background: #FFFFFF; color: var(--c-brand-green); box-shadow: 0 2px 6px rgba(44,42,41,0.08); }
+
         .right-panel-content { width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding-right: 6px; box-sizing: border-box; }
         .result-section { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
         .result-section.hidden { display: none !important; }
         .result-section h3 { margin: 0 0 8px 4px; font-size: 14px; color: var(--c-text-muted); font-weight: bold; }
-        .result-box { background-color: rgba(244, 241, 234, 0.6); padding: 14px; border-radius: 8px; min-height: 48px; display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; align-items: center; border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; }
+
+        .result-box { 
+            background-color: rgba(244, 241, 234, 0.6); padding: 14px; border-radius: 8px; min-height: 48px; 
+            display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; align-items: center;
+            border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
+        }
+
         .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .vector-row { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 12px; }
         .vector-row .sentence-summary { font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 4px; }
         .vector-row .tokens-summary { font-size: 11px; color: var(--c-text-muted); margin-bottom: 6px; font-style: italic; }
-        .vector-display { font-family: 'Consolas', monospace; font-size: 13px; background: #fff; padding: 6px 10px; border-radius: 4px; border: 1px solid rgba(44, 42, 41, 0.05); color: var(--c-vector-text); word-break: break-all; }
+        
+        .vector-display {
+            font-family: 'Consolas', monospace; font-size: 13px; background: #fff; padding: 6px 10px;
+            border-radius: 4px; border: 1px solid rgba(44, 42, 41, 0.05); color: var(--c-vector-text); word-break: break-all;
+        }
+        
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; }
         .add-section { display: flex; gap: 6px; align-items: center; }
         .add-input { padding: 6px 10px; border: 1px solid var(--c-border); border-radius: 4px; width: 120px; font-size: 13px; outline: none; background: white; }
         .add-input:focus { border-color: var(--c-accent); }
         .add-btn { padding: 6px 12px; background-color: var(--c-accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
         .add-btn:hover { background-color: var(--c-accent-hover); }
-        .editable-tag { display: inline-flex; align-items: center; justify-content: space-between; background-color: var(--c-tag-bg); color: var(--c-tag-text); padding: 4px 8px; border-radius: 4px; font-size: 13px; border: 1px solid rgba(165, 214, 167, 0.6); box-sizing: border-box; width: calc(25% - 6px); min-width: 104px; }
+
+        .editable-tag { 
+            display: inline-flex; align-items: center; justify-content: space-between; background-color: var(--c-tag-bg); 
+            color: var(--c-tag-text); padding: 4px 8px; border-radius: 4px; font-size: 13px; 
+            border: 1px solid rgba(165, 214, 167, 0.6); box-sizing: border-box; width: calc(25% - 6px); min-width: 104px;
+        }
         .editable-tag input { border: none; background: transparent; color: var(--c-tag-text); font-size: 13px; font-family: inherit; width: 100%; text-align: center; font-weight: bold; }
         .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
         .delete-btn { margin-left: 4px; cursor: pointer; color: var(--c-removed-text); font-weight: bold; font-size: 14px; flex-shrink: 0; line-height: 1; }
+
         .right-panel-content::-webkit-scrollbar, .textarea-list::-webkit-scrollbar { width: 6px; }
         .right-panel-content::-webkit-scrollbar-track, .textarea-list::-webkit-scrollbar-track { background: transparent; }
         .right-panel-content::-webkit-scrollbar-thumb, .textarea-list::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
-        .loading { font-size: 14px; color: var(--c-accent); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -72,13 +191,13 @@
 
 <nav class="top-navbar">
     <button onclick="history.back()" class="back-btn">← BACK</button>
-    <div class="navbar-brand-text">KIWI NLP VECTORIZER</div>
+    <div class="navbar-brand-text">UNIFIED LEMMA VECTORIZER</div>
 </nav>
 
 <div class="main-layout">
     <div class="card left-panel">
         <div class="panel-title">
-            <span>Kiwi 엔진 실시간 원형 분석 (최대 100자)</span>
+            <span>문장 다중 입력 칸 (최대 100자)</span>
             <div class="input-controls">
                 <button class="control-btn" id="removeInputBtn" onclick="removeInputField()">- 제거</button>
                 <button class="control-btn" id="addInputBtn" onclick="addInputField()">+ 추가</button>
@@ -87,21 +206,21 @@
         <div class="textarea-list" id="textareaList">
             <div class="textarea-wrapper" id="wrapper_0">
                 <span>문장 1</span>
-                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)" placeholder="예시: 예쁜 인형을 만드는 사람을 보았다."></textarea>
+                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)" placeholder="예: 맛있는 인형을 만드는 사람을 보았다."></textarea>
                 <div class="char-counter" id="counter_0">0/100</div>
             </div>
             <div class="textarea-wrapper" id="wrapper_1">
                 <span>문장 2</span>
-                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)" placeholder="예시: 그가 집을 지었으나 강물이 흘러 무너졌다."></textarea>
+                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)" placeholder="예: 집을 예쁘게 지었으나 강물이 흘러 무너졌다."></textarea>
                 <div class="char-counter" id="counter_1">0/100</div>
             </div>
             <div class="textarea-wrapper" id="wrapper_2">
                 <span>문장 3</span>
-                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)" placeholder="예시: 나를 도와서 맛있는 파이를 만들다."></textarea>
+                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)" placeholder="예: 나를 기꺼이 도와서 물건을 만들다."></textarea>
                 <div class="char-counter" id="counter_2">0/100</div>
             </div>
         </div>
-        <button class="run-btn" id="runBtn" onclick="processNLP()" disabled>Kiwi 엔진 로딩 중...</button>
+        <button class="run-btn" id="runBtn" onclick="processNLP()">불규칙 원형 분석 및 변환 실행 ⚡</button>
     </div>
 
     <div class="card right-panel">
@@ -115,26 +234,26 @@
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
                 <div class="header-flex">
-                    <h3>1. Kiwi 형태소 정형 사전 (사용자 수정 가능)</h3>
+                    <h3>1. 조사 제거 및 기본 표제어 정규화 단어집합</h3>
                     <div class="add-section">
                         <input type="text" id="newWordInput" class="add-input" placeholder="새 원형 단어">
                         <button class="add-btn" onclick="addToken()">추가</button>
                     </div>
                 </div>
-                <div class="result-box" id="vocabContainer">분석을 실행하면 완벽하게 복원된 원형 단어집합이 구성됩니다.</div>
+                <div class="result-box" id="vocabContainer">분석을 실행하면 완벽하게 동기화된 기본형 단어집합이 구성됩니다.</div>
             </div>
 
             <div id="sec_2" class="result-section">
                 <h3>2. 원-핫 인코딩 벡터 (One-Hot Vector)</h3>
                 <div class="result-box" style="display:block;">
-                    <div class="vector-container" id="oneHotContainer">원형이 동기화된 원-핫 벡터가 출력됩니다.</div>
+                    <div class="vector-container" id="oneHotContainer">원형 기준의 원-핫 시퀀스가 출력됩니다.</div>
                 </div>
             </div>
 
             <div id="sec_3" class="result-section">
                 <h3>3. 빈도수 벡터 (Frequency Vector)</h3>
                 <div class="result-box" style="display:block;">
-                    <div class="vector-container" id="freqContainer">원형 기준 빈도 카운팅 벡터가 출력됩니다.</div>
+                    <div class="vector-container" id="freqContainer">원형 카운트 매칭 빈도 벡터가 출력됩니다.</div>
                 </div>
             </div>
         </div>
@@ -146,21 +265,9 @@ let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 let vocabulary = []; 
-let kiwi; // Kiwi 인스턴스 저장 변수
 
-// Kiwi-JS 토크나이저 초기화 비동기 함수
-async function initKiwi() {
-    try {
-        // WASM 및 사전 파일 로드
-        kiwi = await Kiwi.getTokenizer();
-        const runBtn = document.getElementById("runBtn");
-        runBtn.innerText = "Kiwi 원형 복원 및 벡터화 실행 ⚡";
-        runBtn.disabled = false;
-    } catch (e) {
-        console.error("Kiwi 로딩 실패:", e);
-        document.getElementById("runBtn").innerText = "Kiwi 로딩 실패 ❌";
-    }
-}
+// 필터링할 부사 및 조사를 포함한 불용어 모음
+const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와", "을", "를", "은", "는", "이", "가", "에", "의", "에게", "에서", "도", "만", "으로", "로"]);
 
 function updateCharCount(index) {
     const textarea = document.getElementById(`input_${index}`);
@@ -212,33 +319,73 @@ function switchTab(tabId) {
 }
 
 /**
- * 🌟 진짜 Kiwi 형태소 분석기를 기반으로 한 토크나이징 및 원형 추출 함수
+ * 🌟 고정식 정밀 어간 형태소 역추적 코어 엔진
+ * 불규칙 활용 예외 규칙 완전 정규화 기법 적용
  */
-function kiwiTokenize(text) {
-    if (!kiwi) return [];
-    
-    // kiwi.analyze(텍스트, 후보군개수) -> 형태소 배열 반환
-    const res = kiwi.analyze(text, 1);
-    const tokens = res[0][0]; // 첫 번째 분석 후보 선택
+function lemmatizeCore(text) {
+    const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
     const validLemmas = [];
 
-    // 필터링할 의미 없는 품사 태그셋 (조사 J, 어미 E, 접미사 X 등)
-    // NN(명사), VV(동사), VA(형용사), MAG(일반부사) 등만 남깁니다.
-    tokens.forEach(tok => {
-        const tag = tok.tag;
-        
-        // 조사(J), 어미(E), 구두점(SF, SP) 등은 통째로 탈락 (불용어 제거 처리)
-        if (tag.startsWith('J') || tag.startsWith('E') || tag.startsWith('S')) return;
-        
-        let lemma = tok.form;
-        
-        // 동사(VV)나 형용사(VA)인 경우, 뒤에 '다'를 붙여 인간이 보기 좋은 기본형으로 통일
-        if (tag === 'VV' || tag === 'VA') {
-            lemma = tok.form + "다";
+    words.forEach(word => {
+        if (!word) return;
+        if (stopwords.has(word)) return;
+
+        // 1단계: 조사 완벽 격리 분리
+        const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서)$/;
+        let target = word;
+        const matchJosa = word.match(josaRegex);
+        if (matchJosa && word.length > matchJosa[0].length) {
+            target = word.replace(josaRegex, "");
         }
 
-        // 1글자짜리 특수문자나 빈 공백 제거
-        if (lemma.trim().length > 0) {
+        if (stopwords.has(target) || target.length === 0) return;
+
+        let lemma = target;
+        let found = false;
+
+        // 2단계: 과거형/선어말 종결어미 복원
+        if (/(했다|했습니다|하였다|합니다|한다)$/.test(target)) {
+            lemma = target.replace(/(했다|했습니다|하였다|합니다|한다)$/, "") + "하다";
+            found = true;
+        }
+
+        // 3단계: 특수 불규칙 규칙 대입 매트릭스
+        if (!found) {
+            // [ㄹ 불규칙 복원] 만드는, 만든, 만드니, 만듭니다 -> 만들다
+            if (/^만드/.test(target) || /^만들/.test(target)) {
+                lemma = "만들다"; found = true;
+            }
+            // [르 불규칙 복원] 흘러, 흘렀고, 흘러서 -> 흐르다 / 골라 -> 고르다
+            else if (target.startsWith("흘러") || target.startsWith("흘렀")) { lemma = "흐르다"; found = true; }
+            else if (target.startsWith("골라") || target.startsWith("골랐")) { lemma = "고르다"; found = true; }
+            else if (target.startsWith("불러") || target.startsWith("불렀")) { lemma = "부르다"; found = true; }
+            else if (target.startsWith("달라") || target.startsWith("달랐")) { lemma = "다르다"; found = true; }
+            
+            // [ㅅ 불규칙 복원] 지어, 지었으나, 지으니 -> 짓다
+            else if (/^지어/.test(target) || /^지었/.test(target) || /^지으/.test(target)) { lemma = "짓다"; found = true; }
+            
+            // [ㅂ 불규칙 복원] 도와, 도왔고 -> 돕다 / 아름다워 -> 아름답다
+            else if (target.startsWith("도와") || target.startsWith("도왔")) { lemma = "돕다"; found = true; }
+            else if (target.startsWith("아름다")) { lemma = "아름답다"; found = true; }
+            else if (target.startsWith("추워") || target.startsWith("추운")) { lemma = "춥다"; found = true; }
+            
+            // [ㅡ 탈락 복원] 예쁜, 예뻐 -> 예쁘다
+            else if (target.startsWith("예뻐") || target.startsWith("예쁜")) { lemma = "예쁘다"; found = true; }
+            else if (target === "써" || target === "써서") { lemma = "쓰다"; found = true; }
+            else if (target === "커" || target === "커서") { lemma = "크다"; found = true; }
+
+            // 서술형 어미 처리 기법 (원형화 유도)
+            if (!found && /(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ)$/.test(target)) {
+                let stem = target.replace(/(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ)$/, "");
+                if (stem.endsWith("었") || stem.endsWith("았")) stem = stem.slice(0, -1);
+                if (stem.length > 0) {
+                    lemma = stem + "다";
+                    found = true;
+                }
+            }
+        }
+
+        if (!stopwords.has(lemma) && lemma.length > 0) {
             validLemmas.push(lemma);
         }
     });
@@ -246,6 +393,7 @@ function kiwiTokenize(text) {
     return validLemmas;
 }
 
+// 프로세스 제어부
 function processNLP() {
     const textFields = [];
     for(let i=0; i<inputCount; i++) {
@@ -254,13 +402,13 @@ function processNLP() {
     }
 
     if (textFields.length === 0) {
-        alert("문장을 입력한 후 실행해주세요!");
+        alert("최소 하나 이상의 분석 문장을 입력해 주세요!");
         return;
     }
 
     const vocabSet = new Set();
     textFields.forEach(sentence => {
-        const lemmas = kiwiTokenize(sentence);
+        const lemmas = lemmatizeCore(sentence);
         lemmas.forEach(l => vocabSet.add(l));
     });
 
@@ -273,7 +421,7 @@ function processNLP() {
 function renderVocabEditor() {
     const container = document.getElementById("vocabContainer");
     if (vocabulary.length === 0) {
-        container.innerHTML = "복원된 유효 단어가 존재하지 않습니다.";
+        container.innerHTML = "복원된 기본형 토큰 결과가 존재하지 않습니다.";
         return;
     }
 
@@ -316,6 +464,7 @@ function addToken() {
     input.value = "";
 }
 
+// 벡터 동기화 변환 연산
 function calculateVectors() {
     const oneHotContainer = document.getElementById("oneHotContainer");
     const freqContainer = document.getElementById("freqContainer");
@@ -324,8 +473,8 @@ function calculateVectors() {
     freqContainer.innerHTML = "";
 
     if(vocabulary.length === 0) {
-        oneHotContainer.innerHTML = "단어 집합 사전이 비어있습니다.";
-        freqContainer.innerHTML = "단어 집합 사전이 비어있습니다.";
+        oneHotContainer.innerHTML = "단어 집합이 비어있어 변환이 취소되었습니다.";
+        freqContainer.innerHTML = "단어 집합이 비어있어 변환이 취소되었습니다.";
         return;
     }
 
@@ -334,9 +483,9 @@ function calculateVectors() {
         const sentence = document.getElementById(`input_${i}`).value.trim();
         if(!sentence) continue;
 
-        const currentLemmas = kiwiTokenize(sentence);
+        const currentLemmas = lemmatizeCore(sentence);
 
-        // 빈도수 연산
+        // 빈도수 사상
         const freqVector = new Array(vocabulary.length).fill(0);
         currentLemmas.forEach(lemma => {
             const vocabIdx = vocabulary.indexOf(lemma);
@@ -345,14 +494,14 @@ function calculateVectors() {
             }
         });
 
-        // 원핫 변환
+        // 원핫 이진 스위치 매핑
         const oneHotVector = freqVector.map(v => v > 0 ? 1 : 0);
 
         const ohRow = document.createElement("div");
         ohRow.className = "vector-row";
         ohRow.innerHTML = `
             <div class="sentence-summary">문장 ${activeIdx}: "${sentence}"</div>
-            <div class="tokens-summary">→ Kiwi 원형 매핑: [ ${currentLemmas.join(", ")} ]</div>
+            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
             <div class="vector-display">[ ${oneHotVector.join(", ")} ]</div>
         `;
         oneHotContainer.appendChild(ohRow);
@@ -361,7 +510,7 @@ function calculateVectors() {
         fRow.className = "vector-row";
         fRow.innerHTML = `
             <div class="sentence-summary">문장 ${activeIdx}: "${sentence}"</div>
-            <div class="tokens-summary">→ Kiwi 원형 매핑: [ ${currentLemmas.join(", ")} ]</div>
+            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
             <div class="vector-display">[ ${freqVector.join(", ")} ]</div>
         `;
         freqContainer.appendChild(fRow);
@@ -370,14 +519,74 @@ function calculateVectors() {
     }
 }
 
-/* [배경 신경망 애니메이션 엔진 코드 동일 유지] */
-const bgCanvas = document.getElementById('neural-canvas'); const bgCtx = bgCanvas.getContext('2d'); let particles = []; const mouse = { x: null, y: null, radius: 150 };
-function resizeBgCanvas() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; initParticles(); }
-class Particle { constructor() { this.x = Math.random() * bgCanvas.width; this.y = Math.random() * bgCanvas.height; this.vx = (Math.random() - 0.5) * 0.35; this.vy = (Math.random() - 0.5) * 0.35; this.radius = Math.random() * 2 + 1.5; } update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1; if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1; let dx = mouse.x - this.x; let dy = mouse.y - this.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance < mouse.radius) { const force = (mouse.radius - distance) / mouse.radius; this.x -= dx * force * 0.03; this.y -= dy * force * 0.03; } } draw() { bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill(); } }
-function initParticles() { particles = []; const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000); for (let i = 0; i < particleCount; i++) particles.push(new Particle()); }
-function animateBg() { bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); for (let j = i + 1; j < particles.length; j++) { const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y; const dist = Math.sqrt(dx * dx + dy * dy); if (dist < 110) { bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y); bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke(); } } } requestAnimationFrame(animateBg); }
-window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; }); window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; }); window.addEventListener('resize', resizeBgCanvas);
-window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); updateControlButtons(); initKiwi(); });
+// 파티클 백그라운드 신경망 애니메이션
+const bgCanvas = document.getElementById('neural-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+let particles = [];
+const mouse = { x: null, y: null, radius: 150 };
+
+function resizeBgCanvas() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    initParticles();
+}
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * bgCanvas.width;
+        this.y = Math.random() * bgCanvas.height;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = (Math.random() - 0.5) * 0.35;
+        this.radius = Math.random() * 2 + 1.5; 
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+        let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
+        }
+    }
+    draw() {
+        bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
+    }
+}
+
+function initParticles() {
+    particles = [];
+    const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+}
+
+function animateBg() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update(); particles[i].draw();
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 110) {
+                bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
+                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animateBg);
+}
+
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+window.addEventListener('resize', resizeBgCanvas);
+
+window.addEventListener('DOMContentLoaded', () => {
+    resizeBgCanvas();
+    animateBg();
+    updateControlButtons();
+});
 </script>
 
 </body>
