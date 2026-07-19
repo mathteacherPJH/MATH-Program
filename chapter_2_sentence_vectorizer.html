@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단어집합 프로그램</title>
+    <title>문장 벡터화 프로그램</title>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -14,12 +14,12 @@
             --c-accent: #2383E2;
             --c-accent-hover: #1A6CB8;
             --c-brand-green: #1B4332;
+            --c-brand-green-hover: #123024;
             --c-tag-bg: #E8F5E9;
             --c-tag-text: #2E7D32;
             --c-removed-bg: #FFEBEE;
             --c-removed-text: #C62828;
-            --c-clean-bg: #FFF9C4;
-            --c-clean-text: #F57F17;
+            --c-vector-text: #0D47A1;
             --c-tab-bg: #F4F1EA;
         }
 
@@ -104,112 +104,37 @@
             flex-direction: column;
         }
 
-        .left-panel {
-            flex: 1.2; 
-            height: 100%;
-        }
+        .left-panel { flex: 1.2; height: 100%; }
+        .panel-title { margin: 0 0 12px 0; font-size: 16px; color: var(--c-brand-green); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .input-controls { display: flex; gap: 6px; }
 
-        /* 입력창 제어 버튼 헤더 */
-        .input-control-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .input-control-header h3 {
-            margin: 0;
-            font-size: 14px;
-            color: var(--c-text-muted);
-            font-weight: bold;
-        }
-        .control-btn-group {
-            display: flex;
-            gap: 6px;
-        }
         .control-btn {
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 1px solid var(--c-border);
-            background-color: white;
-            color: var(--c-text-main);
-            transition: all 0.2s;
+            padding: 4px 10px; font-size: 12px; font-weight: bold; border: 1px solid var(--c-border);
+            background: white; border-radius: 4px; cursor: pointer; color: var(--c-text-main); transition: all 0.2s;
         }
-        .control-btn:hover:not(:disabled) {
-            background-color: var(--c-tab-bg);
-        }
-        .control-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .control-btn:hover:not(:disabled) { background: #eee; }
+        .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* 동적 텍스트 영역 컨테이너 */
-        .textarea-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 16px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        .input-row {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
+        .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 4px; }
+        .textarea-wrapper { position: relative; display: flex; flex-direction: column; }
+        .textarea-wrapper span { font-size: 11px; color: var(--c-text-muted); margin-bottom: 4px; font-weight: bold; }
+        .textarea-wrapper .char-counter { position: absolute; bottom: 6px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
 
         textarea {
-            width: 100%;
-            height: 64px;
-            padding: 12px 14px;
-            box-sizing: border-box;
-            border: 1px solid var(--c-border);
-            border-radius: 8px;
-            resize: none;
-            font-family: inherit;
-            font-size: 14px;
-            line-height: 1.5;
-            background-color: rgba(255, 255, 255, 0.8);
-            color: var(--c-text-main);
-            outline: none;
-            transition: border-color 0.2s;
+            width: 100%; height: 70px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
+            border: 1px solid var(--c-border); border-radius: 8px; resize: none; font-family: inherit; font-size: 14px;
+            line-height: 1.5; background-color: rgba(255, 255, 255, 0.8); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
         }
-        textarea:focus {
-            border-color: var(--c-brand-green);
-        }
-
-        .char-counter {
-            align-self: flex-end;
-            font-size: 11px;
-            color: var(--c-text-muted);
-            margin-top: 2px;
-            margin-right: 4px;
-        }
+        textarea:focus { border-color: var(--c-brand-green); }
 
         .run-btn {
-            width: 100%;
-            padding: 14px 20px;
-            background-color: var(--c-brand-green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-            letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
-            flex-shrink: 0;
+            width: 100%; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); flex-shrink: 0;
         }
-        .run-btn:hover {
-            opacity: 0.9;
-        }
+        .run-btn:hover { background-color: var(--c-brand-green-hover); }
 
-        .right-panel { flex: 2; height: 100%; overflow: hidden; gap: 14px; position: relative; }
+        .right-panel { flex: 2; height: 100%; overflow: hidden; gap: 14px; }
         .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
         
         .nav-btn {
@@ -228,22 +153,15 @@
             display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; align-items: center;
             border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
         }
+
+        .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .vector-row { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 12px; }
+        .vector-row .sentence-summary { font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 4px; }
+        .vector-row .tokens-summary { font-size: 11px; color: var(--c-text-muted); margin-bottom: 6px; font-style: italic; }
         
-        .tag {
-            display: inline-block;
-            background-color: #EFEFED;
-            color: var(--c-text-main);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            border: 1px solid var(--c-border);
-            font-weight: 500;
-        }
-        .removed {
-            background-color: var(--c-removed-bg) !important;
-            color: var(--c-removed-text) !important;
-            text-decoration: line-through;
-            border-color: rgba(198, 40, 40, 0.15) !important;
+        .vector-display {
+            font-family: 'Consolas', monospace; font-size: 13px; background: #fff; padding: 6px 10px;
+            border-radius: 4px; border: 1px solid rgba(44, 42, 41, 0.05); color: var(--c-vector-text); word-break: break-all;
         }
         
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; }
@@ -262,24 +180,20 @@
         .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
         .delete-btn { margin-left: 4px; cursor: pointer; color: var(--c-removed-text); font-weight: bold; font-size: 14px; flex-shrink: 0; line-height: 1; }
 
-        .textarea-container::-webkit-scrollbar,
-        .right-panel-content::-webkit-scrollbar { width: 6px; }
-        .textarea-container::-webkit-scrollbar-track,
-        .right-panel-content::-webkit-scrollbar-track { background: transparent; }
-        .textarea-container::-webkit-scrollbar-thumb,
-        .right-panel-content::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
+        .right-panel-content::-webkit-scrollbar, .textarea-list::-webkit-scrollbar { width: 6px; }
+        .right-panel-content::-webkit-scrollbar-track, .textarea-list::-webkit-scrollbar-track { background: transparent; }
+        .right-panel-content::-webkit-scrollbar-thumb, .textarea-list::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
 
         .loading-overlay {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(251, 249, 244, 0.85);
-            backdrop-filter: blur(4px);
-            z-index: 2000;
+            background: rgba(251, 249, 244, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 5000;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-radius: 12px;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
@@ -289,18 +203,19 @@
             pointer-events: auto;
         }
         .spinner {
-            width: 45px;
-            height: 45px;
+            width: 48px;
+            height: 48px;
             border: 4px solid rgba(27, 67, 50, 0.1);
             border-left-color: var(--c-brand-green);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 12px;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
         }
         .loading-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             color: var(--c-brand-green);
+            letter-spacing: 0.05em;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -312,126 +227,127 @@
 
 <canvas id="neural-canvas"></canvas>
 
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">형태소 분석 및 단어집합 구축 중...</div>
+</div>
+
 <nav class="top-navbar">
     <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">← BACK</button>
-    <div class="navbar-brand-text">MORPHOLOGICAL ANALYSIS</div>
+    <div class="navbar-brand-text">SENTENCE VECTORIZER</div>
 </nav>
 
 <div class="main-layout">
-    <!-- 왼쪽 패널: 동적 입력창 구현 완료 -->
     <div class="card left-panel">
-        <div class="input-control-header">
-            <h3>분석 문장 입력</h3>
-            <div class="control-btn-group">
-                <button id="removeInputBtn" class="control-btn" onclick="removeInputRow()">제거 -</button>
-                <button id="addInputBtn" class="control-btn" onclick="addInputRow()">추가 +</button>
+        <div class="panel-title">
+            <span>문장 다중 입력 칸 (최대 100자)</span>
+            <div class="input-controls">
+                <button class="control-btn" id="removeInputBtn" onclick="removeInputField()">- 제거</button>
+                <button class="control-btn" id="addInputBtn" onclick="addInputField()">+ 추가</button>
             </div>
         </div>
-        <div class="textarea-container" id="textareaContainer">
-            <!-- 초기 3개 기본 생성 -->
-            <div class="input-row">
-                <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
-                <span class="char-counter">0 / 100</span>
+        <div class="textarea-list" id="textareaList">
+            <div class="textarea-wrapper" id="wrapper_0">
+                <span>문장 1</span>
+                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)"></textarea>
+                <div class="char-counter" id="counter_0">0/100</div>
             </div>
-            <div class="input-row">
-                <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
-                <span class="char-counter">0 / 100</span>
+            <div class="textarea-wrapper" id="wrapper_1">
+                <span>문장 2</span>
+                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)"></textarea>
+                <div class="char-counter" id="counter_1">0/100</div>
             </div>
-            <div class="input-row">
-                <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
-                <span class="char-counter">0 / 100</span>
+            <div class="textarea-wrapper" id="wrapper_2">
+                <span>문장 3</span>
+                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)"></textarea>
+                <div class="char-counter" id="counter_2">0/100</div>
             </div>
         </div>
-        <button id="submitBtn" class="run-btn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
+        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
     </div>
 
     <div class="card right-panel">
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="spinner"></div>
-            <div id="loadingText" class="loading-text">형태소 분석 및 단어집합 구축 중...</div>
-        </div>
-
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
-            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 형태소 분석</button>
-            <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 불용어 제거</button>
-            <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 기본형 변환</button>
-            <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 사용자 수정</button>
+            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 단어집합</button>
+            <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 원-핫 벡터</button>
+            <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 빈도수 벡터</button>
         </div>
 
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
-                <h3>1. 형태소 분석</h3>
-                <div id="morphemeResult" class="result-box"></div>
-            </div>
-
-            <div id="sec_2" class="result-section">
-                <h3>2. 불용어 제거</h3>
-                <div id="cleanResult" class="result-box"></div>
-            </div>
-
-            <div id="sec_3" class="result-section">
-                <h3>3. 기본형 변환</h3>
-                <div id="lemmaResult" class="result-box"></div>
-            </div>
-
-            <div id="sec_4" class="result-section">
                 <div class="header-flex">
-                    <h3>4. 사용자 수정 및 단어집합 구성</h3>
+                    <h3>1. 단어집합</h3>
                     <div class="add-section">
-                        <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
+                        <input type="text" id="newWordInput" class="add-input" placeholder="새 원형 단어">
                         <button class="add-btn" onclick="addToken()">추가</button>
                     </div>
                 </div>
-                <div class="result-box" id="editorContainer"></div>
+                <div class="result-box" id="vocabContainer"></div>
+            </div>
+
+            <div id="sec_2" class="result-section">
+                <h3>2. 원-핫 벡터 (One-Hot Vector)</h3>
+                <div class="result-box" style="display:block;">
+                    <div class="vector-container" id="oneHotContainer"></div>
+                </div>
+            </div>
+
+            <div id="sec_3" class="result-section">
+                <h3>3. 빈도수 벡터 (Frequency Vector)</h3>
+                <div class="result-box" style="display:block;">
+                    <div class="vector-container" id="freqContainer"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// 입력창 추가/제거를 위한 최소, 최대 변수 정의
+let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
+let vocabulary = []; 
 
-function updateButtonStates() {
-    const container = document.getElementById("textareaContainer");
-    const currentCount = container.children.length;
-    
-    document.getElementById("addInputBtn").disabled = (currentCount >= MAX_INPUTS);
-    document.getElementById("removeInputBtn").disabled = (currentCount <= MIN_INPUTS);
+const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와", "을", "를", "은", "는", "이", "가", "에", "의", "에게", "에서", "도", "만", "으로", "로"]);
+
+function updateCharCount(index) {
+    const textarea = document.getElementById(`input_${index}`);
+    const counter = document.getElementById(`counter_${index}`);
+    counter.innerText = `${textarea.value.length}/100`;
 }
 
-function addInputRow() {
-    const container = document.getElementById("textareaContainer");
-    if (container.children.length >= MAX_INPUTS) return;
-
-    const row = document.createElement("div");
-    row.className = "input-row";
-    row.innerHTML = `
-        <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
-        <span class="char-counter">0 / 100</span>
+function addInputField() {
+    if (inputCount >= MAX_INPUTS) return;
+    const container = document.getElementById("textareaList");
+    const wrapper = document.createElement("div");
+    wrapper.className = "textarea-wrapper";
+    wrapper.id = `wrapper_${inputCount}`;
+    wrapper.innerHTML = `
+        <span>문장 ${inputCount + 1}</span>
+        <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
+        <div class="char-counter" id="counter_${inputCount}">0/100</div>
     `;
-    container.appendChild(row);
-    updateButtonStates();
-    container.scrollTop = container.scrollHeight; // 추가 시 스크롤 아래로 이동
+    container.appendChild(wrapper);
+    inputCount++;
+    updateControlButtons();
+    container.scrollTop = container.scrollHeight;
 }
 
-function removeInputRow() {
-    const container = document.getElementById("textareaContainer");
-    if (container.children.length <= MIN_INPUTS) return;
-
-    container.removeChild(container.lastChild);
-    updateButtonStates();
+function removeInputField() {
+    if (inputCount <= MIN_INPUTS) return;
+    inputCount--;
+    document.getElementById(`wrapper_${inputCount}`).remove();
+    updateControlButtons();
 }
 
-function updateCharCount(textarea) {
-    const counter = textarea.nextElementSibling;
-    counter.textContent = `${textarea.value.length} / 100`;
+function updateControlButtons() {
+    document.getElementById("addInputBtn").disabled = (inputCount >= MAX_INPUTS);
+    document.getElementById("removeInputBtn").disabled = (inputCount <= MIN_INPUTS);
 }
 
 function switchTab(tabId) {
-    const tabs = ['all', '1', '2', '3', '4'];
+    const tabs = ['all', '1', '2', '3'];
     tabs.forEach(t => {
         document.getElementById(`tab_${t}`).classList.remove('active');
         if(t !== 'all') document.getElementById(`sec_${t}`).classList.add('hidden');
@@ -444,43 +360,16 @@ function switchTab(tabId) {
     }
 }
 
-let finalTokens = [];
-const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와", "을", "를", "은", "는", "이", "가", "에", "의", "에게", "에서", "도", "만", "으로", "로"]);
-
-function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
-async function processNLPWithLoading() {
-    const inputs = document.querySelectorAll(".nlp-input");
-    let combinedText = "";
-    let hasContent = false;
-
-    inputs.forEach(input => {
-        const val = input.value.trim();
-        if (val) {
-            combinedText += val + " ";
-            hasContent = true;
-        }
-    });
-
-    if (!hasContent) { alert("최소 하나의 문장은 입력해주세요!"); return; }
-
-    const overlay = document.getElementById("loadingOverlay");
-    overlay.classList.add("active");
-    await sleep(450); 
-
-    try {
-        processNLP(combinedText.trim());
-    } catch(e) {
-        console.error(e);
-        alert("분석 처리 도중 예기치 못한 에러가 발생했습니다.");
-    } finally {
-        overlay.classList.remove("active");
-    }
-}
-
+// [내장형 오픈소스 NLP 엔진 핵심 모듈]
+// 외부 호출 없이 순수 JS 연산으로 조사를 격리하고 기본형을 복원하는 최적화 패키지
 const EmbeddedNLP = {
+    // 1. 한국어 조사 격리 사전
     josaPatterns: /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서|네|나|니|라)$/,
+    
+    // 2. 용언 어간-어미 패러다임 결합 사전
     eomiPatterns: /(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하|었다|았다|였다|으며|으리|겠다|지|게|다|는|ㄴ|은|던|어|아)$/,
+    
+    // 3. 한국어 고유 불규칙 대조 사전
     irregularMap: [
         { test: /^만드|^만들/, stem: "만들다" },
         { test: /^흘러|^흘렀/, stem: "흐르다" },
@@ -498,115 +387,201 @@ const EmbeddedNLP = {
     ],
 
     analyzeToken: function(word) {
-        let basePart = word;
-        let josaPart = "";
+        let target = word;
         
+        // 조사 탈락 파이프라인
         if (this.josaPatterns.test(word) && word.length > 1) {
             const stripped = word.replace(this.josaPatterns, "");
-            if (stripped.length > 0) {
-                basePart = stripped;
-                const match = word.match(this.josaPatterns);
-                if (match) josaPart = match[0];
-            }
+            if (stripped.length > 0) target = stripped;
         }
 
-        let lemma = basePart;
-        let isDerived = false;
-
+        // 불규칙 맵 대조 연산
         for (let i = 0; i < this.irregularMap.length; i++) {
-            if (this.irregularMap[i].test.test(basePart)) {
-                lemma = this.irregularMap[i].stem;
-                isDerived = true;
-                break;
+            if (this.irregularMap[i].test.test(target)) {
+                return this.irregularMap[i].stem;
             }
         }
 
-        if (!isDerived && this.eomiPatterns.test(basePart)) {
-            if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/.test(basePart)) {
-                lemma = basePart.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/, "") + "하다";
-            } else {
-                let baseStem = basePart.replace(this.eomiPatterns, "");
-                if (baseStem.endsWith("었") || baseStem.endsWith("았")) {
-                    baseStem = baseStem.slice(0, -1);
-                }
-                if (baseStem.length > 0) {
-                    lemma = baseStem + "다";
-                }
+        // '하다'형 복합 결합 및 표준 굴절 어미 복원 연산
+        if (this.eomiPatterns.test(target)) {
+            if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/.test(target)) {
+                return target.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/, "") + "하다";
+            }
+            
+            let baseStem = target.replace(this.eomiPatterns, "");
+            if (baseStem.endsWith("었") || baseStem.endsWith("았")) {
+                baseStem = baseStem.slice(0, -1);
+            }
+            if (baseStem.length > 0) {
+                return baseStem + "다";
             }
         }
 
-        return { basePart, josaPart, lemma };
+        return target;
     }
 };
 
-function processNLP(text) {
-    const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
-    
-    let morphemeHtml = "";
-    let cleanHtml = "";
-    let lemmaHtml = "";
-    finalTokens = [];
-    const uniqueLemmas = new Set();
+// [연동] 고도화된 EmbeddedNLP 엔진을 파이프라인에 연결
+function lemmatizeCore(text) {
+    const cleanText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+    const words = cleanText.split(/\s+/);
+    const validLemmas = [];
 
     words.forEach(word => {
         if (!word) return;
-
-        const result = EmbeddedNLP.analyzeToken(word);
-        const basePart = result.basePart;
-        const josaPart = result.josaPart;
-        const lemma = result.lemma;
-
-        if (stopwords.has(basePart)) {
-            morphemeHtml += `<span class="tag removed">${basePart}(체언/어근)</span>`;
-        } else {
-            morphemeHtml += `<span class="tag">${basePart}(체언/어근)</span>`;
-            cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${basePart}</span>`;
-        }
-
-        if (josaPart) {
-            morphemeHtml += `<span class="tag removed">${josaPart}(조사)</span>`;
-        }
-
-        if (stopwords.has(basePart) || basePart.length === 0) return;
+        
+        // 내장형 NLP 수집 타겟 연산
+        const lemma = EmbeddedNLP.analyzeToken(word);
 
         if (!stopwords.has(lemma) && lemma.length > 0) {
-            if (!uniqueLemmas.has(lemma)) {
-                uniqueLemmas.add(lemma);
-                lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${lemma}</span>`;
-                finalTokens.push(lemma);
-            }
+            validLemmas.push(lemma);
         }
     });
 
-    document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
-    document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
-    document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
-    renderEditor();
+    return validLemmas;
 }
 
-function renderEditor() {
-    const container = document.getElementById("editorContainer");
-    if (finalTokens.length === 0) { container.innerHTML = "출력할 토큰이 없습니다."; return; }
+function processNLPWithLoading() {
+    const textFields = [];
+    for(let i=0; i<inputCount; i++) {
+        const val = document.getElementById(`input_${i}`).value.trim();
+        if(val) textFields.push(val);
+    }
+
+    if (textFields.length === 0) {
+        alert("최소 하나 이상의 분석 문장을 입력해 주세요!");
+        return;
+    }
+
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.classList.add("active");
+
+    setTimeout(() => {
+        try {
+            processNLP();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            overlay.classList.remove("active");
+        }
+    }, 400); 
+}
+
+function processNLP() {
+    const textFields = [];
+    for(let i=0; i<inputCount; i++) {
+        const val = document.getElementById(`input_${i}`).value.trim();
+        if(val) textFields.push(val);
+    }
+
+    const vocabSet = new Set();
+    textFields.forEach(sentence => {
+        const lemmas = lemmatizeCore(sentence);
+        lemmas.forEach(l => vocabSet.add(l));
+    });
+
+    vocabulary = Array.from(vocabSet);
+    
+    renderVocabEditor();
+    calculateVectors();
+}
+
+function renderVocabEditor() {
+    const container = document.getElementById("vocabContainer");
+    if (vocabulary.length === 0) {
+        container.innerHTML = "복원된 기본형 토큰 결과가 존재하지 않습니다.";
+        return;
+    }
+
     let html = "";
-    finalTokens.forEach((token, index) => {
+    vocabulary.forEach((word, index) => {
         html += `
             <span class="editable-tag">
-                <input type="text" value="${token}" onchange="updateToken(${index}, this.value)">
-                <span class="delete-btn" onclick="deleteToken(${index})">×</span>
+                <input type="text" value="${word}" onchange="updateVocab(${index}, this.value)">
+                <span class="delete-btn" onclick="deleteVocab(${index})">×</span>
             </span>
         `;
     });
     container.innerHTML = html;
 }
 
-function updateToken(index, newValue) { finalTokens[index] = newValue.trim(); }
-function deleteToken(index) { finalTokens.splice(index, 1); renderEditor(); }
+function updateVocab(index, newValue) {
+    const cleanValue = newValue.trim();
+    if(cleanValue) {
+        vocabulary[index] = cleanValue;
+        calculateVectors(); 
+    }
+}
+
+function deleteVocab(index) {
+    vocabulary.splice(index, 1);
+    renderVocabEditor();
+    calculateVectors();
+}
+
 function addToken() {
     const input = document.getElementById("newWordInput");
     const value = input.value.trim();
-    if (!value) { alert("추가할 단어를 입력하세요!"); return; }
-    if (!finalTokens.includes(value)) { finalTokens.push(value); renderEditor(); }
+    if (!value) return;
+    
+    if (!vocabulary.includes(value)) {
+        vocabulary.push(value);
+        renderVocabEditor();
+        calculateVectors();
+    }
     input.value = "";
+}
+
+function calculateVectors() {
+    const oneHotContainer = document.getElementById("oneHotContainer");
+    const freqContainer = document.getElementById("freqContainer");
+    
+    oneHotContainer.innerHTML = "";
+    freqContainer.innerHTML = "";
+
+    if(vocabulary.length === 0) {
+        oneHotContainer.innerHTML = "단어 집합이 비어있어 변환이 취소되었습니다.";
+        freqContainer.innerHTML = "단어 집합이 비어있어 변환이 취소되었습니다.";
+        return;
+    }
+
+    let activeIdx = 1;
+    for(let i=0; i<inputCount; i++) {
+        const sentence = document.getElementById(`input_${i}`).value.trim();
+        if(!sentence) continue;
+
+        const currentLemmas = lemmatizeCore(sentence);
+
+        const freqVector = new Array(vocabulary.length).fill(0);
+        currentLemmas.forEach(lemma => {
+            const vocabIdx = vocabulary.indexOf(lemma);
+            if(vocabIdx !== -1) {
+                freqVector[vocabIdx]++;
+            }
+        });
+
+        const oneHotVector = freqVector.map(v => v > 0 ? 1 : 0);
+
+        const ohRow = document.createElement("div");
+        ohRow.className = "vector-row";
+        ohRow.innerHTML = `
+            <div class="sentence-summary">문장 ${activeIdx}: "${sentence}"</div>
+            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
+            <div class="vector-display">[ ${oneHotVector.join(", ")} ]</div>
+        `;
+        oneHotContainer.appendChild(ohRow);
+
+        const fRow = document.createElement("div");
+        fRow.className = "vector-row";
+        fRow.innerHTML = `
+            <div class="sentence-summary">문장 ${activeIdx}: "${sentence}"</div>
+            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${currentLemmas.join(", ")} ]</div>
+            <div class="vector-display">[ ${freqVector.join(", ")} ]</div>
+        `;
+        freqContainer.appendChild(fRow);
+
+        activeIdx++;
+    }
 }
 
 const bgCanvas = document.getElementById('neural-canvas');
@@ -670,7 +645,13 @@ function animateBg() {
 window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
 window.addEventListener('resize', resizeBgCanvas);
-window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); updateButtonStates(); });
+
+window.addEventListener('DOMContentLoaded', () => {
+    resizeBgCanvas();
+    animateBg();
+    updateControlButtons();
+});
 </script>
+
 </body>
 </html>
