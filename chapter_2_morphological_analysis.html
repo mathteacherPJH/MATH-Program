@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>문장 벡터화 프로그램</title>
-    <!-- Kiwi-JS 라이브러리 로드 -->
+    <title>단어집합 프로그램</title>
+    <!-- Kiwi-js 라이브러리 로드 -->
     <script src="https://unpkg.com/kiwi-js"></script>
     <style>
         /* 변수 정의 (참고용 테마 색상 일치) */
@@ -17,7 +17,6 @@
             --c-accent: #2383E2;
             --c-accent-hover: #1A6CB8;
             --c-brand-green: #1B4332;
-            --c-brand-green-hover: #123024;
             --c-tag-bg: #E8F5E9;
             --c-tag-text: #2E7D32;
             --c-removed-bg: #FFEBEE;
@@ -90,11 +89,10 @@
         }
 
         .navbar-brand-text {
-            font-size: 13px; 
+            font-size: 14px; 
             font-weight: bold; 
             color: var(--c-brand-green); 
-            letter-spacing: 0.15em; 
-            text-transform: uppercase; 
+            letter-spacing: 0.08em; 
         }
 
         /* 메인 레이아웃 */
@@ -164,15 +162,15 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            transition: background-color 0.2s, opacity 0.2s;
+            transition: opacity 0.2s;
             letter-spacing: 0.05em;
             box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
         }
-        .run-btn:hover:not(:disabled) {
-            background-color: var(--c-brand-green-hover);
+        .run-btn:hover {
+            opacity: 0.9;
         }
         .run-btn:disabled {
-            opacity: 0.6;
+            background-color: var(--c-text-muted);
             cursor: not-allowed;
         }
 
@@ -182,6 +180,7 @@
             height: 100%;
             overflow: hidden;
             gap: 14px;
+            position: relative;
         }
 
         /* 상단 탭 그룹 */
@@ -362,17 +361,21 @@
             border-radius: 3px;
         }
 
-        /* 🌀 비동기 흐림 로딩 오버레이 스타일 */
+        /* 로딩 전체화면/패널 오버레이 스타일 */
         .loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(251, 249, 244, 0.7);
-            backdrop-filter: blur(8px);
-            z-index: 5000;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            border-radius: 12px;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
@@ -382,19 +385,18 @@
             pointer-events: auto;
         }
         .spinner {
-            width: 48px;
-            height: 48px;
+            width: 45px;
+            height: 45px;
             border: 4px solid rgba(27, 67, 50, 0.1);
             border-left-color: var(--c-brand-green);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 16px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
         }
         .loading-text {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             color: var(--c-brand-green);
-            letter-spacing: 0.05em;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -407,19 +409,13 @@
 <!-- 배경 애니메이션 캔버스 -->
 <canvas id="neural-canvas"></canvas>
 
-<!-- 로딩창 엘리먼트 -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <div class="loading-text" id="loadingText">Kiwi NLP 엔진 로딩 중...</div>
-</div>
-
 <!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
     <button onclick="history.back()" class="back-btn">
         ← BACK
     </button>
     <div class="navbar-brand-text">
-        MORPHOLOGICAL ANALYSIS
+        단어집합 프로그램
     </div>
 </nav>
 
@@ -431,12 +427,18 @@
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
         </div>
-        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()" disabled>엔전 준비 중...</button>
+        <button id="submitBtn" class="run-btn" onclick="processNLP()" disabled>Kiwi 엔진 초기화 중...</button>
     </div>
 
     <!-- 오른쪽: 프로세스 제어판 -->
     <div class="card right-panel">
         
+        <!-- 로딩창 엘리먼트 -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <div id="loadingText" class="loading-text">형태소 분석 중...</div>
+        </div>
+
         <!-- 상단 탭 5개 배치 -->
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
@@ -450,17 +452,17 @@
         <div class="right-panel-content">
             
             <div id="sec_1" class="result-section">
-                <h3>1. 형태소 분석 결과</h3>
+                <h3>1. 형태소 분석 결과 (Kiwi 토큰화)</h3>
                 <div id="morphemeResult" class="result-box"></div>
             </div>
 
             <div id="sec_2" class="result-section">
-                <h3>2. 불용어 제거 결과</h3>
+                <h3>2. 불용어 및 조사 제거 결과</h3>
                 <div id="cleanResult" class="result-box"></div>
             </div>
 
             <div id="sec_3" class="result-section">
-                <h3>3. 기본형 변환</h3>
+                <h3>3. 기본형 변환 (Lemmatization)</h3>
                 <div id="lemmaResult" class="result-box"></div>
             </div>
 
@@ -480,9 +482,7 @@
 </div>
 
 <script>
-let kiwi; // Kiwi 토크나이저 인스턴스
-
-// 탭 뷰 전환 스크립트
+// 상단 탭 뷰 전환 스크립트
 function switchTab(tabId) {
     const tabs = ['all', '1', '2', '3', '4'];
     
@@ -504,106 +504,95 @@ function switchTab(tabId) {
     }
 }
 
-// 🌐 Kiwi-JS 비동기 패치 및 이니셜라이징
+// Kiwi 인스턴스 전역 관리
+let kiwiInstance = null;
+let finalTokens = [];
+
+// 불용어 목록 및 조사(J) 품사 비대상화 정의
+const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더"]);
+
+// Kiwi WASM 초기화 로직
 async function initKiwi() {
+    const submitBtn = document.getElementById("submitBtn");
     try {
-        // CDN 상의 정적 자원 경로 명시적 연결 (.wasm 및 사전 파일 추적)
-        kiwi = await Kiwi.getTokenizer('https://unpkg.com/kiwi-js/dist/');
-        const runBtn = document.getElementById("runBtn");
-        runBtn.innerText = "분석 및 변환 실행 ⚡";
-        runBtn.disabled = false;
-    } catch (e) {
-        console.error("Kiwi 로딩 실패:", e);
-        document.getElementById("runBtn").innerText = "엔진 로딩 실패 ❌";
+        kiwiInstance = await Kiwi.get();
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "분석 및 변환 실행 ⚡";
+    } catch (error) {
+        console.error("Kiwi 엔진 로드 실패:", error);
+        submitBtn.innerHTML = "엔진 로드 실패 (새로고침 필요)";
     }
 }
 
-// 불용어로 취급할 부사 및 기호 대상 정의
-const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와"]);
-let finalTokens = [];
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-// 스무스한 UX를 위한 로딩창 트리거 wrapper 함수
-function processNLPWithLoading() {
+async function processNLP() {
     const text = document.getElementById("inputText").value.trim();
     if (!text) {
         alert("문장을 입력해주세요!");
         return;
     }
 
+    if (!kiwiInstance) return;
+
     const overlay = document.getElementById("loadingOverlay");
-    const loadingText = document.getElementById("loadingText");
-    loadingText.innerText = "Kiwi 엔진 데이터 가동 및 형태소 분석 중...";
     overlay.classList.add("active");
 
-    // 단기 프레임 확보 후 백그라운드 연산 실행
-    setTimeout(() => {
-        try {
-            processNLP(text);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            overlay.classList.remove("active");
-        }
-    }, 400);
-}
+    await sleep(400);
 
-// 🛠️ 진짜 Kiwi 자연어 분석엔진 파이프라인
-function processNLP(text) {
-    if (!kiwi) return;
+    try {
+        const currentResult = kiwiInstance.analyze(text, 1);
+        const tokens = currentResult[0][0]; 
 
-    // 기호 정제 후 분석 실행
-    const cleanedText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-    const analyzeResult = kiwi.analyze(cleanedText, 1);
-    const tokens = analyzeResult[0][0]; // 최적 경로 후보 셋 파싱
+        let morphemeHtml = "";
+        let cleanHtml = "";
+        let lemmaHtml = "";
+        
+        finalTokens = [];
+        const uniqueLemmas = new Set();
 
-    let morphemeHtml = "";
-    let cleanHtml = "";
-    let lemmaHtml = "";
-    
-    finalTokens = [];
-    const uniqueLemmas = new Set();
-
-    tokens.forEach(tok => {
-        const form = tok.form;
-        const tag = tok.tag;
-
-        // 1단계: 품사 매핑 가공 (사용자 가독성 매칭용)
-        let posDisplay = tag;
-        if (tag.startsWith('N')) posDisplay = "명사";
-        else if (tag.startsWith('V')) posDisplay = "용언";
-        else if (tag.startsWith('J')) posDisplay = "조사";
-        else if (tag.startsWith('E')) posDisplay = "어미";
-
-        // 2단계: 표제어(기본형) 규칙 세우기
-        // VV(동사), VA(형용사) 등 용언 계열은 '다' 형태의 표제어로 원형 복원 보장
-        let lemma = form;
-        if (tag === 'VV' || tag === 'VA' || tag === 'VX') {
-            lemma = form + "다";
-        }
-
-        // 3단계: 불용어 판정 (조사 필터링 체인 장착)
-        const isStopword = stopwords.has(form) || tag.startsWith('J') || tag.startsWith('E') || tag.startsWith('S');
-
-        // 4단계: 개별 스텝별 태그 생성
-        if (isStopword) {
-            morphemeHtml += `<span class="tag removed">${form}(${posDisplay})</span>`;
-        } else {
-            morphemeHtml += `<span class="tag">${form}(${posDisplay})</span>`;
-            cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
+        tokens.forEach(token => {
+            const form = token.form;
+            const tag = token.tag;
             
-            if (!uniqueLemmas.has(lemma) && lemma.length > 0) {
-                uniqueLemmas.add(lemma);
-                lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${lemma}</span>`;
-                finalTokens.push(lemma);
-            }
-        }
-    });
+            const isJosa = tag.startsWith("J");
+            const isStopword = stopwords.has(form) || isJosa;
 
-    document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
-    document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
-    document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
-    
-    renderEditor();
+            const displayTag = `${form}(${tag})`;
+
+            if (isStopword) {
+                morphemeHtml += `<span class="tag removed">${displayTag}</span>`;
+            } else {
+                morphemeHtml += `<span class="tag">${displayTag}</span>`;
+                cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
+                
+                let lemma = form;
+                if (tag.startsWith("V")) {
+                    lemma = form + "다";
+                }
+
+                if (!uniqueLemmas.has(lemma)) {
+                    uniqueLemmas.add(lemma);
+                    lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${lemma}</span>`;
+                    finalTokens.push(lemma);
+                }
+            }
+        });
+
+        document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
+        document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
+        document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
+        
+        renderEditor();
+
+    } catch (e) {
+        console.error(e);
+        alert("분석 도중 오류가 발생했습니다.");
+    } finally {
+        overlay.classList.remove("active");
+    }
 }
 
 function renderEditor() {
@@ -730,7 +719,7 @@ window.addEventListener('resize', resizeBgCanvas);
 window.addEventListener('DOMContentLoaded', () => {
     resizeBgCanvas();
     animateBg();
-    initKiwi(); // 비동기 엔진 가동 시작
+    initKiwi(); 
 });
 </script>
 
