@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 파일 목적에 맞춘 직관적인 타이틀 설정 -->
     <title>단어집합 프로그램</title>
-    <!-- Kiwi-js 공식 WASM 라이브러리 연동 (GitHub Pages 환경에서도 안정적으로 구동됨) -->
-    <script src="https://unpkg.com/kiwi-js"></script>
+    <!-- 
+      [WASM 로드 실패 해결 1단계] 
+      버전 누락으로 인한 경로 꼬임을 방지하기 위해 dist 버전을 0.1.1 정식 빌드로 고정합니다.
+    -->
+    <script src="https://unpkg.com/kiwi-js@0.1.1/dist/index.js"></script>
     <style>
         /* 변수 정의 (기존 테마 색상 및 감성 유지) */
         :root {
@@ -406,7 +408,6 @@
 
 <!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
-    <!-- 레포지토리 내 index.html 등으로 직접 연결하려면 href 값(예: "./index.html")을 세팅하셔도 좋습니다 -->
     <button onclick="location.href='./index.html'; || history.back();" class="back-btn">
         ← BACK
     </button>
@@ -507,15 +508,19 @@ let finalTokens = [];
 // 전형적인 불용어 목록 정의
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더"]);
 
-// 페이지 기동 시 Kiwi WASM 바이너리 초기 가동 로직
+// [WASM 로드 실패 해결 2단계] 
+// 외부 호스팅 서버(GitHub Pages) 보안 정책에 맞춰 0.1.1 바이너리와 사전 절대경로를 강제로 주입합니다.
 async function initKiwi() {
     const submitBtn = document.getElementById("submitBtn");
     try {
-        kiwiInstance = await Kiwi.get();
+        kiwiInstance = await Kiwi.get({
+            wasmPath: 'https://unpkg.com/kiwi-js@0.1.1/dist/kiwi.wasm',
+            dictPath: 'https://unpkg.com/kiwi-js@0.1.1/dist/dict.txt'
+        });
         submitBtn.disabled = false;
         submitBtn.innerHTML = "분석 및 변환 실행 ⚡";
     } catch (error) {
-        console.error("Kiwi 엔진 로드 실패:", error);
+        console.error("Kiwi 엔진 로드 실패 상세 원인:", error);
         submitBtn.innerHTML = "엔진 로드 실패 (새로고침 필요)";
     }
 }
