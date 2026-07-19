@@ -233,7 +233,7 @@
 </div>
 
 <nav class="top-navbar">
-    <button onclick="history.back()" class="back-btn">← BACK</button>
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">← BACK</button>
     <div class="navbar-brand-text">SENTENCE VECTORIZER</div>
 </nav>
 
@@ -360,51 +360,56 @@ function switchTab(tabId) {
     }
 }
 
+// [이식 완료] morphological_analysis.html에 탑재된 고도화 내장 정제 엔진
 function lemmatizeCore(text) {
     const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
     const validLemmas = [];
 
     words.forEach(word => {
         if (!word) return;
-        if (stopwords.has(word)) return;
 
+        // 1단계: 복합 조사 및 결합 조사 정밀 분리 정규식
         const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서)$/;
-        let target = word;
+        let basePart = word;
         const matchJosa = word.match(josaRegex);
         if (matchJosa && word.length > matchJosa[0].length) {
-            target = word.replace(josaRegex, "");
+            basePart = word.replace(josaRegex, "");
         }
 
-        if (stopwords.has(target) || target.length === 0) return;
+        if (stopwords.has(basePart) || basePart.length === 0) return;
 
-        let lemma = target;
-        let found = false;
+        // 2단계: 한국어 활용 패러다임 역추적 원형 복원 모듈
+        let lemma = basePart;
+        let isDerived = false;
 
-        if (/(했다|했습니다|하였다|했다|한다)$/.test(target)) {
-            lemma = target.replace(/(했다|했습니다|하였다|했다|한다)$/, "") + "하다";
-            found = true;
+        // '하다'형 결합 동사/형용사 완벽 지원
+        if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오)$/.test(basePart)) {
+            lemma = basePart.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오)$/, "") + "하다";
+            isDerived = true;
         }
 
-        if (!found) {
-            if (/^만드/.test(target) || /^만들/.test(target)) { lemma = "만들다"; found = true; }
-            else if (target.startsWith("흘러") || target.startsWith("흘렀")) { lemma = "흐르다"; found = true; }
-            else if (target.startsWith("골라") || target.startsWith("골랐")) { lemma = "고르다"; found = true; }
-            else if (target.startsWith("불러") || target.startsWith("불렀")) { lemma = "부르다"; found = true; }
-            else if (target.startsWith("달라") || target.startsWith("달랐")) { lemma = "다르다"; found = true; }
-            else if (/^지어/.test(target) || /^지었/.test(target) || /^지으/.test(target)) { lemma = "짓다"; found = true; }
-            else if (target.startsWith("도와") || target.startsWith("도왔")) { lemma = "돕다"; found = true; }
-            else if (target.startsWith("아름다")) { lemma = "아름답다"; found = true; }
-            else if (target.startsWith("추워") || target.startsWith("추운")) { lemma = "춥다"; found = true; }
-            else if (target.startsWith("예뻐") || target.startsWith("예쁜")) { lemma = "예쁘다"; found = true; }
-            else if (target === "써" || target === "써서") { lemma = "쓰다"; found = true; }
-            else if (target === "커" || target === "커서") { lemma = "크다"; found = true; }
+        if (!isDerived) {
+            // 빈출 불규칙 패러다임 사전 맵핑 처리
+            if (/^만드/.test(basePart) || /^만들/.test(basePart)) { lemma = "만들다"; isDerived = true; }
+            else if (basePart.startsWith("흘러") || basePart.startsWith("흘렀")) { lemma = "흐르다"; isDerived = true; }
+            else if (basePart.startsWith("골라") || basePart.startsWith("골랐")) { lemma = "고르다"; isDerived = true; }
+            else if (basePart.startsWith("불러") || basePart.startsWith("불렀")) { lemma = "부르다"; isDerived = true; }
+            else if (basePart.startsWith("달라") || basePart.startsWith("달랐")) { lemma = "다르다"; isDerived = true; }
+            else if (/^지어/.test(basePart) || /^지었/.test(basePart) || /^지으/.test(basePart)) { lemma = "짓다"; isDerived = true; }
+            else if (basePart.startsWith("도와") || basePart.startsWith("도왔")) { lemma = "돕다"; isDerived = true; }
+            else if (basePart.startsWith("아름다")) { lemma = "아름답다"; isDerived = true; }
+            else if (basePart.startsWith("추워") || basePart.startsWith("추운")) { lemma = "춥다"; isDerived = true; }
+            else if (basePart.startsWith("예뻐") || basePart.startsWith("예쁜")) { lemma = "예쁘다"; isDerived = true; }
+            else if (basePart === "써" || basePart === "써서") { lemma = "쓰다"; isDerived = true; }
+            else if (basePart === "커" || basePart === "커서") { lemma = "크다"; isDerived = true; }
 
-            if (!found && /(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ)$/.test(target)) {
-                let stem = target.replace(/(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ)$/, "");
+            // 일반 동사 및 어미 활용 변형 정문화
+            if (!isDerived && /(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ|은|던|어|아)$/.test(basePart)) {
+                let stem = basePart.replace(/(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ|은|던|어|아)$/, "");
                 if (stem.endsWith("었") || stem.endsWith("았")) stem = stem.slice(0, -1);
                 if (stem.length > 0) {
                     lemma = stem + "다";
-                    found = true;
+                    isDerived = true;
                 }
             }
         }
