@@ -117,7 +117,9 @@
 
         .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 4px; }
         .textarea-wrapper { position: relative; display: flex; flex-direction: column; }
-        .textarea-wrapper span { font-size: 11px; color: var(--c-text-muted); margin-bottom: 4px; font-weight: bold; }
+        
+        /* 입력 패널의 문장 1, 문장 2, 문장 3 글자색을 브랜드 그린 컬러로 수정 */
+        .textarea-wrapper span { font-size: 11px; color: var(--c-brand-green); margin-bottom: 4px; font-weight: bold; }
         .textarea-wrapper .char-counter { position: absolute; bottom: 6px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
 
         textarea {
@@ -147,7 +149,6 @@
         .result-section { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
         .result-section.hidden { display: none !important; }
         
-        /* 1, 2, 3 섹션 제목 글자색을 왼쪽 패널 제목과 동일하게 수정 */
         .result-section h3 { margin: 0 0 8px 4px; font-size: 14px; color: var(--c-brand-green); font-weight: bold; }
 
         .result-box { 
@@ -159,7 +160,6 @@
         .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .vector-row { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 12px; }
         
-        /* 결과 리스트 내 '문장 1, 2, 3' 글자색을 왼쪽 패널 제목과 동일하게 이미 되어있으나 명시적 유지 */
         .vector-row .sentence-summary { font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 4px; }
         .vector-row .tokens-summary { font-size: 11px; color: var(--c-text-muted); margin-bottom: 6px; font-style: italic; }
         
@@ -244,7 +244,6 @@
 <div class="main-layout">
     <div class="card left-panel">
         <div class="panel-title">
-            <!-- 문장 다중 입력 칸 (최대 100자) -> 문장 입력 (100자 이내) 수정 -->
             <span>문장 입력 (100자 이내)</span>
             <div class="input-controls">
                 <button class="control-btn" id="removeInputBtn" onclick="removeInputField()">- 제거</button>
@@ -328,6 +327,8 @@ function addInputField() {
     const wrapper = document.createElement("div");
     wrapper.className = "textarea-wrapper";
     wrapper.id = `wrapper_${inputCount}`;
+    
+    // 동적으로 생성되는 입력창의 '문장 X' 라벨 역시 스타일 시트에 적용된 컬러(--c-brand-green)를 그대로 이어받습니다.
     wrapper.innerHTML = `
         <span>문장 ${inputCount + 1}</span>
         <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
