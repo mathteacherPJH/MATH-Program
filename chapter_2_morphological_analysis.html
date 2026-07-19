@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>형태소 분석기 및 단어집합 구성</title>
+    <title>문장 벡터화 프로그램</title>
+    <!-- Kiwi-JS 라이브러리 로드 -->
+    <script src="https://unpkg.com/kiwi-js"></script>
     <style>
         /* 변수 정의 (참고용 테마 색상 일치) */
         :root {
@@ -15,6 +17,7 @@
             --c-accent: #2383E2;
             --c-accent-hover: #1A6CB8;
             --c-brand-green: #1B4332;
+            --c-brand-green-hover: #123024;
             --c-tag-bg: #E8F5E9;
             --c-tag-text: #2E7D32;
             --c-removed-bg: #FFEBEE;
@@ -161,12 +164,16 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            transition: opacity 0.2s;
+            transition: background-color 0.2s, opacity 0.2s;
             letter-spacing: 0.05em;
             box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
         }
-        .run-btn:hover {
-            opacity: 0.9;
+        .run-btn:hover:not(:disabled) {
+            background-color: var(--c-brand-green-hover);
+        }
+        .run-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         /* 오른쪽 섹션: 고정 틀 구조 */
@@ -354,12 +361,57 @@
             background: rgba(44, 42, 41, 0.15);
             border-radius: 3px;
         }
+
+        /* 🌀 비동기 흐림 로딩 오버레이 스타일 */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(251, 249, 244, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(27, 67, 50, 0.1);
+            border-left-color: var(--c-brand-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        .loading-text {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+            letter-spacing: 0.05em;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
 <!-- 배경 애니메이션 캔버스 -->
 <canvas id="neural-canvas"></canvas>
+
+<!-- 로딩창 엘리먼트 -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Kiwi NLP 엔진 로딩 중...</div>
+</div>
 
 <!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
@@ -379,7 +431,7 @@
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
         </div>
-        <button class="run-btn" onclick="processNLP()">분석 및 변환 실행 ⚡</button>
+        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()" disabled>엔전 준비 중...</button>
     </div>
 
     <!-- 오른쪽: 프로세스 제어판 -->
@@ -394,7 +446,7 @@
             <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 사용자 수정</button>
         </div>
 
-        <!-- 결과 컨텐츠 출력 영역 (초기 안내 텍스트 완전 제거) -->
+        <!-- 결과 컨텐츠 출력 영역 -->
         <div class="right-panel-content">
             
             <div id="sec_1" class="result-section">
@@ -428,7 +480,9 @@
 </div>
 
 <script>
-// 상단 탭 뷰 전환 스크립트
+let kiwi; // Kiwi 토크나이저 인스턴스
+
+// 탭 뷰 전환 스크립트
 function switchTab(tabId) {
     const tabs = ['all', '1', '2', '3', '4'];
     
@@ -450,99 +504,58 @@ function switchTab(tabId) {
     }
 }
 
-// 내부 형태소 분석 처리 로직
-const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
-let finalTokens = [];
-
-function tokenizeKorean(text) {
-    const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
-    const tokens = [];
-
-    words.forEach(word => {
-        if (!word) return;
-
-        const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지)$/;
-        const matchJosa = word.match(josaRegex);
-
-        if (matchJosa && word.length > matchJosa[0].length) {
-            const stem = word.replace(josaRegex, "");
-            const josa = matchJosa[0];
-            tokens.push({ text: stem, pos: "명사/어근", lemma: stem });
-            tokens.push({ text: josa, pos: "조사", lemma: josa });
-            return;
-        }
-
-        if (word.endsWith("했습니다") || word.endsWith("합니다") || word.endsWith("하였다") || word.endsWith("했다") || word.endsWith("한다")) {
-            const stem = word.replace(/(했습니다|합니다|하였다|했다|한다)$/, "");
-            tokens.push({ text: word, pos: "용언(하다)", lemma: stem + "하다" });
-            return;
-        }
-
-        if (/[가-힣]+해(질|요|서|도|지|면|유|용|야)/.test(word) || /[가-힣]+해졌다/.test(word) || word.endsWith("해질")) {
-            const stem = word.replace(/(해질|해요|해서|해도|해지|하면|해|해졌다)$/, "");
-            tokens.push({ text: word, pos: "용언(하다)", lemma: stem + "하다" });
-            return;
-        }
-
-        if ((word.endsWith("한") || word.endsWith("할")) && word.length > 1) {
-            const stem = word.slice(0, -1);
-            tokens.push({ text: word, pos: "용언(하다)", lemma: stem + "하다" });
-            return;
-        }
-
-        if (word.endsWith("았습니다") || word.endsWith("었습니다") || word.endsWith("습니다")) {
-            let stem = word.replace(/(았습니다|었습니다|습니다)$/, "");
-            if (stem.endsWith("었") || stem.endsWith("았")) { stem = stem.slice(0, -1); }
-            if (stem.endsWith("들")) stem = stem.slice(0, -1) + "듣";
-            if (stem.endsWith("불렀")) stem = "부르";
-            if (stem.endsWith("골랐")) stem = "고르";
-            if (stem.endsWith("달랐")) stem = "다르";
-            
-            tokens.push({ text: word, pos: "용언", lemma: stem + "다" });
-            return;
-        }
-
-        const eomiRegex = /(다|고|며|니|어|아|게|지|던|은|는|을|인|으려|려고|으니|었더니|았더니)$/;
-        const matchEomi = word.match(eomiRegex);
-
-        if (matchEomi && word.length > matchEomi[0].length) {
-            let stem = word.replace(eomiRegex, "");
-            if (stem.endsWith("었") || stem.endsWith("았")) { stem = stem.slice(0, -1); }
-
-            if (word.endsWith("러") || word.endsWith("라")) {
-                if (stem.endsWith("불")) stem = "부르";
-                if (stem.endsWith("골")) stem = "고르";
-                if (stem.endsWith("달")) stem = "다르";
-                if (stem.endsWith("잘")) stem = "자르";
-            }
-            if (word.endsWith("른") || word.endsWith("를")) { stem = stem + "르"; }
-            if (word.endsWith("쁜")) { stem = stem + "쁘"; }
-            if (word.includes("들으니") || word.includes("들어")) { if (stem === "들") stem = "듣"; }
-            if (word.endsWith("운") && stem.length > 0) { stem = stem + "ㅂ"; }
-            if (word.endsWith("워") || word.endsWith("워서") || word.endsWith("워요")) {
-                stem = stem.replace(/(word|워서|워요)$/, "") + "ㅂ";
-            }
-
-            tokens.push({ text: word, pos: "용언", lemma: stem + "다" });
-        } else {
-            if (word === "불러" || word === "불렀어") { tokens.push({ text: word, pos: "용언", lemma: "부르다" }); return; }
-            if (word === "골라" || word === "골랐어") { tokens.push({ text: word, pos: "용언", lemma: "고르다" }); return; }
-            if (word === "달라" || word === "달랐어") { tokens.push({ text: word, pos: "용언", lemma: "다르다" }); return; }
-            tokens.push({ text: word, pos: "일반단어", lemma: word });
-        }
-    });
-
-    return tokens;
+// 🌐 Kiwi-JS 비동기 패치 및 이니셜라이징
+async function initKiwi() {
+    try {
+        // CDN 상의 정적 자원 경로 명시적 연결 (.wasm 및 사전 파일 추적)
+        kiwi = await Kiwi.getTokenizer('https://unpkg.com/kiwi-js/dist/');
+        const runBtn = document.getElementById("runBtn");
+        runBtn.innerText = "분석 및 변환 실행 ⚡";
+        runBtn.disabled = false;
+    } catch (e) {
+        console.error("Kiwi 로딩 실패:", e);
+        document.getElementById("runBtn").innerText = "엔진 로딩 실패 ❌";
+    }
 }
 
-function processNLP() {
+// 불용어로 취급할 부사 및 기호 대상 정의
+const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와"]);
+let finalTokens = [];
+
+// 스무스한 UX를 위한 로딩창 트리거 wrapper 함수
+function processNLPWithLoading() {
     const text = document.getElementById("inputText").value.trim();
     if (!text) {
         alert("문장을 입력해주세요!");
         return;
     }
 
-    const allTokens = tokenizeKorean(text);
+    const overlay = document.getElementById("loadingOverlay");
+    const loadingText = document.getElementById("loadingText");
+    loadingText.innerText = "Kiwi 엔진 데이터 가동 및 형태소 분석 중...";
+    overlay.classList.add("active");
+
+    // 단기 프레임 확보 후 백그라운드 연산 실행
+    setTimeout(() => {
+        try {
+            processNLP(text);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            overlay.classList.remove("active");
+        }
+    }, 400);
+}
+
+// 🛠️ 진짜 Kiwi 자연어 분석엔진 파이프라인
+function processNLP(text) {
+    if (!kiwi) return;
+
+    // 기호 정제 후 분석 실행
+    const cleanedText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+    const analyzeResult = kiwi.analyze(cleanedText, 1);
+    const tokens = analyzeResult[0][0]; // 최적 경로 후보 셋 파싱
+
     let morphemeHtml = "";
     let cleanHtml = "";
     let lemmaHtml = "";
@@ -550,19 +563,38 @@ function processNLP() {
     finalTokens = [];
     const uniqueLemmas = new Set();
 
-    allTokens.forEach(token => {
-        const isStopword = stopwords.has(token.text) || token.pos === "조사";
+    tokens.forEach(tok => {
+        const form = tok.form;
+        const tag = tok.tag;
 
+        // 1단계: 품사 매핑 가공 (사용자 가독성 매칭용)
+        let posDisplay = tag;
+        if (tag.startsWith('N')) posDisplay = "명사";
+        else if (tag.startsWith('V')) posDisplay = "용언";
+        else if (tag.startsWith('J')) posDisplay = "조사";
+        else if (tag.startsWith('E')) posDisplay = "어미";
+
+        // 2단계: 표제어(기본형) 규칙 세우기
+        // VV(동사), VA(형용사) 등 용언 계열은 '다' 형태의 표제어로 원형 복원 보장
+        let lemma = form;
+        if (tag === 'VV' || tag === 'VA' || tag === 'VX') {
+            lemma = form + "다";
+        }
+
+        // 3단계: 불용어 판정 (조사 필터링 체인 장착)
+        const isStopword = stopwords.has(form) || tag.startsWith('J') || tag.startsWith('E') || tag.startsWith('S');
+
+        // 4단계: 개별 스텝별 태그 생성
         if (isStopword) {
-            morphemeHtml += `<span class="tag removed">${token.text}(${token.pos})</span>`;
+            morphemeHtml += `<span class="tag removed">${form}(${posDisplay})</span>`;
         } else {
-            morphemeHtml += `<span class="tag">${token.text}(${token.pos})</span>`;
-            cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${token.text}</span>`;
+            morphemeHtml += `<span class="tag">${form}(${posDisplay})</span>`;
+            cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
             
-            if (!uniqueLemmas.has(token.lemma)) {
-                uniqueLemmas.add(token.lemma);
-                lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${token.lemma}</span>`;
-                finalTokens.push(token.lemma);
+            if (!uniqueLemmas.has(lemma) && lemma.length > 0) {
+                uniqueLemmas.add(lemma);
+                lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${lemma}</span>`;
+                finalTokens.push(lemma);
             }
         }
     });
@@ -698,6 +730,7 @@ window.addEventListener('resize', resizeBgCanvas);
 window.addEventListener('DOMContentLoaded', () => {
     resizeBgCanvas();
     animateBg();
+    initKiwi(); // 비동기 엔진 가동 시작
 });
 </script>
 
