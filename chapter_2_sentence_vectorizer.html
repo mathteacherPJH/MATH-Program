@@ -146,7 +146,9 @@
         .right-panel-content { width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding-right: 6px; box-sizing: border-box; }
         .result-section { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
         .result-section.hidden { display: none !important; }
-        .result-section h3 { margin: 0 0 8px 4px; font-size: 14px; color: var(--c-text-muted); font-weight: bold; }
+        
+        /* 1, 2, 3 섹션 제목 글자색을 왼쪽 패널 제목과 동일하게 수정 */
+        .result-section h3 { margin: 0 0 8px 4px; font-size: 14px; color: var(--c-brand-green); font-weight: bold; }
 
         .result-box { 
             background-color: rgba(244, 241, 234, 0.6); padding: 14px; border-radius: 8px; min-height: 48px; 
@@ -156,6 +158,8 @@
 
         .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .vector-row { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 12px; }
+        
+        /* 결과 리스트 내 '문장 1, 2, 3' 글자색을 왼쪽 패널 제목과 동일하게 이미 되어있으나 명시적 유지 */
         .vector-row .sentence-summary { font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 4px; }
         .vector-row .tokens-summary { font-size: 11px; color: var(--c-text-muted); margin-bottom: 6px; font-style: italic; }
         
@@ -240,7 +244,8 @@
 <div class="main-layout">
     <div class="card left-panel">
         <div class="panel-title">
-            <span>문장 다중 입력 칸 (최대 100자)</span>
+            <!-- 문장 다중 입력 칸 (최대 100자) -> 문장 입력 (100자 이내) 수정 -->
+            <span>문장 입력 (100자 이내)</span>
             <div class="input-controls">
                 <button class="control-btn" id="removeInputBtn" onclick="removeInputField()">- 제거</button>
                 <button class="control-btn" id="addInputBtn" onclick="addInputField()">+ 추가</button>
@@ -360,16 +365,9 @@ function switchTab(tabId) {
     }
 }
 
-// [내장형 오픈소스 NLP 엔진 핵심 모듈]
-// 외부 호출 없이 순수 JS 연산으로 조사를 격리하고 기본형을 복원하는 최적화 패키지
 const EmbeddedNLP = {
-    // 1. 한국어 조사 격리 사전
     josaPatterns: /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서|네|나|니|라)$/,
-    
-    // 2. 용언 어간-어미 패러다임 결합 사전
     eomiPatterns: /(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하|었다|았다|였다|으며|으리|겠다|지|게|다|는|ㄴ|은|던|어|아)$/,
-    
-    // 3. 한국어 고유 불규칙 대조 사전
     irregularMap: [
         { test: /^만드|^만들/, stem: "만들다" },
         { test: /^흘러|^흘렀/, stem: "흐르다" },
@@ -389,20 +387,17 @@ const EmbeddedNLP = {
     analyzeToken: function(word) {
         let target = word;
         
-        // 조사 탈락 파이프라인
         if (this.josaPatterns.test(word) && word.length > 1) {
             const stripped = word.replace(this.josaPatterns, "");
             if (stripped.length > 0) target = stripped;
         }
 
-        // 불규칙 맵 대조 연산
         for (let i = 0; i < this.irregularMap.length; i++) {
             if (this.irregularMap[i].test.test(target)) {
                 return this.irregularMap[i].stem;
             }
         }
 
-        // '하다'형 복합 결합 및 표준 굴절 어미 복원 연산
         if (this.eomiPatterns.test(target)) {
             if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/.test(target)) {
                 return target.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/, "") + "하다";
@@ -421,7 +416,6 @@ const EmbeddedNLP = {
     }
 };
 
-// [연동] 고도화된 EmbeddedNLP 엔진을 파이프라인에 연결
 function lemmatizeCore(text) {
     const cleanText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
     const words = cleanText.split(/\s+/);
@@ -430,7 +424,6 @@ function lemmatizeCore(text) {
     words.forEach(word => {
         if (!word) return;
         
-        // 내장형 NLP 수집 타겟 연산
         const lemma = EmbeddedNLP.analyzeToken(word);
 
         if (!stopwords.has(lemma) && lemma.length > 0) {
