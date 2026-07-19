@@ -85,10 +85,11 @@
         }
 
         .navbar-brand-text {
-            font-size: 14px; 
+            font-size: 13px; 
             font-weight: bold; 
             color: var(--c-brand-green); 
-            letter-spacing: 0.08em; 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase;
         }
 
         .main-layout {
@@ -395,7 +396,7 @@
         ← BACK
     </button>
     <div class="navbar-brand-text">
-        단어집합 프로그램
+        MORPHOLOGICAL ANALYSIS
     </div>
 </nav>
 
@@ -404,8 +405,7 @@
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
         </div>
-        <!-- 외부 연딩 의존성이 제거되어 상시 즉시 실행 가능하도록 수정 -->
-        <button id="submitBtn" class="run-btn" onclick="processNLPWithLoading()">분석 및 변환 실행 ⚡</button>
+        <button id="submitBtn" class="run-btn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
     </div>
 
     <div class="card right-panel">
@@ -423,13 +423,15 @@
         </div>
 
         <div class="right-panel-content">
+            <!-- [수정] 섹션 1 제목을 "1. 형태소 분석"으로 변경 -->
             <div id="sec_1" class="result-section">
-                <h3>1. 형태소 정규화 결과</h3>
+                <h3>1. 형태소 분석</h3>
                 <div id="morphemeResult" class="result-box"></div>
             </div>
 
+            <!-- [수정] 섹션 2 제목을 "2. 불용어 제거"로 변경 -->
             <div id="sec_2" class="result-section">
-                <h3>2. 불용어 및 조사 제거 결과</h3>
+                <h3>2. 불용어 제거</h3>
                 <div id="cleanResult" class="result-box"></div>
             </div>
 
@@ -478,7 +480,7 @@ async function processNLPWithLoading() {
 
     const overlay = document.getElementById("loadingOverlay");
     overlay.classList.add("active");
-    await sleep(450); // 로딩 스피너의 연출 감성을 극대화하기 위한 시간 버퍼
+    await sleep(450); 
 
     try {
         processNLP(text);
@@ -491,7 +493,6 @@ async function processNLPWithLoading() {
 }
 
 function processNLP(text) {
-    // 특수문자 전처리 분리 후 어절 단위 슬라이싱
     const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
     
     let morphemeHtml = "";
@@ -503,7 +504,6 @@ function processNLP(text) {
     words.forEach(word => {
         if (!word) return;
 
-        // 1단계: 조사(Josa) 정밀 매칭 및 분리 처리
         const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서)$/;
         let basePart = word;
         let josaPart = "";
@@ -514,7 +514,6 @@ function processNLP(text) {
             josaPart = matchJosa[0];
         }
 
-        // 형태소 결과 빌드
         if (stopwords.has(basePart)) {
             morphemeHtml += `<span class="tag removed">${basePart}(체언/어근)</span>`;
         } else {
@@ -526,7 +525,6 @@ function processNLP(text) {
             morphemeHtml += `<span class="tag removed">${josaPart}(조사)</span>`;
         }
 
-        // 2단계: 불용어 판단 및 원형(기본형) 복원 고도화 모듈
         if (stopwords.has(basePart) || basePart.length === 0) return;
 
         let lemma = basePart;
@@ -561,7 +559,6 @@ function processNLP(text) {
             }
         }
 
-        // 최종 중복 배제 단어집합 필터링
         if (!stopwords.has(lemma) && lemma.length > 0) {
             if (!uniqueLemmas.has(lemma)) {
                 uniqueLemmas.add(lemma);
