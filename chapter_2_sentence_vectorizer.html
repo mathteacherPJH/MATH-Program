@@ -109,25 +109,70 @@
             height: 100%;
         }
 
-        /* [복원] 입력창이 세로 공간을 꽉 채우도록 수정한 컨테이너 구조 */
+        /* 입력창 제어 버튼 헤더 */
+        .input-control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .input-control-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--c-text-muted);
+            font-weight: bold;
+        }
+        .control-btn-group {
+            display: flex;
+            gap: 6px;
+        }
+        .control-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--c-border);
+            background-color: white;
+            color: var(--c-text-main);
+            transition: all 0.2s;
+        }
+        .control-btn:hover:not(:disabled) {
+            background-color: var(--c-tab-bg);
+        }
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* 동적 텍스트 영역 컨테이너 */
         .textarea-container {
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 10px;
             margin-bottom: 16px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .input-row {
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         textarea {
             width: 100%;
-            flex: 1; 
-            padding: 16px;
+            height: 64px;
+            padding: 12px 14px;
             box-sizing: border-box;
             border: 1px solid var(--c-border);
             border-radius: 8px;
             resize: none;
             font-family: inherit;
-            font-size: 15px;
-            line-height: 1.6;
+            font-size: 14px;
+            line-height: 1.5;
             background-color: rgba(255, 255, 255, 0.8);
             color: var(--c-text-main);
             outline: none;
@@ -135,6 +180,14 @@
         }
         textarea:focus {
             border-color: var(--c-brand-green);
+        }
+
+        .char-counter {
+            align-self: flex-end;
+            font-size: 11px;
+            color: var(--c-text-muted);
+            margin-top: 2px;
+            margin-right: 4px;
         }
 
         .run-btn {
@@ -150,6 +203,7 @@
             transition: opacity 0.2s;
             letter-spacing: 0.05em;
             box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
+            flex-shrink: 0;
         }
         .run-btn:hover {
             opacity: 0.9;
@@ -208,8 +262,11 @@
         .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
         .delete-btn { margin-left: 4px; cursor: pointer; color: var(--c-removed-text); font-weight: bold; font-size: 14px; flex-shrink: 0; line-height: 1; }
 
+        .textarea-container::-webkit-scrollbar,
         .right-panel-content::-webkit-scrollbar { width: 6px; }
+        .textarea-container::-webkit-scrollbar-track,
         .right-panel-content::-webkit-scrollbar-track { background: transparent; }
+        .textarea-container::-webkit-scrollbar-thumb,
         .right-panel-content::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
 
         .loading-overlay {
@@ -255,17 +312,35 @@
 
 <canvas id="neural-canvas"></canvas>
 
-<!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
     <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">← BACK</button>
     <div class="navbar-brand-text">MORPHOLOGICAL ANALYSIS</div>
 </nav>
 
 <div class="main-layout">
-    <!-- 왼쪽 패널 복원 완료 -->
+    <!-- 왼쪽 패널: 동적 입력창 구현 완료 -->
     <div class="card left-panel">
-        <div class="textarea-container">
-            <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
+        <div class="input-control-header">
+            <h3>분석 문장 입력</h3>
+            <div class="control-btn-group">
+                <button id="removeInputBtn" class="control-btn" onclick="removeInputRow()">제거 -</button>
+                <button id="addInputBtn" class="control-btn" onclick="addInputRow()">추가 +</button>
+            </div>
+        </div>
+        <div class="textarea-container" id="textareaContainer">
+            <!-- 초기 3개 기본 생성 -->
+            <div class="input-row">
+                <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
+                <span class="char-counter">0 / 100</span>
+            </div>
+            <div class="input-row">
+                <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
+                <span class="char-counter">0 / 100</span>
+            </div>
+            <div class="input-row">
+                <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
+                <span class="char-counter">0 / 100</span>
+            </div>
         </div>
         <button id="submitBtn" class="run-btn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
     </div>
@@ -315,6 +390,46 @@
 </div>
 
 <script>
+// 입력창 추가/제거를 위한 최소, 최대 변수 정의
+const MIN_INPUTS = 3;
+const MAX_INPUTS = 10;
+
+function updateButtonStates() {
+    const container = document.getElementById("textareaContainer");
+    const currentCount = container.children.length;
+    
+    document.getElementById("addInputBtn").disabled = (currentCount >= MAX_INPUTS);
+    document.getElementById("removeInputBtn").disabled = (currentCount <= MIN_INPUTS);
+}
+
+function addInputRow() {
+    const container = document.getElementById("textareaContainer");
+    if (container.children.length >= MAX_INPUTS) return;
+
+    const row = document.createElement("div");
+    row.className = "input-row";
+    row.innerHTML = `
+        <textarea class="nlp-input" maxlength="100" placeholder="문장을 입력하세요 (최대 100자)" oninput="updateCharCount(this)"></textarea>
+        <span class="char-counter">0 / 100</span>
+    `;
+    container.appendChild(row);
+    updateButtonStates();
+    container.scrollTop = container.scrollHeight; // 추가 시 스크롤 아래로 이동
+}
+
+function removeInputRow() {
+    const container = document.getElementById("textareaContainer");
+    if (container.children.length <= MIN_INPUTS) return;
+
+    container.removeChild(container.lastChild);
+    updateButtonStates();
+}
+
+function updateCharCount(textarea) {
+    const counter = textarea.nextElementSibling;
+    counter.textContent = `${textarea.value.length} / 100`;
+}
+
 function switchTab(tabId) {
     const tabs = ['all', '1', '2', '3', '4'];
     tabs.forEach(t => {
@@ -335,15 +450,26 @@ const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저",
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 async function processNLPWithLoading() {
-    const text = document.getElementById("inputText").value.trim();
-    if (!text) { alert("문장을 입력해주세요!"); return; }
+    const inputs = document.querySelectorAll(".nlp-input");
+    let combinedText = "";
+    let hasContent = false;
+
+    inputs.forEach(input => {
+        const val = input.value.trim();
+        if (val) {
+            combinedText += val + " ";
+            hasContent = true;
+        }
+    });
+
+    if (!hasContent) { alert("최소 하나의 문장은 입력해주세요!"); return; }
 
     const overlay = document.getElementById("loadingOverlay");
     overlay.classList.add("active");
     await sleep(450); 
 
     try {
-        processNLP(text);
+        processNLP(combinedText.trim());
     } catch(e) {
         console.error(e);
         alert("분석 처리 도중 예기치 못한 에러가 발생했습니다.");
@@ -544,7 +670,7 @@ function animateBg() {
 window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
 window.addEventListener('resize', resizeBgCanvas);
-window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); });
+window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); updateButtonStates(); });
 </script>
 </body>
 </html>
