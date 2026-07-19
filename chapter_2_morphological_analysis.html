@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단어집합 구성 프로그램</title>
+    <title>형태소 분석기 및 단어집합 구성</title>
     <style>
         /* 변수 정의 (참고용 테마 색상 일치) */
         :root {
@@ -28,15 +28,16 @@
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 30px;
-            padding-top: 90px; 
+            padding: 20px;
+            padding-top: 85px; 
             display: flex;
             flex-direction: column;
             align-items: center;
             letter-spacing: 0.03em;
             position: relative;
-            min-height: 100vh;
+            height: 100vh;
             box-sizing: border-box;
+            overflow: hidden; /* 전체 페이지 스크롤 방지, 내부 스크롤 사용 */
         }
 
         #neural-canvas {
@@ -92,15 +93,19 @@
             text-transform: uppercase; 
         }
 
-        /* 메인 컨테이너 및 카드 스타일 */
-        .container {
+        /* 메인 2분할 레이아웃 디자인 */
+        .main-layout {
+            display: flex;
             width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
+            max-width: 1400px;
+            height: calc(100vh - 110px); /* 화면 높이에 맞춤 */
+            gap: 20px;
             position: relative;
             z-index: 10;
+            box-sizing: border-box;
         }
 
+        /* 공통 카드 스타일 */
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
@@ -109,33 +114,34 @@
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .main-header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
+        /* 왼쪽 섹션: 대형 입력창 */
+        .left-panel {
+            flex: 1.2; 
+            height: 100%;
         }
-        .main-header-flex h2 {
-            margin: 0;
-            font-size: 20px;
-            color: var(--c-brand-green);
+
+        .textarea-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
         }
 
         textarea {
             width: 100%;
-            height: 110px;
-            padding: 12px;
+            flex: 1; /* 부모 크기에 맞춰 꽉 채움 */
+            padding: 16px;
             box-sizing: border-box;
             border: 1px solid var(--c-border);
-            border-radius: 6px;
-            resize: vertical;
+            border-radius: 8px;
+            resize: none;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 15px;
+            line-height: 1.6;
             background-color: rgba(255, 255, 255, 0.8);
             color: var(--c-text-main);
             outline: none;
@@ -146,37 +152,49 @@
         }
 
         .run-btn {
-            padding: 10px 20px;
+            width: 100%;
+            padding: 14px 20px;
             background-color: var(--c-brand-green);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             transition: opacity 0.2s;
             letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
         }
         .run-btn:hover {
             opacity: 0.9;
         }
 
-        /* 결과 섹션 공통 스타일 */
+        /* 오른쪽 섹션: 순차적 프로세스 창 */
+        .right-panel {
+            flex: 2;
+            height: 100%;
+            overflow-y: auto; /* 내용이 많아지면 내부 스크롤 제공 */
+            padding-right: 5px;
+            gap: 16px;
+        }
+
+        /* 결과 섹션 개별 스타일 */
         .result-section {
-            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
         }
         .result-section h3 {
-            margin: 0 0 10px 0;
-            font-size: 15px;
-            color: var(--c-text-main);
+            margin: 0 0 8px 4px;
+            font-size: 14px;
+            color: var(--c-text-muted);
             font-weight: bold;
         }
 
         .result-box { 
             background-color: rgba(244, 241, 234, 0.6); 
-            padding: 15px; 
+            padding: 14px; 
             border-radius: 8px; 
-            min-height: 44px; 
+            min-height: 48px; 
             display: flex; 
             flex-wrap: wrap; 
             justify-content: flex-start;
@@ -208,18 +226,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             flex-wrap: wrap;
             gap: 10px;
         }
-        .header-flex h3 { margin: 0; }
         
         .add-section { display: flex; gap: 6px; align-items: center; }
         .add-input {
             padding: 6px 10px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            width: 140px;
+            width: 130px;
             font-size: 13px;
             outline: none;
             background: white;
@@ -237,7 +254,7 @@
         }
         .add-btn:hover { background-color: var(--c-accent-hover); }
 
-        /* 사용자 수정 편집형 태그 */
+        /* 사용자 수정 편집형 태그 배치 최적화 */
         .editable-tag { 
             display: inline-flex; 
             align-items: center; 
@@ -249,7 +266,7 @@
             font-size: 13px; 
             border: 1px solid rgba(165, 214, 167, 0.6); 
             box-sizing: border-box;
-            width: 15.6%;
+            width: calc(25% - 6px); /* 4열로 보기 좋게 반응형 배치 */
             min-width: 110px;
         }
         .editable-tag input { 
@@ -276,6 +293,18 @@
             flex-shrink: 0;
             line-height: 1;
         }
+
+        /* 오른쪽 영역 스크롤바 디자인 */
+        .right-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .right-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .right-panel::-webkit-scrollbar-thumb {
+            background: rgba(44, 42, 41, 0.15);
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -293,48 +322,53 @@
     </div>
 </nav>
 
-<!-- 메인 컨텐츠 영역 -->
-<div class="container">
-    <div class="card">
-        <div class="main-header-flex">
-            <h2>📝 단어집합 구성 프로그램</h2>
-            <button class="run-btn" onclick="processNLP()">분석 및 변환 실행</button>
+<!-- 2분할 메인 레이아웃 시작 -->
+<div class="main-layout">
+    
+    <!-- 왼쪽: 문장 입력 칸 -->
+    <div class="card left-panel">
+        <div class="textarea-container">
+            <textarea id="inputText" placeholder="여기에 분석할 문장을 넉넉히 입력하세요.&#10;(예: 불편한 옷을 입으니 소중해질 기회가 사라져 무척 감동했습니다)"></textarea>
         </div>
-        
-        <textarea id="inputText" placeholder="문장을 입력하세요. (예: 불편한 옷을 입으니 소중해질 기회가 사라져 무척 감동했습니다)"></textarea>
+        <button class="run-btn" onclick="processNLP()">분석 및 변환 실행 ⚡</button>
+    </div>
 
+    <!-- 오른쪽: 순차적 프로세스 제어판 -->
+    <div class="card right-panel">
+        
         <div class="result-section">
-            <h3>1. 형태소 분석</h3>
+            <h3>1. 형태소 분석 결과</h3>
             <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
         </div>
 
         <div class="result-section">
-            <h3>2. 불용어 제거</h3>
+            <h3>2. 불용어 제거 결과</h3>
             <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
         </div>
 
         <div class="result-section">
-            <h3>3. 기본형 만들기</h3>
+            <h3>3. 기본형 변환</h3>
             <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
         </div>
 
         <div class="result-section">
             <div class="header-flex">
-                <h3>4. 사용자 수정</h3>
+                <h3>4. 사용자 수정 및 단어집합 구성</h3>
                 <div class="add-section">
                     <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
-                    <button class="add-btn" onclick="addToken()">단어 추가</button>
+                    <button class="add-btn" onclick="addToken()">추가</button>
                 </div>
             </div>
             <div class="result-box" id="editorContainer">
-                분석을 실행하면 편집 가능한 토큰이 여기에 생성됩니다.
+                분석을 실행하면 수정/삭제 가능한 토큰이 여기에 생성됩니다.
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-// 기존 기능 및 데이터 소스 100% 보존
+// 기존 기능 및 처리 로직 100% 보존
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
 let finalTokens = [];
 
@@ -500,7 +534,7 @@ function addToken() {
     input.value = "";
 }
 
-// 배경 은하/신경망 인터랙티브 애니메이션 엔진 보존 및 가동
+// 배경 은하/신경망 인터랙티브 애니메이션 엔진 가동
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
