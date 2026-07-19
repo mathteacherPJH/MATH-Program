@@ -177,7 +177,7 @@
             gap: 14px;
         }
 
-        /* 새로 추가된 상단 탭 그룹 */
+        /* 상단 탭 그룹 */
         .nav-group {
             display: flex;
             gap: 4px;
@@ -227,7 +227,7 @@
             box-sizing: border-box;
         }
         .result-section.hidden {
-            display: none !important; /* 탭 변경 시 숨김 처리 */
+            display: none !important;
         }
         .result-section h3 {
             margin: 0 0 8px 4px;
@@ -377,12 +377,12 @@
     <!-- 왼쪽: 문장 입력 칸 -->
     <div class="card left-panel">
         <div class="textarea-container">
-            <textarea id="inputText" placeholder="여기에 분석할 문장을 넉넉히 입력하세요.&#10;(예: 불편한 옷을 입으니 소중해질 기회가 사라져 무척 감동했습니다)"></textarea>
+            <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
         </div>
         <button class="run-btn" onclick="processNLP()">분석 및 변환 실행 ⚡</button>
     </div>
 
-    <!-- 오른쪽: 프로세스 제어판 (탭 전환 매커니즘 포함) -->
+    <!-- 오른쪽: 프로세스 제어판 -->
     <div class="card right-panel">
         
         <!-- 상단 탭 5개 배치 -->
@@ -394,22 +394,22 @@
             <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 사용자 수정</button>
         </div>
 
-        <!-- 결과 컨텐츠 출력 영역 -->
+        <!-- 결과 컨텐츠 출력 영역 (초기 안내 텍스트 완전 제거) -->
         <div class="right-panel-content">
             
             <div id="sec_1" class="result-section">
                 <h3>1. 형태소 분석 결과</h3>
-                <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
+                <div id="morphemeResult" class="result-box"></div>
             </div>
 
             <div id="sec_2" class="result-section">
                 <h3>2. 불용어 제거 결과</h3>
-                <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
+                <div id="cleanResult" class="result-box"></div>
             </div>
 
             <div id="sec_3" class="result-section">
                 <h3>3. 기본형 변환</h3>
-                <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
+                <div id="lemmaResult" class="result-box"></div>
             </div>
 
             <div id="sec_4" class="result-section">
@@ -420,9 +420,7 @@
                         <button class="add-btn" onclick="addToken()">추가</button>
                     </div>
                 </div>
-                <div class="result-box" id="editorContainer">
-                    분석을 실행하면 수정/삭제 가능한 토큰이 여기에 생성됩니다.
-                </div>
+                <div class="result-box" id="editorContainer"></div>
             </div>
 
         </div>
@@ -430,11 +428,10 @@
 </div>
 
 <script>
-// 상단 탭 뷰 전환 스크립트 기능 추가
+// 상단 탭 뷰 전환 스크립트
 function switchTab(tabId) {
     const tabs = ['all', '1', '2', '3', '4'];
     
-    // 모든 탭 비활성화 및 관련 섹션 숨김 처리
     tabs.forEach(t => {
         document.getElementById(`tab_${t}`).classList.remove('active');
         if(t !== 'all') {
@@ -442,7 +439,6 @@ function switchTab(tabId) {
         }
     });
 
-    // 선택한 탭 활성화 및 맵핑 섹션 표시
     document.getElementById(`tab_${tabId}`).classList.add('active');
     
     if (tabId === 'all') {
@@ -454,7 +450,7 @@ function switchTab(tabId) {
     }
 }
 
-// 내부 형태소 분석 처리 로직 완전 보존
+// 내부 형태소 분석 처리 로직
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
 let finalTokens = [];
 
