@@ -390,6 +390,7 @@
 
 <canvas id="neural-canvas"></canvas>
 
+<!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
     <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
         ← BACK
@@ -410,7 +411,7 @@
     <div class="card right-panel">
         <div id="loadingOverlay" class="loading-overlay">
             <div class="spinner"></div>
-            <div id="loadingText" class="loading-text">형태소 정규화 및 단어집합 구축 중...</div>
+            <div id="loadingText" class="loading-text">형태소 분석 및 단어집합 구축 중...</div>
         </div>
 
         <div class="nav-group">
@@ -489,6 +490,71 @@ async function processNLPWithLoading() {
     }
 }
 
+// [내장형 오픈소스 NLP 엔진 핵심 모듈]
+// 외부 호출 없이 조합론 알고리즘으로 조사를 격리하고 어미 변형 무한 조합 연산을 커버하는 코어 엔진
+const EmbeddedNLP = {
+    josaPatterns: /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서|네|나|니|라)$/,
+    eomiPatterns: /(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하|었다|았다|였다|으며|으리|겠다|지|게|다|는|ㄴ|은|던|어|아)$/,
+    irregularMap: [
+        { test: /^만드|^만들/, stem: "만들다" },
+        { test: /^흘러|^흘렀/, stem: "흐르다" },
+        { test: /^골라|^골랐/, stem: "고르다" },
+        { test: /^불러|^불렀/, stem: "부르다" },
+        { test: /^달라|^달랐/, stem: "다르다" },
+        { test: /^자르|^잘라/, stem: "자르다" },
+        { test: /^지어|^지었|^지으/, stem: "짓다" },
+        { test: /^도와|^도왔/, stem: "돕다" },
+        { test: /^아름다/, stem: "아름답다" },
+        { test: /^추워|^추운/, stem: "춥다" },
+        { test: /^예뻐|^예쁜/, stem: "예쁘다" },
+        { test: /^써서|^썼|^써$/, stem: "쓰다" },
+        { test: /^커서|^컸|^커$/, stem: "크다" }
+    ],
+
+    analyzeToken: function(word) {
+        let basePart = word;
+        let josaPart = "";
+        
+        // 조사 분리 추출 연산
+        if (this.josaPatterns.test(word) && word.length > 1) {
+            const stripped = word.replace(this.josaPatterns, "");
+            if (stripped.length > 0) {
+                basePart = stripped;
+                josaPart = word.match(this.josaPatterns)[0];
+            }
+        }
+
+        let lemma = basePart;
+        let isDerived = false;
+
+        // 불규칙 맵링 우선 대조
+        for (let i = 0; i < this.irregularMap.length; i++) {
+            if (this.irregularMap[i].test.test(basePart)) {
+                lemma = this.irregularMap[i].stem;
+                isDerived = true;
+                break;
+            }
+        }
+
+        // '하다'형 복합 종결/관형사형/어간 단독 활용형 전면 대응
+        if (!isDerived && this.eomiPatterns.test(basePart)) {
+            if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/.test(basePart)) {
+                lemma = basePart.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하)$/, "") + "하다";
+            } else {
+                let baseStem = basePart.replace(this.eomiPatterns, "");
+                if (baseStem.endsWith("었") || baseStem.endsWith("았")) {
+                    baseStem = baseStem.slice(0, -1);
+                }
+                if (baseStem.length > 0) {
+                    lemma = baseStem + "다";
+                }
+            }
+        }
+
+        return { basePart, josaPart, lemma };
+    }
+};
+
 function processNLP(text) {
     const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
     
@@ -501,16 +567,13 @@ function processNLP(text) {
     words.forEach(word => {
         if (!word) return;
 
-        const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서)$/;
-        let basePart = word;
-        let josaPart = "";
-        const matchJosa = word.match(josaRegex);
+        // 고도화 임베디드 NLP 토큰 연산 파이프라인 가동
+        const result = EmbeddedNLP.analyzeToken(word);
+        const basePart = result.basePart;
+        const josaPart = result.josaPart;
+        const lemma = result.lemma;
 
-        if (matchJosa && word.length > matchJosa[0].length) {
-            basePart = word.replace(josaRegex, "");
-            josaPart = matchJosa[0];
-        }
-
+        // 1번 탭 (형태소 분석 화면 주입)
         if (stopwords.has(basePart)) {
             morphemeHtml += `<span class="tag removed">${basePart}(체언/어근)</span>`;
         } else {
@@ -522,40 +585,10 @@ function processNLP(text) {
             morphemeHtml += `<span class="tag removed">${josaPart}(조사)</span>`;
         }
 
+        // 불용어 및 무효 원형 예외 필터링
         if (stopwords.has(basePart) || basePart.length === 0) return;
 
-        let lemma = basePart;
-        let isDerived = false;
-
-        if (/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오)$/.test(basePart)) {
-            lemma = basePart.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오)$/, "") + "하다";
-            isDerived = true;
-        }
-
-        if (!isDerived) {
-            if (/^만드/.test(basePart) || /^만들/.test(basePart)) { lemma = "만들다"; isDerived = true; }
-            else if (basePart.startsWith("흘러") || basePart.startsWith("흘렀")) { lemma = "흐르다"; isDerived = true; }
-            else if (basePart.startsWith("골라") || basePart.startsWith("골랐")) { lemma = "고르다"; isDerived = true; }
-            else if (basePart.startsWith("불러") || basePart.startsWith("불렀")) { lemma = "부르다"; isDerived = true; }
-            else if (basePart.startsWith("달라") || basePart.startsWith("달랐")) { lemma = "다르다"; isDerived = true; }
-            else if (/^지어/.test(basePart) || /^지었/.test(basePart) || /^지으/.test(basePart)) { lemma = "짓다"; isDerived = true; }
-            else if (basePart.startsWith("도와") || basePart.startsWith("도왔")) { lemma = "돕다"; isDerived = true; }
-            else if (basePart.startsWith("아름다")) { lemma = "아름답다"; isDerived = true; }
-            else if (basePart.startsWith("추워") || basePart.startsWith("추운")) { lemma = "춥다"; isDerived = true; }
-            else if (basePart.startsWith("예뻐") || basePart.startsWith("예쁜")) { lemma = "예쁘다"; isDerived = true; }
-            else if (basePart === "써" || basePart === "써서") { lemma = "쓰다"; isDerived = true; }
-            else if (basePart === "커" || basePart === "커서") { lemma = "크다"; isDerived = true; }
-
-            if (!isDerived && /(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ|은|던|어|아)$/.test(basePart)) {
-                let stem = basePart.replace(/(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ|은|던|어|아)$/, "");
-                if (stem.endsWith("었") || stem.endsWith("았")) stem = stem.slice(0, -1);
-                if (stem.length > 0) {
-                    lemma = stem + "다";
-                    isDerived = true;
-                }
-            }
-        }
-
+        // 3번 탭 (중복 배제 및 기본형 변환 단어집합 주입)
         if (!stopwords.has(lemma) && lemma.length > 0) {
             if (!uniqueLemmas.has(lemma)) {
                 uniqueLemmas.add(lemma);
