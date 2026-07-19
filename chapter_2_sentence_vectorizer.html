@@ -249,17 +249,17 @@
         <div class="textarea-list" id="textareaList">
             <div class="textarea-wrapper" id="wrapper_0">
                 <span>문장 1</span>
-                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)" placeholder="분석할 첫 번째 문장을 입력하세요."></textarea>
+                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)"></textarea>
                 <div class="char-counter" id="counter_0">0/100</div>
             </div>
             <div class="textarea-wrapper" id="wrapper_1">
                 <span>문장 2</span>
-                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)" placeholder="분석할 두 번째 문장을 입력하세요."></textarea>
+                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)"></textarea>
                 <div class="char-counter" id="counter_1">0/100</div>
             </div>
             <div class="textarea-wrapper" id="wrapper_2">
                 <span>문장 3</span>
-                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)" placeholder="분석할 세 번째 문장을 입력하세요."></textarea>
+                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)"></textarea>
                 <div class="char-counter" id="counter_2">0/100</div>
             </div>
         </div>
@@ -325,7 +325,7 @@ function addInputField() {
     wrapper.id = `wrapper_${inputCount}`;
     wrapper.innerHTML = `
         <span>문장 ${inputCount + 1}</span>
-        <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})" placeholder="분석할 문장을 입력하세요."></textarea>
+        <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
         <div class="char-counter" id="counter_${inputCount}">0/100</div>
     `;
     container.appendChild(wrapper);
