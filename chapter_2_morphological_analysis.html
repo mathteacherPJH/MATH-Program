@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 파일 목적에 맞춘 직관적인 타이틀 설정 -->
     <title>단어집합 프로그램</title>
-    <!-- Kiwi-js 라이브러리 로드 -->
+    <!-- Kiwi-js 공식 WASM 라이브러리 연동 (GitHub Pages 환경에서도 안정적으로 구동됨) -->
     <script src="https://unpkg.com/kiwi-js"></script>
     <style>
-        /* 변수 정의 (참고용 테마 색상 일치) */
+        /* 변수 정의 (기존 테마 색상 및 감성 유지) */
         :root {
             --c-bg-main: #FBF9F4; 
             --c-bg-card: rgba(255, 255, 255, 0.73); 
@@ -40,7 +41,7 @@
             position: relative;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* 전체 페이지 스크롤 방지 */
+            overflow: hidden; /* 전체 뷰포트 스크롤 제어 */
         }
 
         #neural-canvas {
@@ -95,7 +96,7 @@
             letter-spacing: 0.08em; 
         }
 
-        /* 메인 레이아웃 */
+        /* 메인 2분할 레이아웃 */
         .main-layout {
             display: flex;
             width: 100%; 
@@ -106,7 +107,6 @@
             box-sizing: border-box;
         }
 
-        /* 공통 카드 스타일 */
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
@@ -119,7 +119,7 @@
             flex-direction: column;
         }
 
-        /* 왼쪽 섹션: 대형 입력창 */
+        /* 왼쪽 패널: 텍스트 입력 구역 */
         .left-panel {
             flex: 1.2; 
             height: 100%;
@@ -174,7 +174,7 @@
             cursor: not-allowed;
         }
 
-        /* 오른쪽 섹션: 고정 틀 구조 */
+        /* 오른쪽 패널: 결과 출력 및 관리 구역 */
         .right-panel {
             flex: 2;
             height: 100%;
@@ -183,7 +183,7 @@
             position: relative;
         }
 
-        /* 상단 탭 그룹 */
+        /* 상단 네비게이션 탭 */
         .nav-group {
             display: flex;
             gap: 4px;
@@ -213,7 +213,6 @@
             box-shadow: 0 2px 6px rgba(44,42,41,0.08);
         }
 
-        /* 내부 스크롤 컨테이너 */
         .right-panel-content {
             width: 100%;
             height: 100%;
@@ -225,7 +224,6 @@
             box-sizing: border-box;
         }
 
-        /* 결과 섹션 개별 스타일 */
         .result-section {
             display: flex;
             flex-direction: column;
@@ -257,7 +255,6 @@
             width: 100%; 
         }
         
-        /* 토큰 태그 스타일 */
         .tag {
             display: inline-block;
             background-color: #EFEFED;
@@ -309,7 +306,6 @@
         }
         .add-btn:hover { background-color: var(--c-accent-hover); }
 
-        /* 수정 태그 반응형 너비 계산 */
         .editable-tag { 
             display: inline-flex; 
             align-items: center; 
@@ -349,7 +345,6 @@
             line-height: 1;
         }
 
-        /* 내부 스크롤바 슬림 디자인 */
         .right-panel-content::-webkit-scrollbar {
             width: 6px;
         }
@@ -361,7 +356,7 @@
             border-radius: 3px;
         }
 
-        /* 로딩 전체화면/패널 오버레이 스타일 */
+        /* Kiwi 비동기 연동 스피너 디자인 */
         .loading-overlay {
             position: absolute;
             top: 0;
@@ -406,12 +401,13 @@
 </head>
 <body>
 
-<!-- 배경 애니메이션 캔버스 -->
+<!-- 배경 인공신경망 이펙트용 캔버스 -->
 <canvas id="neural-canvas"></canvas>
 
 <!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
-    <button onclick="history.back()" class="back-btn">
+    <!-- 레포지토리 내 index.html 등으로 직접 연결하려면 href 값(예: "./index.html")을 세팅하셔도 좋습니다 -->
+    <button onclick="location.href='./index.html'; || history.back();" class="back-btn">
         ← BACK
     </button>
     <div class="navbar-brand-text">
@@ -419,10 +415,10 @@
     </div>
 </nav>
 
-<!-- 2분할 메인 레이아웃 -->
+<!-- 본문 메인 레이아웃 -->
 <div class="main-layout">
     
-    <!-- 왼쪽: 문장 입력 칸 -->
+    <!-- 왼쪽 창: 텍스트 원문 입력 구역 -->
     <div class="card left-panel">
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
@@ -430,16 +426,16 @@
         <button id="submitBtn" class="run-btn" onclick="processNLP()" disabled>Kiwi 엔진 초기화 중...</button>
     </div>
 
-    <!-- 오른쪽: 프로세스 제어판 -->
+    <!-- 오른쪽 창: 데이터 정제 프로세스 제어판 -->
     <div class="card right-panel">
         
-        <!-- 로딩창 엘리먼트 -->
+        <!-- 분석 중 피드백 오버레이 -->
         <div id="loadingOverlay" class="loading-overlay">
             <div class="spinner"></div>
             <div id="loadingText" class="loading-text">형태소 분석 중...</div>
         </div>
 
-        <!-- 상단 탭 5개 배치 -->
+        <!-- 탭 구조 구성 -->
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
             <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 형태소 분석</button>
@@ -448,7 +444,7 @@
             <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 사용자 수정</button>
         </div>
 
-        <!-- 결과 컨텐츠 출력 영역 -->
+        <!-- 각 단계별 동적 출력 컨테이너 -->
         <div class="right-panel-content">
             
             <div id="sec_1" class="result-section">
@@ -482,7 +478,7 @@
 </div>
 
 <script>
-// 상단 탭 뷰 전환 스크립트
+// 탭 인터페이스 전환 스크립트
 function switchTab(tabId) {
     const tabs = ['all', '1', '2', '3', '4'];
     
@@ -504,14 +500,14 @@ function switchTab(tabId) {
     }
 }
 
-// Kiwi 인스턴스 전역 관리
+// Kiwi 핵심 인스턴스 전역 관리 배열
 let kiwiInstance = null;
 let finalTokens = [];
 
-// 불용어 목록 및 조사(J) 품사 비대상화 정의
+// 전형적인 불용어 목록 정의
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더"]);
 
-// Kiwi WASM 초기화 로직
+// 페이지 기동 시 Kiwi WASM 바이너리 초기 가동 로직
 async function initKiwi() {
     const submitBtn = document.getElementById("submitBtn");
     try {
@@ -528,6 +524,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// 핵심 NLP 처리 비동기 파이프라인
 async function processNLP() {
     const text = document.getElementById("inputText").value.trim();
     if (!text) {
@@ -540,6 +537,7 @@ async function processNLP() {
     const overlay = document.getElementById("loadingOverlay");
     overlay.classList.add("active");
 
+    // UX 브라우저 렌더링 스레드 보장을 위한 미세 딜레이 인터벌
     await sleep(400);
 
     try {
@@ -568,6 +566,7 @@ async function processNLP() {
                 morphemeHtml += `<span class="tag">${displayTag}</span>`;
                 cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
                 
+                // 동사/형용사 원형 종결형 어미 복원 프로세스
                 let lemma = form;
                 if (tag.startsWith("V")) {
                     lemma = form + "다";
@@ -637,7 +636,7 @@ function addToken() {
     input.value = "";
 }
 
-// 배경 신경망 애니메이션
+// 배경 추상 네트워크 애니메이션 제어부
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
