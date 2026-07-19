@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인공지능 수학 대시보드</title>
+    <!-- Tailwind CSS 최신 CDN 매칭 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         /* 글로벌 모던 자간 및 가독성 최적화 */
@@ -31,8 +32,10 @@
 </head>
 <body class="bg-[#FBF9F4] text-[#2C2A29] font-sans antialiased selection:bg-[#1B4332] selection:text-white min-h-screen relative overflow-x-hidden flex flex-col justify-between premium-text">
 
+    <!-- 🌐 차분함과 가시성 밸런스를 재조정한 동적 신경망 배경 레이어 -->
     <canvas id="neural-canvas"></canvas>
 
+    <!-- [상단 프리미엄 미니멀리즘 내비게이션 바] -->
     <nav class="fixed top-0 left-0 w-full bg-[#FBF9F4]/80 backdrop-blur-xl border-b border-[#2C2A29]/10 z-50 px-6 py-4 flex items-center justify-between transition-all duration-300">
         <div class="flex items-center gap-2 select-none cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
             <span class="text-sm tracking-[0.3em] font-black text-[#1B4332] font-mono">MATHMATICS FOR AI</span>
@@ -46,6 +49,7 @@
         </div>
     </nav>
 
+    <!-- 🧭 [우측 고정형 5단 프리미엄 플로팅 퀵 바 시스템] -->
     <aside id="floating-sidebar" class="right-4 md:right-8 flex flex-col items-end gap-3 bg-white/95 backdrop-blur-xl border border-[#1B4332]/25 p-4 rounded-2xl shadow-2xl pt-6">
         <button onclick="scrollToSection('hero')" id="q-hero" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
             <span class="text-[11px] font-bold tracking-wider text-[#1B4332] transition-all">ABOUT US</span>
@@ -73,11 +77,14 @@
         </button>
     </aside>
 
+    <!-- ================= [SECTION 1: HERO 비주얼 메인 배너] ================= -->
     <section id="hero" class="relative w-full h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#2C2A29]/10 pt-16 bg-[#F4F1EA]/50">
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#FBF9F4]/30 to-[#FBF9F4] z-10"></div>
         
+        <!-- 교실 풍경 이미지 투명도 조절 -->
         <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-15 filter sepia-10 contrast-95 brightness-105">
 
+        <!-- 중앙 메인 카피 단락 -->
         <div class="relative z-20 text-center space-y-6 max-w-4xl px-6 select-none">
             <p class="text-sm md:text-base tracking-[0.5em] font-black text-[#7D7569] uppercase">
                 VISUAL MATHEMATICS COMPASS
@@ -94,6 +101,7 @@
         </div>
     </section>
 
+    <!-- ================= [SECTION 2: OUR SERVICES] ================= -->
     <section id="services" class="max-w-5xl mx-auto w-full px-6 py-24 space-y-16">
         <div class="text-center space-y-3 select-none">
             <h2 class="text-sm font-bold tracking-[0.4em] text-[#1B4332] uppercase">OUR SERVICES</h2>
@@ -101,6 +109,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 1단원 개요 -->
             <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
                 <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 01</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
                 <h3 class="text-xl font-bold text-[#2C2A29] tracking-wide">인공지능과 빅데이터</h3>
@@ -109,6 +118,7 @@
                 </p>
             </div>
 
+            <!-- 2단원 개요 -->
             <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
                 <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 02</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
                 <h3 class="text-xl font-bold text-[#2C2A29] tracking-wide">텍스트 데이터의 처리</h3>
@@ -117,6 +127,7 @@
                 </p>
             </div>
 
+            <!-- 3단원 개요 -->
             <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
                 <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 03</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
                 <h3 class="text-xl font-bold text-[#2C2A29] tracking-tight">이미지 데이터의 처리</h3>
@@ -125,6 +136,7 @@
                 </p>
             </div>
 
+            <!-- 4단원 개요 -->
             <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#1B4332]/30 transition-all duration-300">
                 <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 04</span><span class="w-1.5 h-1.5 rounded-full bg-[#1B4332] shadow-[0_0_8px_#1B4332]"></span></div>
                 <h3 class="text-xl font-bold text-[#2C2A29] tracking-tight">인공지능과 확률</h3>
@@ -135,6 +147,7 @@
         </div>
     </section>
 
+    <!-- ================= [SECTION 3: PROGRAMS] ================= -->
     <section id="programs" class="bg-[#F4F1EA]/40 w-full border-y border-[#2C2A29]/10 py-24">
         <div class="max-w-4xl mx-auto px-6 space-y-12">
             <div class="text-center space-y-2 select-none">
@@ -142,6 +155,7 @@
                 <div class="w-10 h-[1px] bg-[#1B4332] mx-auto opacity-30"></div>
             </div>
 
+            <!-- 🗂️ 중첩 내부 단원별 필터 탭 바 -->
             <div class="flex items-center justify-center border-b border-[#2C2A29]/10 pb-4 overflow-x-auto no-scrollbar gap-1 md:gap-4 inner-tabs-container">
                 <button onclick="filterPrograms('all')" id="inner-all" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm">전체보기</button>
                 <button onclick="filterPrograms('ch1')" id="inner-ch1" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">1단원</button>
@@ -156,6 +170,7 @@
                     1단원에 등록된 탐구 세부 프로그램이 없습니다. (준비 중)
                 </div>
 
+                <!-- 2단원 링크 1 -->
                 <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#2D6A4F] bg-[#E9F5ED] border border-[#BCDFCA] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
@@ -164,6 +179,16 @@
                     <a href="chapter_2_morphological_analysis.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 💡 [신규 추가] 2단원 링크 2 (chapter_2_sentence_vectorizer.html 연동) -->
+                <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#2D6A4F] bg-[#E9F5ED] border border-[#BCDFCA] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#2D6A4F] transition-colors">문장 벡터화 표현 프로그램</h4>
+                    </div>
+                    <a href="chapter_2_sentence_vectorizer.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 1 -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -172,6 +197,7 @@
                     <a href="chapter_3_image_representation.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 3단원 링크 2 -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -180,6 +206,7 @@
                     <a href="chapter_3_image_processing_1.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 3단원 링크 3 -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -188,6 +215,7 @@
                     <a href="chapter_3_reflection_and_rotation.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 3단원 링크 4 -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -196,6 +224,7 @@
                     <a href="chapter_3_image_blending.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 3단원 링크 5 -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -204,6 +233,7 @@
                     <a href="chapter_3_blur_and_sharpening.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 3단원 링크 6 -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -212,6 +242,7 @@
                     <a href="chapter_3_classification.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
+                <!-- 4단원 링크 -->
                 <div class="program-node ch4 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#9B2226]/40 hover:shadow-lg hover:shadow-black/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#9B2226] bg-[#FDF0F0] border border-[#F5C6C6] px-2.5 py-0.5 rounded-xs">Chapter 04</span>
@@ -231,6 +262,7 @@
         </div>
     </section>
 
+    <!-- ================= [SECTION 4: EXTERNAL TOOLS] ================= -->
     <footer id="tools" class="w-full max-w-4xl mx-auto px-6 py-16 text-center space-y-6">
         <p class="text-xs font-bold text-[#1B4332] uppercase tracking-[0.3em]">EXTERNAL OPEN FRAMEWORKS</p>
         <div class="flex flex-wrap items-center justify-center gap-3">
@@ -244,8 +276,10 @@
             <p>&copy; 2026 AI &times; MATHEMATICS EDUCATION PROJECT LAB. ALL RIGHTS RESERVED.</p>
             <p class="text-[#7D7569] font-medium">made by Ji Hwan Park (estintoshout)</p>
         </div>
-    </footer>
+    </nav>
 
+    <!-- ========================================================================= -->
+    <!-- 인터랙션, 필터링 및 애니메이션 스크립트 핵심 코어 엔진 -->
     <script>
         /* 🌐 1. 인공지능 신경망(Neural Network) & 보정형 유성 기믹 애니메이션 엔진 */
         const canvas = document.getElementById('neural-canvas');
@@ -293,7 +327,7 @@
             }
         }
 
-        // ☄️ 정밀 주기로 보정된 5초 간격 유성(별똥별) 클래스
+        // 정밀 주기로 보정된 5초 간격 유성(별똥별) 클래스
         class ShootingStar {
             constructor() {
                 this.reset();
