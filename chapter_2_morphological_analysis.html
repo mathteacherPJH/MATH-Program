@@ -21,6 +21,7 @@
             --c-removed-text: #C62828;
             --c-clean-bg: #FFF9C4;
             --c-clean-text: #F57F17;
+            --c-tab-bg: #F4F1EA;
         }
 
         body {
@@ -168,22 +169,53 @@
             opacity: 0.9;
         }
 
-        /* 오른쪽 섹션: 틀은 고정하고 내부만 스크롤되도록 고도화 */
+        /* 오른쪽 섹션: 고정 틀 구조 */
         .right-panel {
             flex: 2;
             height: 100%;
-            overflow: hidden; /* 카드가 늘어나는 것을 절대 방지 */
+            overflow: hidden;
+            gap: 14px;
         }
 
-        /* 실제 스크롤이 일어나는 내부 컨테이너 */
+        /* 새로 추가된 상단 탭 그룹 */
+        .nav-group {
+            display: flex;
+            gap: 4px;
+            background: var(--c-tab-bg); 
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid rgba(44, 42, 41, 0.05);
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .nav-btn.active {
+            background: #FFFFFF;
+            color: var(--c-brand-green); 
+            box-shadow: 0 2px 6px rgba(44,42,41,0.08);
+        }
+
+        /* 내부 스크롤 컨테이너 */
         .right-panel-content {
             width: 100%;
             height: 100%;
-            overflow-y: auto; /* 내용이 넘치면 이곳에만 스크롤바 생성 */
+            overflow-y: auto; 
             display: flex;
             flex-direction: column;
             gap: 18px;
-            padding-right: 6px; /* 스크롤바와 여백 균형 조정 */
+            padding-right: 6px; 
             box-sizing: border-box;
         }
 
@@ -193,6 +225,9 @@
             flex-direction: column;
             width: 100%;
             box-sizing: border-box;
+        }
+        .result-section.hidden {
+            display: none !important; /* 탭 변경 시 숨김 처리 */
         }
         .result-section h3 {
             margin: 0 0 8px 4px;
@@ -250,7 +285,7 @@
             padding: 6px 10px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            width: 130px;
+            width: 120px;
             font-size: 13px;
             outline: none;
             background: white;
@@ -308,7 +343,7 @@
             line-height: 1;
         }
 
-        /* 내부 스크롤바 슬림 고딕 디자인 */
+        /* 내부 스크롤바 슬림 디자인 */
         .right-panel-content::-webkit-scrollbar {
             width: 6px;
         }
@@ -347,26 +382,37 @@
         <button class="run-btn" onclick="processNLP()">분석 및 변환 실행 ⚡</button>
     </div>
 
-    <!-- 오른쪽: 순차적 프로세스 제어판 (내부 내용만 스크롤 고정) -->
+    <!-- 오른쪽: 프로세스 제어판 (탭 전환 매커니즘 포함) -->
     <div class="card right-panel">
+        
+        <!-- 상단 탭 5개 배치 -->
+        <div class="nav-group">
+            <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
+            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 형태소 분석</button>
+            <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 불용어 제거</button>
+            <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 기본형 변환</button>
+            <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 사용자 수정</button>
+        </div>
+
+        <!-- 결과 컨텐츠 출력 영역 -->
         <div class="right-panel-content">
             
-            <div class="result-section">
+            <div id="sec_1" class="result-section">
                 <h3>1. 형태소 분석 결과</h3>
                 <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
             </div>
 
-            <div class="result-section">
+            <div id="sec_2" class="result-section">
                 <h3>2. 불용어 제거 결과</h3>
                 <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
             </div>
 
-            <div class="result-section">
+            <div id="sec_3" class="result-section">
                 <h3>3. 기본형 변환</h3>
                 <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
             </div>
 
-            <div class="result-section">
+            <div id="sec_4" class="result-section">
                 <div class="header-flex">
                     <h3>4. 사용자 수정 및 단어집합 구성</h3>
                     <div class="add-section">
@@ -384,7 +430,31 @@
 </div>
 
 <script>
-// 내부 분석 로직 완전 보존
+// 상단 탭 뷰 전환 스크립트 기능 추가
+function switchTab(tabId) {
+    const tabs = ['all', '1', '2', '3', '4'];
+    
+    // 모든 탭 비활성화 및 관련 섹션 숨김 처리
+    tabs.forEach(t => {
+        document.getElementById(`tab_${t}`).classList.remove('active');
+        if(t !== 'all') {
+            document.getElementById(`sec_${t}`).classList.add('hidden');
+        }
+    });
+
+    // 선택한 탭 활성화 및 맵핑 섹션 표시
+    document.getElementById(`tab_${tabId}`).classList.add('active');
+    
+    if (tabId === 'all') {
+        tabs.forEach(t => {
+            if(t !== 'all') document.getElementById(`sec_${t}`).classList.remove('hidden');
+        });
+    } else {
+        document.getElementById(`sec_${tabId}`).classList.remove('hidden');
+    }
+}
+
+// 내부 형태소 분석 처리 로직 완전 보존
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
 let finalTokens = [];
 
@@ -550,7 +620,7 @@ function addToken() {
     input.value = "";
 }
 
-// 배경 애니메이션 스크립트
+// 배경 신경망 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
