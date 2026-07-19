@@ -5,49 +5,249 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>단어집합 구성 프로그램</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; margin: 30px; background-color: #f9f9f9; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 100px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
-        
-        .main-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .main-header-flex h2 { margin: 0; }
-        .run-btn { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .run-btn:hover { background-color: #45a049; }
-        
-        .result-section { margin-top: 20px; }
-        
+        /* 변수 정의 (참고용 테마 색상 일치) */
+        :root {
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-brand-green: #1B4332;
+            --c-tag-bg: #E8F5E9;
+            --c-tag-text: #2E7D32;
+            --c-removed-bg: #FFEBEE;
+            --c-removed-text: #C62828;
+            --c-clean-bg: #FFF9C4;
+            --c-clean-text: #F57F17;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 30px;
+            padding-top: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: 0.03em;
+            position: relative;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 상단 네비게이션 바 */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--c-border);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--c-brand-green);
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.8;
+        }
+
+        .navbar-brand-text {
+            font-size: 13px; 
+            font-weight: bold; 
+            color: var(--c-brand-green); 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase; 
+        }
+
+        /* 메인 컨테이너 및 카드 스타일 */
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
+            margin-bottom: 20px;
+        }
+
+        .main-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .main-header-flex h2 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--c-brand-green);
+        }
+
+        textarea {
+            width: 100%;
+            height: 110px;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 14px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: var(--c-text-main);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            border-color: var(--c-brand-green);
+        }
+
+        .run-btn {
+            padding: 10px 20px;
+            background-color: var(--c-brand-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            letter-spacing: 0.05em;
+        }
+        .run-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* 결과 섹션 공통 스타일 */
+        .result-section {
+            margin-top: 20px;
+        }
+        .result-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: var(--c-text-main);
+            font-weight: bold;
+        }
+
         .result-box { 
-            background-color: #eee; 
+            background-color: rgba(244, 241, 234, 0.6); 
             padding: 15px; 
-            border-radius: 4px; 
-            min-height: 40px; 
+            border-radius: 8px; 
+            min-height: 44px; 
             display: flex; 
             flex-wrap: wrap; 
             justify-content: flex-start;
-            gap: 10px 1.2%; 
+            gap: 8px; 
             align-items: center;
+            border: 1px solid var(--c-border);
+            box-sizing: border-box;
         }
         
-        .tag { display: inline-block; background-color: #e0f7fa; color: #006064; padding: 6px 10px; border-radius: 4px; font-size: 14px; }
-        .removed { background-color: #ffebee; color: #c62828; text-decoration: line-through; }
+        /* 토큰 태그 스타일 고도화 */
+        .tag {
+            display: inline-block;
+            background-color: #EFEFED;
+            color: var(--c-text-main);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 1px solid var(--c-border);
+            font-weight: 500;
+        }
+        .removed {
+            background-color: var(--c-removed-bg) !important;
+            color: var(--c-removed-text) !important;
+            text-decoration: line-through;
+            border-color: rgba(198, 40, 40, 0.15) !important;
+        }
         
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
         .header-flex h3 { margin: 0; }
+        
         .add-section { display: flex; gap: 6px; align-items: center; }
-        .add-input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 140px; font-size: 14px; }
-        .add-btn { padding: 6px 12px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .add-btn:hover { background-color: #1e88e5; }
+        .add-input {
+            padding: 6px 10px;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            width: 140px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+        }
+        .add-input:focus { border-color: var(--c-accent); }
+        .add-btn {
+            padding: 6px 12px;
+            background-color: var(--c-accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .add-btn:hover { background-color: var(--c-accent-hover); }
 
+        /* 사용자 수정 편집형 태그 */
         .editable-tag { 
             display: inline-flex; 
             align-items: center; 
             justify-content: space-between;
-            background-color: #e8f5e9; 
-            color: #2e7d32; 
-            padding: 6px 8px; 
+            background-color: var(--c-tag-bg); 
+            color: var(--c-tag-text); 
+            padding: 4px 8px; 
             border-radius: 4px; 
-            font-size: 14px; 
-            border: 1px solid #a5d6a7; 
+            font-size: 13px; 
+            border: 1px solid rgba(165, 214, 167, 0.6); 
             box-sizing: border-box;
             width: 15.6%;
             min-width: 110px;
@@ -55,57 +255,86 @@
         .editable-tag input { 
             border: none; 
             background: transparent; 
-            color: #2e7d32; 
-            font-size: 14px; 
+            color: var(--c-tag-text); 
+            font-size: 13px; 
             font-family: inherit; 
             width: 100%;
             text-align: center; 
             font-weight: bold; 
         }
-        .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
-        .delete-btn { margin-left: 4px; cursor: pointer; color: #c62828; font-weight: bold; font-size: 12px; flex-shrink: 0; }
+        .editable-tag input:focus {
+            outline: none;
+            background-color: #fff;
+            border-radius: 2px;
+        }
+        .delete-btn {
+            margin-left: 6px;
+            cursor: pointer;
+            color: var(--c-removed-text);
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
 
+<!-- 배경 애니메이션 캔버스 -->
+<canvas id="neural-canvas"></canvas>
+
+<!-- 상단 네비게이션 바 -->
+<nav class="top-navbar">
+    <button onclick="history.back()" class="back-btn">
+        ← BACK
+    </button>
+    <div class="navbar-brand-text">
+        MORPHOLOGICAL ANALYSIS
+    </div>
+</nav>
+
+<!-- 메인 컨텐츠 영역 -->
 <div class="container">
-    <div class="main-header-flex">
-        <h2>📝 단어집합 구성 프로그램</h2>
-        <button class="run-btn" onclick="processNLP()">분석 및 변환 실행</button>
-    </div>
-    
-    <textarea id="inputText" placeholder="문장을 입력하세요. (예: 불편한 옷을 입으니 소중해질 기회가 사라져 무척 감동했습니다)"></textarea>
-
-    <div class="result-section">
-        <h3>1. 형태소 분석</h3>
-        <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
-    </div>
-
-    <div class="result-section">
-        <h3>2. 불용어 제거</h3>
-        <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
-    </div>
-
-    <div class="result-section">
-        <h3>3. 기본형 만들기</h3>
-        <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
-    </div>
-
-    <div class="result-section">
-        <div class="header-flex">
-            <h3>4. 사용자 수정</h3>
-            <div class="add-section">
-                <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
-                <button class="add-btn" onclick="addToken()">단어 추가</button>
-            </div>
+    <div class="card">
+        <div class="main-header-flex">
+            <h2>📝 단어집합 구성 프로그램</h2>
+            <button class="run-btn" onclick="processNLP()">분석 및 변환 실행</button>
         </div>
-        <div class="result-box" id="editorContainer">
-            분석을 실행하면 편집 가능한 토큰이 여기에 생성됩니다.
+        
+        <textarea id="inputText" placeholder="문장을 입력하세요. (예: 불편한 옷을 입으니 소중해질 기회가 사라져 무척 감동했습니다)"></textarea>
+
+        <div class="result-section">
+            <h3>1. 형태소 분석</h3>
+            <div id="morphemeResult" class="result-box">결과가 여기에 표시됩니다.</div>
+        </div>
+
+        <div class="result-section">
+            <h3>2. 불용어 제거</h3>
+            <div id="cleanResult" class="result-box">결과가 여기에 표시됩니다.</div>
+        </div>
+
+        <div class="result-section">
+            <h3>3. 기본형 만들기</h3>
+            <div id="lemmaResult" class="result-box">결과가 여기에 표시됩니다.</div>
+        </div>
+
+        <div class="result-section">
+            <div class="header-flex">
+                <h3>4. 사용자 수정</h3>
+                <div class="add-section">
+                    <input type="text" id="newWordInput" class="add-input" placeholder="새 단어 입력">
+                    <button class="add-btn" onclick="addToken()">단어 추가</button>
+                </div>
+            </div>
+            <div class="result-box" id="editorContainer">
+                분석을 실행하면 편집 가능한 토큰이 여기에 생성됩니다.
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+// 기존 기능 및 데이터 소스 100% 보존
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "에", "에서", "에게", "의", "를", "을", "은", "는", "이", "가", "무척", "가장", "매우", "더", "과", "와"]);
 let finalTokens = [];
 
@@ -212,11 +441,11 @@ function processNLP() {
             morphemeHtml += `<span class="tag removed">${token.text}(${token.pos})</span>`;
         } else {
             morphemeHtml += `<span class="tag">${token.text}(${token.pos})</span>`;
-            cleanHtml += `<span class="tag" style="background-color: #fff9c4; color: #f57f17;">${token.text}</span>`;
+            cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${token.text}</span>`;
             
             if (!uniqueLemmas.has(token.lemma)) {
                 uniqueLemmas.add(token.lemma);
-                lemmaHtml += `<span class="tag" style="background-color: #e8f5e9; color: #2e7d32;">${token.lemma}</span>`;
+                lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${token.lemma}</span>`;
                 finalTokens.push(token.lemma);
             }
         }
@@ -270,6 +499,90 @@ function addToken() {
     }
     input.value = "";
 }
+
+// 배경 은하/신경망 인터랙티브 애니메이션 엔진 보존 및 가동
+const bgCanvas = document.getElementById('neural-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+let particles = [];
+const mouse = { x: null, y: null, radius: 150 };
+
+function resizeBgCanvas() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    initParticles();
+}
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * bgCanvas.width;
+        this.y = Math.random() * bgCanvas.height;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = (Math.random() - 0.5) * 0.35;
+        this.radius = Math.random() * 2 + 1.5; 
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+
+        let dx = mouse.x - this.x;
+        let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            this.x -= dx * force * 0.03;
+            this.y -= dy * force * 0.03;
+        }
+    }
+    draw() {
+        bgCtx.beginPath();
+        bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; 
+        bgCtx.fill();
+    }
+}
+
+function initParticles() {
+    particles = [];
+    const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
+}
+
+function animateBg() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 110) {
+                bgCtx.beginPath();
+                bgCtx.moveTo(particles[i].x, particles[i].y);
+                bgCtx.lineTo(particles[j].x, particles[j].y);
+                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`;
+                bgCtx.lineWidth = 1.0;
+                bgCtx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animateBg);
+}
+
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+window.addEventListener('resize', resizeBgCanvas);
+
+window.addEventListener('DOMContentLoaded', () => {
+    resizeBgCanvas();
+    animateBg();
+});
 </script>
 
 </body>
