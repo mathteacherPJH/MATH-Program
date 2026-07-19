@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>문장 벡터화 프로그램</title>
+    <title>단어집합 프로그램</title>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -14,12 +14,12 @@
             --c-accent: #2383E2;
             --c-accent-hover: #1A6CB8;
             --c-brand-green: #1B4332;
-            --c-brand-green-hover: #123024;
             --c-tag-bg: #E8F5E9;
             --c-tag-text: #2E7D32;
             --c-removed-bg: #FFEBEE;
             --c-removed-text: #C62828;
-            --c-vector-text: #0D47A1;
+            --c-clean-bg: #FFF9C4;
+            --c-clean-text: #F57F17;
             --c-tab-bg: #F4F1EA;
         }
 
@@ -104,35 +104,56 @@
             flex-direction: column;
         }
 
-        .left-panel { flex: 1.2; height: 100%; }
-        .panel-title { margin: 0 0 12px 0; font-size: 16px; color: var(--c-brand-green); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .input-controls { display: flex; gap: 6px; }
-
-        .control-btn {
-            padding: 4px 10px; font-size: 12px; font-weight: bold; border: 1px solid var(--c-border);
-            background: white; border-radius: 4px; cursor: pointer; color: var(--c-text-main); transition: all 0.2s;
+        .left-panel {
+            flex: 1.2; 
+            height: 100%;
         }
-        .control-btn:hover:not(:disabled) { background: #eee; }
-        .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 4px; }
-        .textarea-wrapper { position: relative; display: flex; flex-direction: column; }
-        .textarea-wrapper span { font-size: 11px; color: var(--c-text-muted); margin-bottom: 4px; font-weight: bold; }
-        .textarea-wrapper .char-counter { position: absolute; bottom: 6px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
+        /* [복원] 입력창이 세로 공간을 꽉 채우도록 수정한 컨테이너 구조 */
+        .textarea-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+        }
 
         textarea {
-            width: 100%; height: 70px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
-            border: 1px solid var(--c-border); border-radius: 8px; resize: none; font-family: inherit; font-size: 14px;
-            line-height: 1.5; background-color: rgba(255, 255, 255, 0.8); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
+            width: 100%;
+            flex: 1; 
+            padding: 16px;
+            box-sizing: border-box;
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.6;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: var(--c-text-main);
+            outline: none;
+            transition: border-color 0.2s;
         }
-        textarea:focus { border-color: var(--c-brand-green); }
+        textarea:focus {
+            border-color: var(--c-brand-green);
+        }
 
         .run-btn {
-            width: 100%; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
-            cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); flex-shrink: 0;
+            width: 100%;
+            padding: 14px 20px;
+            background-color: var(--c-brand-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
         }
-        .run-btn:hover { background-color: var(--c-brand-green-hover); }
+        .run-btn:hover {
+            opacity: 0.9;
+        }
 
         .right-panel { flex: 2; height: 100%; overflow: hidden; gap: 14px; position: relative; }
         .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
@@ -153,15 +174,22 @@
             display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; align-items: center;
             border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
         }
-
-        .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .vector-row { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 12px; }
-        .vector-row .sentence-summary { font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 4px; }
-        .vector-row .tokens-summary { font-size: 11px; color: var(--c-text-muted); margin-bottom: 6px; font-style: italic; }
         
-        .vector-display {
-            font-family: 'Consolas', monospace; font-size: 13px; background: #fff; padding: 6px 10px;
-            border-radius: 4px; border: 1px solid rgba(44, 42, 41, 0.05); color: var(--c-vector-text); word-break: break-all;
+        .tag {
+            display: inline-block;
+            background-color: #EFEFED;
+            color: var(--c-text-main);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 1px solid var(--c-border);
+            font-weight: 500;
+        }
+        .removed {
+            background-color: var(--c-removed-bg) !important;
+            color: var(--c-removed-text) !important;
+            text-decoration: line-through;
+            border-color: rgba(198, 40, 40, 0.15) !important;
         }
         
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; }
@@ -180,9 +208,9 @@
         .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
         .delete-btn { margin-left: 4px; cursor: pointer; color: var(--c-removed-text); font-weight: bold; font-size: 14px; flex-shrink: 0; line-height: 1; }
 
-        .right-panel-content::-webkit-scrollbar, .textarea-list::-webkit-scrollbar { width: 6px; }
-        .right-panel-content::-webkit-scrollbar-track, .textarea-list::-webkit-scrollbar-track { background: transparent; }
-        .right-panel-content::-webkit-scrollbar-thumb, .textarea-list::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
+        .right-panel-content::-webkit-scrollbar { width: 6px; }
+        .right-panel-content::-webkit-scrollbar-track { background: transparent; }
+        .right-panel-content::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
 
         .loading-overlay {
             position: absolute;
@@ -227,17 +255,14 @@
 
 <canvas id="neural-canvas"></canvas>
 
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <div class="loading-text">형태소 분석 및 단어집합 구축 중...</div>
-</div>
-
+<!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
     <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">← BACK</button>
     <div class="navbar-brand-text">MORPHOLOGICAL ANALYSIS</div>
 </nav>
 
 <div class="main-layout">
+    <!-- 왼쪽 패널 복원 완료 -->
     <div class="card left-panel">
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
@@ -246,6 +271,11 @@
     </div>
 
     <div class="card right-panel">
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <div id="loadingText" class="loading-text">형태소 분석 및 단어집합 구축 중...</div>
+        </div>
+
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
             <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 형태소 분석</button>
@@ -322,7 +352,6 @@ async function processNLPWithLoading() {
     }
 }
 
-// [내장형 오픈소스 NLP 엔진 핵심 모듈] - 문법 버그 완전 교정 버전
 const EmbeddedNLP = {
     josaPatterns: /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서|네|나|니|라)$/,
     eomiPatterns: /(했다|했습니다|합니다|하였다|한다|하느라|하면|하네|하오|한|하|었다|았다|였다|으며|으리|겠다|지|게|다|는|ㄴ|은|던|어|아)$/,
@@ -346,7 +375,6 @@ const EmbeddedNLP = {
         let basePart = word;
         let josaPart = "";
         
-        // [교정완료] 안전한 매칭 인덱싱 구조 확보
         if (this.josaPatterns.test(word) && word.length > 1) {
             const stripped = word.replace(this.josaPatterns, "");
             if (stripped.length > 0) {
