@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>단어집합 프로그램</title>
-    <!-- [정확도 해결] 가장 완벽한 웹 컴파일을 보장하는 cdnjs 인프라로 Kiwi 라이브러리 교체 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/kiwi-js/0.1.1/index.js"></script>
+    <!-- [핵심 패치 1단계] 버전을 명시한 jsDelivr 공식 패키지 루트 스크립트를 로드합니다. -->
+    <script src="https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/index.js"></script>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -477,13 +477,13 @@ let kiwiInstance = null;
 let finalTokens = [];
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더"]);
 
-// [WASM 로드 근본 해결] 보안 차단이 발생하지 않는 정식 cdnjs 바이너리 미러 경로 세팅
+// [핵심 패치 2단계] 깃허브 블로그 서버와 완벽히 호환되는 jsDelivr 정식 배포망 풀패키지 경로 고정
 async function initKiwi() {
     const submitBtn = document.getElementById("submitBtn");
     try {
         kiwiInstance = await Kiwi.get({
-            wasmPath: 'https://cdnjs.cloudflare.com/ajax/libs/kiwi-js/0.1.1/kiwi.wasm',
-            dictPath: 'https://cdnjs.cloudflare.com/ajax/libs/kiwi-js/0.1.1/dict.txt'
+            wasmPath: 'https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/kiwi.wasm',
+            dictPath: 'https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/dict.txt'
         });
         submitBtn.disabled = false;
         submitBtn.innerHTML = "분석 실행 ⚡";
@@ -505,7 +505,6 @@ async function processNLPWithLoading() {
     await sleep(400); 
 
     try {
-        // [복원] 규칙 기반 하드코딩 모델 전면 제거 ➡ 진짜 Kiwi 인공지능 토큰 분석 파이프라인 구동
         const currentResult = kiwiInstance.analyze(text, 1);
         const tokens = currentResult[0][0]; 
 
@@ -529,7 +528,6 @@ async function processNLPWithLoading() {
                 morphemeHtml += `<span class="tag">${displayTag}</span>`;
                 cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
                 
-                // 진짜 Kiwi 분석기는 어간을 스스로 추적해내므로 'V'(용언)일 때 뒤에 '다'만 붙여주면 완벽히 원형으로 정제됩니다.
                 let lemma = form;
                 if (tag.startsWith("V")) {
                     lemma = form + "다";
