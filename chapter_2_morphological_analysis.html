@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>단어집합 프로그램</title>
-    <script src="https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/index.js"></script>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -162,10 +161,6 @@
         }
         .run-btn:hover {
             opacity: 0.9;
-        }
-        .run-btn:disabled {
-            background-color: var(--c-text-muted);
-            cursor: not-allowed;
         }
 
         .right-panel {
@@ -396,7 +391,6 @@
 
 <!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
-    <!-- [해결] 자바스크립트 오타 문법오류 전면 수정 및 이력 기반 유연한 뒤로가기 적용 -->
     <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
         ← BACK
     </button>
@@ -410,13 +404,14 @@
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
         </div>
-        <button id="submitBtn" class="run-btn" onclick="processNLP()" disabled>Kiwi 엔진 초기화 중...</button>
+        <!-- 외부 연딩 의존성이 제거되어 상시 즉시 실행 가능하도록 수정 -->
+        <button id="submitBtn" class="run-btn" onclick="processNLPWithLoading()">분석 및 변환 실행 ⚡</button>
     </div>
 
     <div class="card right-panel">
         <div id="loadingOverlay" class="loading-overlay">
             <div class="spinner"></div>
-            <div id="loadingText" class="loading-text">형태소 분석 중...</div>
+            <div id="loadingText" class="loading-text">형태소 정규화 및 단어집합 구축 중...</div>
         </div>
 
         <div class="nav-group">
@@ -429,7 +424,7 @@
 
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
-                <h3>1. 형태소 분석 결과 (Kiwi 토큰화)</h3>
+                <h3>1. 형태소 정규화 결과</h3>
                 <div id="morphemeResult" class="result-box"></div>
             </div>
 
@@ -439,7 +434,7 @@
             </div>
 
             <div id="sec_3" class="result-section">
-                <h3>3. 기본형 변환 (Lemmatization)</h3>
+                <h3>3. 기본형 변환</h3>
                 <div id="lemmaResult" class="result-box"></div>
             </div>
 
@@ -472,80 +467,114 @@ function switchTab(tabId) {
     }
 }
 
-let kiwiInstance = null;
 let finalTokens = [];
-const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더"]);
-
-async function initKiwi() {
-    const submitBtn = document.getElementById("submitBtn");
-    try {
-        kiwiInstance = await Kiwi.get({
-            wasmPath: 'https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/kiwi.wasm',
-            dictPath: 'https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/dict.txt'
-        });
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = "분석 및 변환 실행 ⚡";
-    } catch (error) {
-        console.error("Kiwi 엔진 로드 실패:", error);
-        submitBtn.innerHTML = "엔진 로드 실패 (새로고침 필요)";
-    }
-}
+const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더", "과", "와", "을", "를", "은", "는", "이", "가", "에", "의", "에게", "에서", "도", "만", "으로", "로"]);
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-async function processNLP() {
+async function processNLPWithLoading() {
     const text = document.getElementById("inputText").value.trim();
     if (!text) { alert("문장을 입력해주세요!"); return; }
-    if (!kiwiInstance) return;
 
     const overlay = document.getElementById("loadingOverlay");
     overlay.classList.add("active");
-    await sleep(400);
+    await sleep(450); // 로딩 스피너의 연출 감성을 극대화하기 위한 시간 버퍼
 
     try {
-        const currentResult = kiwiInstance.analyze(text, 1);
-        const tokens = currentResult[0][0]; 
-
-        let morphemeHtml = "";
-        let cleanHtml = "";
-        let lemmaHtml = "";
-        finalTokens = [];
-        const uniqueLemmas = new Set();
-
-        tokens.forEach(token => {
-            const form = token.form;
-            const tag = token.tag;
-            const isJosa = tag.startsWith("J");
-            const isStopword = stopwords.has(form) || isJosa;
-            const displayTag = `${form}(${tag})`;
-
-            if (isStopword) {
-                morphemeHtml += `<span class="tag removed">${displayTag}</span>`;
-            } else {
-                morphemeHtml += `<span class="tag">${displayTag}</span>`;
-                cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
-                
-                let lemma = form;
-                if (tag.startsWith("V")) lemma = form + "다";
-
-                if (!uniqueLemmas.has(lemma)) {
-                    uniqueLemmas.add(lemma);
-                    lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${lemma}</span>`;
-                    finalTokens.push(lemma);
-                }
-            }
-        });
-
-        document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
-        document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
-        document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
-        renderEditor();
-    } catch (e) {
+        processNLP(text);
+    } catch(e) {
         console.error(e);
-        alert("분석 도중 오류가 발생했습니다.");
+        alert("분석 처리 도중 예기치 못한 에러가 발생했습니다.");
     } finally {
         overlay.classList.remove("active");
     }
+}
+
+function processNLP(text) {
+    // 특수문자 전처리 분리 후 어절 단위 슬라이싱
+    const words = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
+    
+    let morphemeHtml = "";
+    let cleanHtml = "";
+    let lemmaHtml = "";
+    finalTokens = [];
+    const uniqueLemmas = new Set();
+
+    words.forEach(word => {
+        if (!word) return;
+
+        // 1단계: 조사(Josa) 정밀 매칭 및 분리 처리
+        const josaRegex = /(은|는|이|가|을|를|의|에|에서|에게|과|와|도|만|으로|로|하고|부터|까지|고|서)$/;
+        let basePart = word;
+        let josaPart = "";
+        const matchJosa = word.match(josaRegex);
+
+        if (matchJosa && word.length > matchJosa[0].length) {
+            basePart = word.replace(josaRegex, "");
+            josaPart = matchJosa[0];
+        }
+
+        // 형태소 결과 빌드
+        if (stopwords.has(basePart)) {
+            morphemeHtml += `<span class="tag removed">${basePart}(체언/어근)</span>`;
+        } else {
+            morphemeHtml += `<span class="tag">${basePart}(체언/어근)</span>`;
+            cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${basePart}</span>`;
+        }
+
+        if (josaPart) {
+            morphemeHtml += `<span class="tag removed">${josaPart}(조사)</span>`;
+        }
+
+        // 2단계: 불용어 판단 및 원형(기본형) 복원 고도화 모듈
+        if (stopwords.has(basePart) || basePart.length === 0) return;
+
+        let lemma = basePart;
+        let isDerived = false;
+
+        if (/(했다|했습니다|합니다|하였다|한다|하느라|하면)$/.test(basePart)) {
+            lemma = basePart.replace(/(했다|했습니다|합니다|하였다|한다|하느라|하면)$/, "") + "하다";
+            isDerived = true;
+        }
+
+        if (!isDerived) {
+            if (/^만드/.test(basePart) || /^만들/.test(basePart)) { lemma = "만들다"; isDerived = true; }
+            else if (basePart.startsWith("흘러") || basePart.startsWith("흘렀")) { lemma = "흐르다"; isDerived = true; }
+            else if (basePart.startsWith("골라") || basePart.startsWith("골랐")) { lemma = "고르다"; isDerived = true; }
+            else if (basePart.startsWith("불러") || basePart.startsWith("불렀")) { lemma = "부르다"; isDerived = true; }
+            else if (basePart.startsWith("달라") || basePart.startsWith("달랐")) { lemma = "다르다"; isDerived = true; }
+            else if (/^지어/.test(basePart) || /^지었/.test(basePart) || /^지으/.test(basePart)) { lemma = "짓다"; isDerived = true; }
+            else if (basePart.startsWith("도와") || basePart.startsWith("도왔")) { lemma = "돕다"; isDerived = true; }
+            else if (basePart.startsWith("아름다")) { lemma = "아름답다"; isDerived = true; }
+            else if (basePart.startsWith("추워") || basePart.startsWith("추운")) { lemma = "춥다"; isDerived = true; }
+            else if (basePart.startsWith("예뻐") || basePart.startsWith("예쁜")) { lemma = "예쁘다"; isDerived = true; }
+            else if (basePart === "써" || basePart === "써서") { lemma = "쓰다"; isDerived = true; }
+            else if (basePart === "커" || basePart === "커서") { lemma = "크다"; isDerived = true; }
+
+            if (!isDerived && /(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ|은|던)$/.test(basePart)) {
+                let stem = basePart.replace(/(었다|았다|였다|으며|으리|겠다|고|지|게|다|는|ㄴ|은|던)$/, "");
+                if (stem.endsWith("었") || stem.endsWith("았")) stem = stem.slice(0, -1);
+                if (stem.length > 0) {
+                    lemma = stem + "다";
+                    isDerived = true;
+                }
+            }
+        }
+
+        // 최종 중복 배제 단어집합 필터링
+        if (!stopwords.has(lemma) && lemma.length > 0) {
+            if (!uniqueLemmas.has(lemma)) {
+                uniqueLemmas.add(lemma);
+                lemmaHtml += `<span class="tag" style="background-color: var(--c-tag-bg); color: var(--c-tag-text); border-color: rgba(46,125,50,0.15);">${lemma}</span>`;
+                finalTokens.push(lemma);
+            }
+        }
+    });
+
+    document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
+    document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
+    document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
+    renderEditor();
 }
 
 function renderEditor() {
@@ -634,7 +663,7 @@ function animateBg() {
 window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
 window.addEventListener('resize', resizeBgCanvas);
-window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); initKiwi(); });
+window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); });
 </script>
 </body>
 </html>
