@@ -4,13 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>단어집합 프로그램</title>
-    <!-- 
-      [WASM 로드 실패 해결 1단계] 
-      버전 누락으로 인한 경로 꼬임을 방지하기 위해 dist 버전을 0.1.1 정식 빌드로 고정합니다.
-    -->
-    <script src="https://unpkg.com/kiwi-js@0.1.1/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/index.js"></script>
     <style>
-        /* 변수 정의 (기존 테마 색상 및 감성 유지) */
         :root {
             --c-bg-main: #FBF9F4; 
             --c-bg-card: rgba(255, 255, 255, 0.73); 
@@ -43,7 +38,7 @@
             position: relative;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* 전체 뷰포트 스크롤 제어 */
+            overflow: hidden;
         }
 
         #neural-canvas {
@@ -54,7 +49,6 @@
             pointer-events: none;
         }
 
-        /* 상단 네비게이션 바 */
         .top-navbar {
             position: fixed;
             top: 0;
@@ -98,7 +92,6 @@
             letter-spacing: 0.08em; 
         }
 
-        /* 메인 2분할 레이아웃 */
         .main-layout {
             display: flex;
             width: 100%; 
@@ -121,7 +114,6 @@
             flex-direction: column;
         }
 
-        /* 왼쪽 패널: 텍스트 입력 구역 */
         .left-panel {
             flex: 1.2; 
             height: 100%;
@@ -176,7 +168,6 @@
             cursor: not-allowed;
         }
 
-        /* 오른쪽 패널: 결과 출력 및 관리 구역 */
         .right-panel {
             flex: 2;
             height: 100%;
@@ -185,7 +176,6 @@
             position: relative;
         }
 
-        /* 상단 네비게이션 탭 */
         .nav-group {
             display: flex;
             gap: 4px;
@@ -358,7 +348,6 @@
             border-radius: 3px;
         }
 
-        /* Kiwi 비동기 연동 스피너 디자인 */
         .loading-overlay {
             position: absolute;
             top: 0;
@@ -403,12 +392,12 @@
 </head>
 <body>
 
-<!-- 배경 인공신경망 이펙트용 캔버스 -->
 <canvas id="neural-canvas"></canvas>
 
 <!-- 상단 네비게이션 바 -->
 <nav class="top-navbar">
-    <button onclick="location.href='./index.html'; || history.back();" class="back-btn">
+    <!-- [해결] 자바스크립트 오타 문법오류 전면 수정 및 이력 기반 유연한 뒤로가기 적용 -->
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
         ← BACK
     </button>
     <div class="navbar-brand-text">
@@ -416,10 +405,7 @@
     </div>
 </nav>
 
-<!-- 본문 메인 레이아웃 -->
 <div class="main-layout">
-    
-    <!-- 왼쪽 창: 텍스트 원문 입력 구역 -->
     <div class="card left-panel">
         <div class="textarea-container">
             <textarea id="inputText" placeholder="여기에 분석할 문장을 입력하세요."></textarea>
@@ -427,16 +413,12 @@
         <button id="submitBtn" class="run-btn" onclick="processNLP()" disabled>Kiwi 엔진 초기화 중...</button>
     </div>
 
-    <!-- 오른쪽 창: 데이터 정제 프로세스 제어판 -->
     <div class="card right-panel">
-        
-        <!-- 분석 중 피드백 오버레이 -->
         <div id="loadingOverlay" class="loading-overlay">
             <div class="spinner"></div>
             <div id="loadingText" class="loading-text">형태소 분석 중...</div>
         </div>
 
-        <!-- 탭 구조 구성 -->
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
             <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 형태소 분석</button>
@@ -445,9 +427,7 @@
             <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 사용자 수정</button>
         </div>
 
-        <!-- 각 단계별 동적 출력 컨테이너 -->
         <div class="right-panel-content">
-            
             <div id="sec_1" class="result-section">
                 <h3>1. 형태소 분석 결과 (Kiwi 토큰화)</h3>
                 <div id="morphemeResult" class="result-box"></div>
@@ -473,76 +453,53 @@
                 </div>
                 <div class="result-box" id="editorContainer"></div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
-// 탭 인터페이스 전환 스크립트
 function switchTab(tabId) {
     const tabs = ['all', '1', '2', '3', '4'];
-    
     tabs.forEach(t => {
         document.getElementById(`tab_${t}`).classList.remove('active');
-        if(t !== 'all') {
-            document.getElementById(`sec_${t}`).classList.add('hidden');
-        }
+        if(t !== 'all') document.getElementById(`sec_${t}`).classList.add('hidden');
     });
-
     document.getElementById(`tab_${tabId}`).classList.add('active');
-    
     if (tabId === 'all') {
-        tabs.forEach(t => {
-            if(t !== 'all') document.getElementById(`sec_${t}`).classList.remove('hidden');
-        });
+        tabs.forEach(t => { if(t !== 'all') document.getElementById(`sec_${t}`).classList.remove('hidden'); });
     } else {
         document.getElementById(`sec_${tabId}`).classList.remove('hidden');
     }
 }
 
-// Kiwi 핵심 인스턴스 전역 관리 배열
 let kiwiInstance = null;
 let finalTokens = [];
-
-// 전형적인 불용어 목록 정의
 const stopwords = new Set(["참", "그러나", "그리고", "이", "그", "저", "무척", "가장", "매우", "더"]);
 
-// [WASM 로드 실패 해결 2단계] 
-// 외부 호스팅 서버(GitHub Pages) 보안 정책에 맞춰 0.1.1 바이너리와 사전 절대경로를 강제로 주입합니다.
 async function initKiwi() {
     const submitBtn = document.getElementById("submitBtn");
     try {
         kiwiInstance = await Kiwi.get({
-            wasmPath: 'https://unpkg.com/kiwi-js@0.1.1/dist/kiwi.wasm',
-            dictPath: 'https://unpkg.com/kiwi-js@0.1.1/dist/dict.txt'
+            wasmPath: 'https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/kiwi.wasm',
+            dictPath: 'https://cdn.jsdelivr.net/npm/kiwi-js@0.1.1/dist/dict.txt'
         });
         submitBtn.disabled = false;
         submitBtn.innerHTML = "분석 및 변환 실행 ⚡";
     } catch (error) {
-        console.error("Kiwi 엔진 로드 실패 상세 원인:", error);
+        console.error("Kiwi 엔진 로드 실패:", error);
         submitBtn.innerHTML = "엔진 로드 실패 (새로고침 필요)";
     }
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-// 핵심 NLP 처리 비동기 파이프라인
 async function processNLP() {
     const text = document.getElementById("inputText").value.trim();
-    if (!text) {
-        alert("문장을 입력해주세요!");
-        return;
-    }
-
+    if (!text) { alert("문장을 입력해주세요!"); return; }
     if (!kiwiInstance) return;
 
     const overlay = document.getElementById("loadingOverlay");
     overlay.classList.add("active");
-
-    // UX 브라우저 렌더링 스레드 보장을 위한 미세 딜레이 인터벌
     await sleep(400);
 
     try {
@@ -552,17 +509,14 @@ async function processNLP() {
         let morphemeHtml = "";
         let cleanHtml = "";
         let lemmaHtml = "";
-        
         finalTokens = [];
         const uniqueLemmas = new Set();
 
         tokens.forEach(token => {
             const form = token.form;
             const tag = token.tag;
-            
             const isJosa = tag.startsWith("J");
             const isStopword = stopwords.has(form) || isJosa;
-
             const displayTag = `${form}(${tag})`;
 
             if (isStopword) {
@@ -571,11 +525,8 @@ async function processNLP() {
                 morphemeHtml += `<span class="tag">${displayTag}</span>`;
                 cleanHtml += `<span class="tag" style="background-color: var(--c-clean-bg); color: var(--c-clean-text); border-color: rgba(245,127,23,0.15);">${form}</span>`;
                 
-                // 동사/형용사 원형 종결형 어미 복원 프로세스
                 let lemma = form;
-                if (tag.startsWith("V")) {
-                    lemma = form + "다";
-                }
+                if (tag.startsWith("V")) lemma = form + "다";
 
                 if (!uniqueLemmas.has(lemma)) {
                     uniqueLemmas.add(lemma);
@@ -588,9 +539,7 @@ async function processNLP() {
         document.getElementById("morphemeResult").innerHTML = morphemeHtml || "분석 결과가 없습니다.";
         document.getElementById("cleanResult").innerHTML = cleanHtml || "남은 토큰이 없습니다.";
         document.getElementById("lemmaResult").innerHTML = lemmaHtml || "남은 토큰이 없습니다.";
-        
         renderEditor();
-
     } catch (e) {
         console.error(e);
         alert("분석 도중 오류가 발생했습니다.");
@@ -601,11 +550,7 @@ async function processNLP() {
 
 function renderEditor() {
     const container = document.getElementById("editorContainer");
-    if (finalTokens.length === 0) {
-        container.innerHTML = "출력할 토큰이 없습니다.";
-        return;
-    }
-
+    if (finalTokens.length === 0) { container.innerHTML = "출력할 토큰이 없습니다."; return; }
     let html = "";
     finalTokens.forEach((token, index) => {
         html += `
@@ -618,30 +563,16 @@ function renderEditor() {
     container.innerHTML = html;
 }
 
-function updateToken(index, newValue) {
-    finalTokens[index] = newValue.trim();
-}
-
-function deleteToken(index) {
-    finalTokens.splice(index, 1);
-    renderEditor();
-}
-
+function updateToken(index, newValue) { finalTokens[index] = newValue.trim(); }
+function deleteToken(index) { finalTokens.splice(index, 1); renderEditor(); }
 function addToken() {
     const input = document.getElementById("newWordInput");
     const value = input.value.trim();
-    if (!value) {
-        alert("추가할 단어를 입력하세요!");
-        return;
-    }
-    if (!finalTokens.includes(value)) {
-        finalTokens.push(value);
-        renderEditor();
-    }
+    if (!value) { alert("추가할 단어를 입력하세요!"); return; }
+    if (!finalTokens.includes(value)) { finalTokens.push(value); renderEditor(); }
     input.value = "";
 }
 
-// 배경 추상 네트워크 애니메이션 제어부
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
@@ -662,54 +593,38 @@ class Particle {
         this.radius = Math.random() * 2 + 1.5; 
     }
     update() {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx; this.y += this.vy;
         if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
         if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
-
-        let dx = mouse.x - this.x;
-        let dy = mouse.y - this.y;
+        let dx = mouse.x - this.x; let dy = mouse.y - this.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < mouse.radius) {
             const force = (mouse.radius - distance) / mouse.radius;
-            this.x -= dx * force * 0.03;
-            this.y -= dy * force * 0.03;
+            this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
         }
     }
     draw() {
-        bgCtx.beginPath();
-        bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; 
-        bgCtx.fill();
+        bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
     }
 }
 
 function initParticles() {
     particles = [];
     const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
-    for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle());
-    }
+    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
 }
 
 function animateBg() {
     bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
     for (let i = 0; i < particles.length; i++) {
-        particles[i].update();
-        particles[i].draw();
-
+        particles[i].update(); particles[i].draw();
         for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
+            const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-
             if (dist < 110) {
-                bgCtx.beginPath();
-                bgCtx.moveTo(particles[i].x, particles[i].y);
-                bgCtx.lineTo(particles[j].x, particles[j].y);
-                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`;
-                bgCtx.lineWidth = 1.0;
-                bgCtx.stroke();
+                bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
+                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
             }
         }
     }
@@ -719,13 +634,7 @@ function animateBg() {
 window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
 window.addEventListener('resize', resizeBgCanvas);
-
-window.addEventListener('DOMContentLoaded', () => {
-    resizeBgCanvas();
-    animateBg();
-    initKiwi(); 
-});
+window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); initKiwi(); });
 </script>
-
 </body>
 </html>
