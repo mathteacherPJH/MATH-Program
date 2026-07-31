@@ -5,23 +5,138 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문장 벡터화 프로그램</title>
     <style>
-        body { 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            height: 100vh; 
-            background-color: #FBF9F4; 
+        /* 기존 UI 스타일 및 디자인 유지 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
         }
-        iframe { 
-            border: none; 
-            width: 100%; 
-            height: 100vh; 
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        button {
+            padding: 10px 18px;
+            background-color: #4b6bfb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #3b59e0;
+        }
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f3f5;
+            border-radius: 8px;
+            min-height: 100px;
+        }
+        .loading {
+            color: #868e96;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <iframe src="https://mathteacherpjh-vectorizer.streamlit.app/?embed=true"></iframe>
+<div class="container">
+    <h1>SENTENCE VECTORIZER</h1>
+    
+    <!-- 문장 입력 영역 -->
+    <div class="input-group">
+        <input type="text" id="sentenceInput" placeholder="분석할 문장을 입력하세요 (100자 이내)">
+        <button onclick="analyzeText()">분석하기</button>
+    </div>
+
+    <!-- 결과 출력 영역 -->
+    <div class="result-area" id="resultContainer">
+        문장을 입력하고 [분석하기] 버튼을 누르면 형태소 분석 및 벡터화 결과가 표시됩니다.
+    </div>
+</div>
+
+<script>
+    // Render 배포 백엔드 API 주소
+    const API_URL = 'https://math-render-apps.onrender.com/api/analyze';
+
+    async function analyzeText() {
+        const inputElement = document.getElementById('sentenceInput');
+        const resultContainer = document.getElementById('resultContainer');
+        const text = inputElement.value.trim();
+
+        if (!text) {
+            alert('문장을 입력해 주세요!');
+            return;
+        }
+
+        resultContainer.innerHTML = '<span class="loading">서버에서 형태소를 분석하고 있습니다... (Cold Start 시 최대 30초 소요)</span>';
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sentences: [text],
+                    custom_vocab: []
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`서버 응답 에러: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // 결과 화면 렌더링
+            renderResults(data);
+
+        } catch (error) {
+            console.error('API 호출 실패:', error);
+            resultContainer.innerHTML = `<span style="color: red;">오류가 발생했습니다: ${error.message}</span>`;
+        }
+    }
+
+    function renderResults(data) {
+        const resultContainer = document.getElementById('resultContainer');
+        
+        let html = `<h3>1. 단어집합 (Vocabulary)</h3>`;
+        html += `<p>${JSON.stringify(data.vocabulary)}</p>`;
+        
+        html += `<h3>2. 형태소 처리 결과 (Processed Corpus)</h3>`;
+        html += `<p>${JSON.stringify(data.processed_corpus)}</p>`;
+        
+        html += `<h3>3. 빈도수 벡터 (Frequency Matrix)</h3>`;
+        html += `<pre>${JSON.stringify(data.frequency, null, 2)}</pre>`;
+
+        resultContainer.innerHTML = html;
+    }
+</script>
 
 </body>
 </html>
