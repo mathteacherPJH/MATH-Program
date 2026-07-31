@@ -229,9 +229,10 @@
 
 <canvas id="neural-canvas"></canvas>
 
+<!-- 문구 수정: Kiwi 엔진 명시 -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div class="loading-text">KoNLPy 엔진 형태소 분석 중...</div>
+    <div class="loading-text">Kiwi 백엔드 엔진 형태소 분석 중...</div>
 </div>
 
 <nav class="top-navbar">
@@ -306,7 +307,6 @@
 </div>
 
 <script>
-// 배포된 Render 백엔드 API URL
 const API_URL = 'https://math-render-apps.onrender.com/api/analyze';
 
 let inputCount = 3;
@@ -368,7 +368,6 @@ function switchTab(tabId) {
     }
 }
 
-// Render 백엔드 서버와 통신하는 함수
 async function processNLPWithLoading() {
     const textFields = [];
     for(let i=0; i<inputCount; i++) {
@@ -411,7 +410,7 @@ async function processNLPWithLoading() {
 
     } catch (e) {
         console.error(e);
-        alert("형태소 분석 서버와의 통신에 실패했습니다. (서버 깨어나는 중일 수 있으니 30초 후 다시 시도해 주세요)");
+        alert("Kiwi 서버 통신 중 오류가 발생했습니다. (서버 준비 상태를 확인해 주세요)");
     } finally {
         overlay.classList.remove("active");
     }
@@ -463,7 +462,6 @@ function addToken() {
     input.value = "";
 }
 
-// 단어 집합 편집 시 로컬 벡터 다시 계산
 function recalculateVectorsLocal() {
     oneHotMatrix = [];
     frequencyMatrix = [];
@@ -508,7 +506,7 @@ function renderVectorDisplays() {
         ohRow.className = "vector-row";
         ohRow.innerHTML = `
             <div class="sentence-summary">문장 ${i + 1}: "${sentence}"</div>
-            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${tokensStr} ]</div>
+            <div class="tokens-summary">→ Kiwi 추출 형태소 리스트: [ ${tokensStr} ]</div>
             <div class="vector-display">[ ${ohVec.join(", ")} ]</div>
         `;
         oneHotContainer.appendChild(ohRow);
@@ -517,14 +515,14 @@ function renderVectorDisplays() {
         fRow.className = "vector-row";
         fRow.innerHTML = `
             <div class="sentence-summary">문장 ${i + 1}: "${sentence}"</div>
-            <div class="tokens-summary">→ 추출된 복원 기본형 리스트: [ ${tokensStr} ]</div>
-            <div class="vector-display">[ ${fVec.join(", ")} ]</div>
+            <div class="tokens-summary">→ Kiwi 추출 형태소 리스트: [ ${tokensStr} ]</div>
+            <div class="vector-display">[ ${fRow ? fVec.join(", ") : ""} ]</div>
         `;
         freqContainer.appendChild(fRow);
     });
 }
 
-// 신경망 배경 애니메이션
+// 배경 신경망 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
