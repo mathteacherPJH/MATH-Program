@@ -187,6 +187,8 @@
             flex-wrap: wrap;
             gap: 4px;
         }
+
+        /* ✏️ 편집 가능한 단어 태그 스타일 */
         .mini-tag {
             background: #FFFFFF;
             border: 1px solid rgba(44, 42, 41, 0.15);
@@ -198,6 +200,20 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
+        }
+        .mini-tag-input {
+            border: none;
+            background: transparent;
+            color: var(--c-brand-green);
+            font-size: 11px;
+            font-family: inherit;
+            font-weight: bold;
+            outline: none;
+            width: 50px;
+        }
+        .mini-tag-input:focus {
+            background-color: var(--c-tag-bg);
+            border-radius: 2px;
         }
         .mini-tag-delete {
             cursor: pointer;
@@ -338,7 +354,7 @@
                     <div class="sentence-vocab-header">
                         <span class="vocab-title">단어집합</span>
                         <div class="add-mini-section">
-                            <input type="text" id="add_input_0" class="add-mini-input" placeholder="원형 단어">
+                            <input type="text" id="add_input_0" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(0)">
                             <button class="add-mini-btn" onclick="addWordToSentence(0)">추가</button>
                         </div>
                     </div>
@@ -356,7 +372,7 @@
                     <div class="sentence-vocab-header">
                         <span class="vocab-title">단어집합</span>
                         <div class="add-mini-section">
-                            <input type="text" id="add_input_1" class="add-mini-input" placeholder="원형 단어">
+                            <input type="text" id="add_input_1" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(1)">
                             <button class="add-mini-btn" onclick="addWordToSentence(1)">추가</button>
                         </div>
                     </div>
@@ -374,7 +390,7 @@
                     <div class="sentence-vocab-header">
                         <span class="vocab-title">단어집합</span>
                         <div class="add-mini-section">
-                            <input type="text" id="add_input_2" class="add-mini-input" placeholder="원형 단어">
+                            <input type="text" id="add_input_2" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(2)">
                             <button class="add-mini-btn" onclick="addWordToSentence(2)">추가</button>
                         </div>
                     </div>
@@ -452,7 +468,7 @@ function addInputField() {
             <div class="sentence-vocab-header">
                 <span class="vocab-title">단어집합</span>
                 <div class="add-mini-section">
-                    <input type="text" id="add_input_${idx}" class="add-mini-input" placeholder="원형 단어">
+                    <input type="text" id="add_input_${idx}" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(${idx})">
                     <button class="add-mini-btn" onclick="addWordToSentence(${idx})">추가</button>
                 </div>
             </div>
@@ -569,16 +585,31 @@ function addWordToSentence(sentenceIdx) {
     input.value = "";
 }
 
+// ✏️ 개별 문장의 단어 수정 (인덱스 기준)
+function updateWordInSentence(sentenceIdx, wordIdx, newValue) {
+    const cleanValue = newValue.trim();
+    if (!sentenceVocabMap[sentenceIdx]) return;
+
+    if (cleanValue) {
+        sentenceVocabMap[sentenceIdx][wordIdx] = cleanValue;
+    } else {
+        // 빈 문자열로 수정할 경우 삭제 처리
+        sentenceVocabMap[sentenceIdx].splice(wordIdx, 1);
+    }
+    renderSentenceVocab(sentenceIdx);
+    recalculateUnionAndVectors();
+}
+
 // 개별 문장에서 단어 삭제
-function deleteWordFromSentence(sentenceIdx, word) {
+function deleteWordFromSentence(sentenceIdx, wordIdx) {
     if (sentenceVocabMap[sentenceIdx]) {
-        sentenceVocabMap[sentenceIdx] = sentenceVocabMap[sentenceIdx].filter(w => w !== word);
+        sentenceVocabMap[sentenceIdx].splice(wordIdx, 1);
         renderSentenceVocab(sentenceIdx);
         recalculateUnionAndVectors();
     }
 }
 
-// 좌측 개별 문장 단어집합 렌더링
+// 좌측 개별 문장 단어집합 렌더링 (편집창 포함)
 function renderSentenceVocab(i) {
     const tagContainer = document.getElementById(`vocab_tags_${i}`);
     const words = sentenceVocabMap[i] || [];
@@ -586,10 +617,12 @@ function renderSentenceVocab(i) {
     if (words.length === 0) {
         tagContainer.innerHTML = "<span style='color:#aaa;'>단어 없음</span>";
     } else {
-        tagContainer.innerHTML = words.map(w => `
+        tagContainer.innerHTML = words.map((w, wIdx) => `
             <span class="mini-tag">
-                ${w}
-                <span class="mini-tag-delete" onclick="deleteWordFromSentence(${i}, '${w}')">×</span>
+                <input type="text" class="mini-tag-input" value="${w}" 
+                       onchange="updateWordInSentence(${i}, ${wIdx}, this.value)"
+                       style="width: ${Math.max(w.length * 11, 35)}px;">
+                <span class="mini-tag-delete" onclick="deleteWordFromSentence(${i}, ${wIdx})">×</span>
             </span>
         `).join("");
     }
