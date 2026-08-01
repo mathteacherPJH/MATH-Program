@@ -117,12 +117,11 @@
 
         .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; padding-right: 4px; }
         
-        /* 문장 세트 카드 (textarea + 단어집합) */
         .textarea-wrapper { 
             position: relative; 
             display: flex; 
             flex-direction: column; 
-            gap: 6px;
+            gap: 8px;
             background: rgba(255, 255, 255, 0.5);
             padding: 12px;
             border-radius: 8px;
@@ -133,44 +132,79 @@
         .textarea-wrapper .char-counter { position: absolute; bottom: 8px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
 
         textarea {
-            width: 100%; height: 60px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
+            width: 100%; height: 55px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
             border: 1px solid var(--c-border); border-radius: 6px; resize: none; font-family: inherit; font-size: 13px;
             line-height: 1.4; background-color: rgba(255, 255, 255, 0.9); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
         }
         textarea:focus { border-color: var(--c-brand-green); }
 
-        /* 🔥 문장 개별 단어집합 영역 추가 스타일 */
+        /* 문장별 개별 단어집합 편집 영역 */
         .sentence-vocab-box {
             background-color: var(--c-tab-bg);
             border: 1px dashed rgba(27, 67, 50, 0.2);
             border-radius: 6px;
-            padding: 6px 10px;
+            padding: 8px 10px;
             font-size: 12px;
-            color: var(--c-brand-green);
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 6px;
-            min-height: 24px;
         }
-        .sentence-vocab-box .vocab-title {
+        .sentence-vocab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vocab-title {
             font-weight: bold;
             font-size: 11px;
-            color: var(--c-text-muted);
-            white-space: nowrap;
+            color: var(--c-brand-green);
         }
-        .sentence-vocab-box .vocab-tags {
+        .add-mini-section {
+            display: flex;
+            gap: 4px;
+        }
+        .add-mini-input {
+            padding: 2px 6px;
+            border: 1px solid var(--c-border);
+            border-radius: 3px;
+            font-size: 11px;
+            width: 90px;
+            outline: none;
+            background: white;
+        }
+        .add-mini-btn {
+            padding: 2px 6px;
+            background-color: var(--c-accent);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .vocab-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
         }
         .mini-tag {
             background: #FFFFFF;
-            border: 1px solid rgba(44, 42, 41, 0.1);
+            border: 1px solid rgba(44, 42, 41, 0.15);
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 11px;
             color: var(--c-brand-green);
             font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .mini-tag-delete {
+            cursor: pointer;
+            color: var(--c-removed-text);
+            font-size: 12px;
+            font-weight: bold;
+            line-height: 1;
         }
 
         .run-btn {
@@ -201,6 +235,19 @@
             border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
         }
 
+        /* 읽기 전용 전체 단어집합 태그 */
+        .readonly-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--c-tag-bg);
+            color: var(--c-tag-text);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 1px solid rgba(165, 214, 167, 0.6);
+        }
+
         .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .vector-row { background: rgba(255, 255, 255, 0.6); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 12px; }
         
@@ -211,22 +258,6 @@
             font-family: 'Consolas', monospace; font-size: 13px; background: #fff; padding: 6px 10px;
             border-radius: 4px; border: 1px solid rgba(44, 42, 41, 0.05); color: var(--c-vector-text); word-break: break-all;
         }
-        
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; }
-        .add-section { display: flex; gap: 6px; align-items: center; }
-        .add-input { padding: 6px 10px; border: 1px solid var(--c-border); border-radius: 4px; width: 120px; font-size: 13px; outline: none; background: white; }
-        .add-input:focus { border-color: var(--c-accent); }
-        .add-btn { padding: 6px 12px; background-color: var(--c-accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
-        .add-btn:hover { background-color: var(--c-accent-hover); }
-
-        .editable-tag { 
-            display: inline-flex; align-items: center; justify-content: space-between; background-color: var(--c-tag-bg); 
-            color: var(--c-tag-text); padding: 4px 8px; border-radius: 4px; font-size: 13px; 
-            border: 1px solid rgba(165, 214, 167, 0.6); box-sizing: border-box; width: calc(25% - 6px); min-width: 104px;
-        }
-        .editable-tag input { border: none; background: transparent; color: var(--c-tag-text); font-size: 13px; font-family: inherit; width: 100%; text-align: center; font-weight: bold; }
-        .editable-tag input:focus { outline: none; background-color: #fff; border-radius: 2px; }
-        .delete-btn { margin-left: 4px; cursor: pointer; color: var(--c-removed-text); font-weight: bold; font-size: 14px; flex-shrink: 0; line-height: 1; }
 
         .right-panel-content::-webkit-scrollbar, .textarea-list::-webkit-scrollbar { width: 6px; }
         .right-panel-content::-webkit-scrollbar-track, .textarea-list::-webkit-scrollbar-track { background: transparent; }
@@ -303,9 +334,15 @@
                     <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)"></textarea>
                     <div class="char-counter" id="counter_0">0/100</div>
                 </div>
-                <div class="sentence-vocab-box" id="sentence_vocab_0">
-                    <span class="vocab-title">단어집합:</span>
-                    <span class="vocab-tags" id="vocab_tags_0">분석 대기 중...</span>
+                <div class="sentence-vocab-box">
+                    <div class="sentence-vocab-header">
+                        <span class="vocab-title">단어집합</span>
+                        <div class="add-mini-section">
+                            <input type="text" id="add_input_0" class="add-mini-input" placeholder="원형 단어">
+                            <button class="add-mini-btn" onclick="addWordToSentence(0)">추가</button>
+                        </div>
+                    </div>
+                    <div class="vocab-tags" id="vocab_tags_0"><span style="color:#aaa;">분석 대기 중...</span></div>
                 </div>
             </div>
 
@@ -315,9 +352,15 @@
                     <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)"></textarea>
                     <div class="char-counter" id="counter_1">0/100</div>
                 </div>
-                <div class="sentence-vocab-box" id="sentence_vocab_1">
-                    <span class="vocab-title">단어집합:</span>
-                    <span class="vocab-tags" id="vocab_tags_1">분석 대기 중...</span>
+                <div class="sentence-vocab-box">
+                    <div class="sentence-vocab-header">
+                        <span class="vocab-title">단어집합</span>
+                        <div class="add-mini-section">
+                            <input type="text" id="add_input_1" class="add-mini-input" placeholder="원형 단어">
+                            <button class="add-mini-btn" onclick="addWordToSentence(1)">추가</button>
+                        </div>
+                    </div>
+                    <div class="vocab-tags" id="vocab_tags_1"><span style="color:#aaa;">분석 대기 중...</span></div>
                 </div>
             </div>
 
@@ -327,9 +370,15 @@
                     <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)"></textarea>
                     <div class="char-counter" id="counter_2">0/100</div>
                 </div>
-                <div class="sentence-vocab-box" id="sentence_vocab_2">
-                    <span class="vocab-title">단어집합:</span>
-                    <span class="vocab-tags" id="vocab_tags_2">분석 대기 중...</span>
+                <div class="sentence-vocab-box">
+                    <div class="sentence-vocab-header">
+                        <span class="vocab-title">단어집합</span>
+                        <div class="add-mini-section">
+                            <input type="text" id="add_input_2" class="add-mini-input" placeholder="원형 단어">
+                            <button class="add-mini-btn" onclick="addWordToSentence(2)">추가</button>
+                        </div>
+                    </div>
+                    <div class="vocab-tags" id="vocab_tags_2"><span style="color:#aaa;">분석 대기 중...</span></div>
                 </div>
             </div>
         </div>
@@ -339,20 +388,14 @@
     <div class="card right-panel">
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
-            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 단어집합 (합집합)</button>
+            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 전체 단어집합</button>
             <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 원-핫 벡터</button>
             <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 빈도수 벡터</button>
         </div>
 
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
-                <div class="header-flex">
-                    <h3>1. 전체 단어집합 (합집합)</h3>
-                    <div class="add-section">
-                        <input type="text" id="newWordInput" class="add-input" placeholder="새 원형 단어">
-                        <button class="add-btn" onclick="addToken()">추가</button>
-                    </div>
-                </div>
+                <h3>1. 전체 단어집합</h3>
                 <div class="result-box" id="vocabContainer"></div>
             </div>
 
@@ -380,10 +423,9 @@ let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 
-let vocabulary = []; // 합집합 단어집합
-let processedCorpus = []; // 백엔드에서 반환하는 문장별 원형 텍스트
+let vocabulary = []; // 합집합 (전체 단어집합)
 let currentSentences = [];
-let sentenceVocabLists = []; // 문장별 개별 단어집합 배열
+let sentenceVocabMap = {}; // 각 문장 인덱스별 개별 단어집합 배열 { 0: ['읽다', '감동'], 1: [...] }
 let oneHotMatrix = [];
 let frequencyMatrix = [];
 
@@ -395,19 +437,26 @@ function updateCharCount(index) {
 
 function addInputField() {
     if (inputCount >= MAX_INPUTS) return;
+    const idx = inputCount;
     const container = document.getElementById("textareaList");
     const wrapper = document.createElement("div");
     wrapper.className = "textarea-wrapper";
-    wrapper.id = `wrapper_${inputCount}`;
+    wrapper.id = `wrapper_${idx}`;
     wrapper.innerHTML = `
-        <span class="label">문장 ${inputCount + 1}</span>
+        <span class="label">문장 ${idx + 1}</span>
         <div class="textarea-inner">
-            <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
-            <div class="char-counter" id="counter_${inputCount}">0/100</div>
+            <textarea id="input_${idx}" maxlength="100" oninput="updateCharCount(${idx})"></textarea>
+            <div class="char-counter" id="counter_${idx}">0/100</div>
         </div>
-        <div class="sentence-vocab-box" id="sentence_vocab_${inputCount}">
-            <span class="vocab-title">단어집합:</span>
-            <span class="vocab-tags" id="vocab_tags_${inputCount}">분석 대기 중...</span>
+        <div class="sentence-vocab-box">
+            <div class="sentence-vocab-header">
+                <span class="vocab-title">단어집합</span>
+                <div class="add-mini-section">
+                    <input type="text" id="add_input_${idx}" class="add-mini-input" placeholder="원형 단어">
+                    <button class="add-mini-btn" onclick="addWordToSentence(${idx})">추가</button>
+                </div>
+            </div>
+            <div class="vocab-tags" id="vocab_tags_${idx}"><span style="color:#aaa;">분석 대기 중...</span></div>
         </div>
     `;
     container.appendChild(wrapper);
@@ -420,7 +469,9 @@ function removeInputField() {
     if (inputCount <= MIN_INPUTS) return;
     inputCount--;
     document.getElementById(`wrapper_${inputCount}`).remove();
+    delete sentenceVocabMap[inputCount];
     updateControlButtons();
+    recalculateUnionAndVectors();
 }
 
 function updateControlButtons() {
@@ -444,13 +495,17 @@ function switchTab(tabId) {
 
 async function processNLPWithLoading() {
     const textFields = [];
+    const activeIndices = [];
+    
     for(let i = 0; i < inputCount; i++) {
         const val = document.getElementById(`input_${i}`).value.trim();
-        textFields.push(val); // 빈 문장이어도 인덱스를 맞추기 위해 push
+        if(val.length > 0) {
+            textFields.push(val);
+            activeIndices.push(i);
+        }
     }
 
-    const hasContent = textFields.some(t => t.length > 0);
-    if (!hasContent) {
+    if (textFields.length === 0) {
         alert("최소 하나 이상의 분석 문장을 입력해 주세요!");
         return;
     }
@@ -464,7 +519,7 @@ async function processNLPWithLoading() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sentences: currentSentences.filter(s => s.length > 0),
+                sentences: currentSentences,
                 custom_vocab: []
             })
         });
@@ -474,22 +529,19 @@ async function processNLPWithLoading() {
         }
 
         const data = await response.json();
-        
-        vocabulary = data.vocabulary || [];
-        processedCorpus = data.processed_corpus || [];
-        oneHotMatrix = data.one_hot || [];
-        frequencyMatrix = data.frequency || [];
+        const processedCorpus = data.processed_corpus || [];
 
-        // 문장별 원형 단어 리스트 파싱
-        sentenceVocabLists = processedCorpus.map(corpusStr => {
-            if (!corpusStr.trim()) return [];
-            // 중복 제거된 개별 단어집합
-            return Array.from(new Set(corpusStr.split(/\s+/)));
+        // 초기화
+        sentenceVocabMap = {};
+        
+        activeIndices.forEach((fieldIdx, arrayIdx) => {
+            const corpusStr = processedCorpus[arrayIdx] || "";
+            const words = corpusStr.trim() ? corpusStr.split(/\s+/) : [];
+            sentenceVocabMap[fieldIdx] = Array.from(new Set(words));
         });
 
-        renderLeftSentenceVocab(); // 좌측 문장별 개별 단어집합 렌더링
-        renderVocabEditor();       // 우측 전체 합집합 단어집합 렌더링
-        renderVectorDisplays();     // 원-핫 / 빈도수 벡터 렌더링
+        renderAllSentenceVocabs();
+        recalculateUnionAndVectors();
 
     } catch (e) {
         console.error(e);
@@ -499,81 +551,74 @@ async function processNLPWithLoading() {
     }
 }
 
-// 🔥 좌측 각 문장 아래 개별 단어집합 렌더링
-function renderLeftSentenceVocab() {
-    let validIndex = 0;
-    for (let i = 0; i < inputCount; i++) {
-        const tagContainer = document.getElementById(`vocab_tags_${i}`);
-        const inputVal = document.getElementById(`input_${i}`).value.trim();
+// 개별 문장에 단어 추가
+function addWordToSentence(sentenceIdx) {
+    const input = document.getElementById(`add_input_${sentenceIdx}`);
+    const word = input.value.trim();
+    if (!word) return;
 
-        if (!inputVal) {
-            tagContainer.innerHTML = "<span style='color:#aaa;'>입력 없음</span>";
-            continue;
-        }
-
-        const currentWords = sentenceVocabLists[validIndex] || [];
-        validIndex++;
-
-        if (currentWords.length === 0) {
-            tagContainer.innerHTML = "<span style='color:#aaa;'>추출된 단어 없음</span>";
-        } else {
-            tagContainer.innerHTML = currentWords.map(w => `<span class="mini-tag">${w}</span>`).join("");
-        }
-    }
-}
-
-// 우측 전체 단어집합 (합집합) 렌더링
-function renderVocabEditor() {
-    const container = document.getElementById("vocabContainer");
-    if (vocabulary.length === 0) {
-        container.innerHTML = "복원된 기본형 토큰 결과가 존재하지 않습니다.";
-        return;
+    if (!sentenceVocabMap[sentenceIdx]) {
+        sentenceVocabMap[sentenceIdx] = [];
     }
 
-    let html = "";
-    vocabulary.forEach((word, index) => {
-        html += `
-            <span class="editable-tag">
-                <input type="text" value="${word}" onchange="updateVocab(${index}, this.value)">
-                <span class="delete-btn" onclick="deleteVocab(${index})">×</span>
-            </span>
-        `;
-    });
-    container.innerHTML = html;
-}
-
-function updateVocab(index, newValue) {
-    const cleanValue = newValue.trim();
-    if(cleanValue) {
-        vocabulary[index] = cleanValue;
-        recalculateVectorsLocal(); 
-    }
-}
-
-function deleteVocab(index) {
-    vocabulary.splice(index, 1);
-    renderVocabEditor();
-    recalculateVectorsLocal();
-}
-
-function addToken() {
-    const input = document.getElementById("newWordInput");
-    const value = input.value.trim();
-    if (!value) return;
-    
-    if (!vocabulary.includes(value)) {
-        vocabulary.push(value);
-        renderVocabEditor();
-        recalculateVectorsLocal();
+    if (!sentenceVocabMap[sentenceIdx].includes(word)) {
+        sentenceVocabMap[sentenceIdx].push(word);
+        renderSentenceVocab(sentenceIdx);
+        recalculateUnionAndVectors();
     }
     input.value = "";
 }
 
-function recalculateVectorsLocal() {
+// 개별 문장에서 단어 삭제
+function deleteWordFromSentence(sentenceIdx, word) {
+    if (sentenceVocabMap[sentenceIdx]) {
+        sentenceVocabMap[sentenceIdx] = sentenceVocabMap[sentenceIdx].filter(w => w !== word);
+        renderSentenceVocab(sentenceIdx);
+        recalculateUnionAndVectors();
+    }
+}
+
+// 좌측 개별 문장 단어집합 렌더링
+function renderSentenceVocab(i) {
+    const tagContainer = document.getElementById(`vocab_tags_${i}`);
+    const words = sentenceVocabMap[i] || [];
+
+    if (words.length === 0) {
+        tagContainer.innerHTML = "<span style='color:#aaa;'>단어 없음</span>";
+    } else {
+        tagContainer.innerHTML = words.map(w => `
+            <span class="mini-tag">
+                ${w}
+                <span class="mini-tag-delete" onclick="deleteWordFromSentence(${i}, '${w}')">×</span>
+            </span>
+        `).join("");
+    }
+}
+
+function renderAllSentenceVocabs() {
+    for (let i = 0; i < inputCount; i++) {
+        renderSentenceVocab(i);
+    }
+}
+
+// 전체 합집합 단어집합 및 벡터 재계산
+function recalculateUnionAndVectors() {
+    const unionSet = new Set();
+    Object.values(sentenceVocabMap).forEach(list => {
+        list.forEach(w => unionSet.add(w));
+    });
+
+    vocabulary = Array.from(unionSet).sort();
+
+    // 벡터 행렬 생성
     oneHotMatrix = [];
     frequencyMatrix = [];
 
-    sentenceVocabLists.forEach(wordList => {
+    for (let i = 0; i < inputCount; i++) {
+        const inputVal = document.getElementById(`input_${i}`)?.value.trim();
+        if (!inputVal) continue;
+
+        const wordList = sentenceVocabMap[i] || [];
         const fVec = new Array(vocabulary.length).fill(0);
         
         wordList.forEach(w => {
@@ -585,9 +630,23 @@ function recalculateVectorsLocal() {
 
         frequencyMatrix.push(fVec);
         oneHotMatrix.push(ohVec);
-    });
+    }
 
+    renderReadonlyVocab();
     renderVectorDisplays();
+}
+
+// 우측 읽기 전용 전체 단어집합 렌더링
+function renderReadonlyVocab() {
+    const container = document.getElementById("vocabContainer");
+    if (vocabulary.length === 0) {
+        container.innerHTML = "<span style='color:#aaa;'>전체 단어 집합이 비어 있습니다.</span>";
+        return;
+    }
+
+    container.innerHTML = vocabulary.map(word => `
+        <span class="readonly-tag">${word}</span>
+    `).join("");
 }
 
 function renderVectorDisplays() {
@@ -603,15 +662,16 @@ function renderVectorDisplays() {
         return;
     }
 
-    let validIndex = 0;
-    currentSentences.forEach((sentence, i) => {
-        if (!sentence.trim()) return;
+    let vecIdx = 0;
+    for (let i = 0; i < inputCount; i++) {
+        const sentence = document.getElementById(`input_${i}`)?.value.trim();
+        if (!sentence) continue;
 
-        const currentWords = sentenceVocabLists[validIndex] || [];
+        const currentWords = sentenceVocabMap[i] || [];
         const tokensStr = currentWords.join(", ");
-        const ohVec = oneHotMatrix[validIndex] || [];
-        const fVec = frequencyMatrix[validIndex] || [];
-        validIndex++;
+        const ohVec = oneHotMatrix[vecIdx] || [];
+        const fVec = frequencyMatrix[vecIdx] || [];
+        vecIdx++;
 
         const ohRow = document.createElement("div");
         ohRow.className = "vector-row";
@@ -630,7 +690,7 @@ function renderVectorDisplays() {
             <div class="vector-display">[ ${fVec.join(", ")} ]</div>
         `;
         freqContainer.appendChild(fRow);
-    });
+    }
 }
 
 // 배경 신경망 애니메이션
