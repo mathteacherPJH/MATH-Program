@@ -115,17 +115,63 @@
         .control-btn:hover:not(:disabled) { background: #eee; }
         .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 4px; }
-        .textarea-wrapper { position: relative; display: flex; flex-direction: column; }
-        .textarea-wrapper span { font-size: 11px; color: var(--c-text-muted); margin-bottom: 4px; font-weight: bold; }
-        .textarea-wrapper .char-counter { position: absolute; bottom: 6px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
+        .textarea-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; padding-right: 4px; }
+        
+        /* 문장 세트 카드 (textarea + 단어집합) */
+        .textarea-wrapper { 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--c-border);
+        }
+        .textarea-wrapper span.label { font-size: 11px; color: var(--c-text-muted); font-weight: bold; }
+        .textarea-inner { position: relative; width: 100%; }
+        .textarea-wrapper .char-counter { position: absolute; bottom: 8px; right: 12px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
 
         textarea {
-            width: 100%; height: 70px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
-            border: 1px solid var(--c-border); border-radius: 8px; resize: none; font-family: inherit; font-size: 14px;
-            line-height: 1.5; background-color: rgba(255, 255, 255, 0.8); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
+            width: 100%; height: 60px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
+            border: 1px solid var(--c-border); border-radius: 6px; resize: none; font-family: inherit; font-size: 13px;
+            line-height: 1.4; background-color: rgba(255, 255, 255, 0.9); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
         }
         textarea:focus { border-color: var(--c-brand-green); }
+
+        /* 🔥 문장 개별 단어집합 영역 추가 스타일 */
+        .sentence-vocab-box {
+            background-color: var(--c-tab-bg);
+            border: 1px dashed rgba(27, 67, 50, 0.2);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--c-brand-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 24px;
+        }
+        .sentence-vocab-box .vocab-title {
+            font-weight: bold;
+            font-size: 11px;
+            color: var(--c-text-muted);
+            white-space: nowrap;
+        }
+        .sentence-vocab-box .vocab-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .mini-tag {
+            background: #FFFFFF;
+            border: 1px solid rgba(44, 42, 41, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--c-brand-green);
+            font-weight: bold;
+        }
 
         .run-btn {
             width: 100%; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
@@ -229,7 +275,7 @@
 
 <canvas id="neural-canvas"></canvas>
 
-<!-- Kiwi 엔진 명시 로딩 레이어 -->
+<!-- Kiwi 엔진 로딩 레이어 -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div class="loading-text">Kiwi 백엔드 엔진 형태소 분석 중...</div>
@@ -250,20 +296,41 @@
             </div>
         </div>
         <div class="textarea-list" id="textareaList">
+            <!-- 기본 3개 입력 영역 -->
             <div class="textarea-wrapper" id="wrapper_0">
-                <span>문장 1</span>
-                <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)"></textarea>
-                <div class="char-counter" id="counter_0">0/100</div>
+                <span class="label">문장 1</span>
+                <div class="textarea-inner">
+                    <textarea id="input_0" maxlength="100" oninput="updateCharCount(0)"></textarea>
+                    <div class="char-counter" id="counter_0">0/100</div>
+                </div>
+                <div class="sentence-vocab-box" id="sentence_vocab_0">
+                    <span class="vocab-title">단어집합:</span>
+                    <span class="vocab-tags" id="vocab_tags_0">분석 대기 중...</span>
+                </div>
             </div>
+
             <div class="textarea-wrapper" id="wrapper_1">
-                <span>문장 2</span>
-                <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)"></textarea>
-                <div class="char-counter" id="counter_1">0/100</div>
+                <span class="label">문장 2</span>
+                <div class="textarea-inner">
+                    <textarea id="input_1" maxlength="100" oninput="updateCharCount(1)"></textarea>
+                    <div class="char-counter" id="counter_1">0/100</div>
+                </div>
+                <div class="sentence-vocab-box" id="sentence_vocab_1">
+                    <span class="vocab-title">단어집합:</span>
+                    <span class="vocab-tags" id="vocab_tags_1">분석 대기 중...</span>
+                </div>
             </div>
+
             <div class="textarea-wrapper" id="wrapper_2">
-                <span>문장 3</span>
-                <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)"></textarea>
-                <div class="char-counter" id="counter_2">0/100</div>
+                <span class="label">문장 3</span>
+                <div class="textarea-inner">
+                    <textarea id="input_2" maxlength="100" oninput="updateCharCount(2)"></textarea>
+                    <div class="char-counter" id="counter_2">0/100</div>
+                </div>
+                <div class="sentence-vocab-box" id="sentence_vocab_2">
+                    <span class="vocab-title">단어집합:</span>
+                    <span class="vocab-tags" id="vocab_tags_2">분석 대기 중...</span>
+                </div>
             </div>
         </div>
         <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
@@ -272,7 +339,7 @@
     <div class="card right-panel">
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
-            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 단어집합</button>
+            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 단어집합 (합집합)</button>
             <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 원-핫 벡터</button>
             <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 빈도수 벡터</button>
         </div>
@@ -280,7 +347,7 @@
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
                 <div class="header-flex">
-                    <h3>1. 단어집합</h3>
+                    <h3>1. 전체 단어집합 (합집합)</h3>
                     <div class="add-section">
                         <input type="text" id="newWordInput" class="add-input" placeholder="새 원형 단어">
                         <button class="add-btn" onclick="addToken()">추가</button>
@@ -313,9 +380,10 @@ let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 
-let vocabulary = [];
-let processedCorpus = [];
+let vocabulary = []; // 합집합 단어집합
+let processedCorpus = []; // 백엔드에서 반환하는 문장별 원형 텍스트
 let currentSentences = [];
+let sentenceVocabLists = []; // 문장별 개별 단어집합 배열
 let oneHotMatrix = [];
 let frequencyMatrix = [];
 
@@ -332,9 +400,15 @@ function addInputField() {
     wrapper.className = "textarea-wrapper";
     wrapper.id = `wrapper_${inputCount}`;
     wrapper.innerHTML = `
-        <span>문장 ${inputCount + 1}</span>
-        <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
-        <div class="char-counter" id="counter_${inputCount}">0/100</div>
+        <span class="label">문장 ${inputCount + 1}</span>
+        <div class="textarea-inner">
+            <textarea id="input_${inputCount}" maxlength="100" oninput="updateCharCount(${inputCount})"></textarea>
+            <div class="char-counter" id="counter_${inputCount}">0/100</div>
+        </div>
+        <div class="sentence-vocab-box" id="sentence_vocab_${inputCount}">
+            <span class="vocab-title">단어집합:</span>
+            <span class="vocab-tags" id="vocab_tags_${inputCount}">분석 대기 중...</span>
+        </div>
     `;
     container.appendChild(wrapper);
     inputCount++;
@@ -370,12 +444,13 @@ function switchTab(tabId) {
 
 async function processNLPWithLoading() {
     const textFields = [];
-    for(let i=0; i<inputCount; i++) {
+    for(let i = 0; i < inputCount; i++) {
         const val = document.getElementById(`input_${i}`).value.trim();
-        if(val) textFields.push(val);
+        textFields.push(val); // 빈 문장이어도 인덱스를 맞추기 위해 push
     }
 
-    if (textFields.length === 0) {
+    const hasContent = textFields.some(t => t.length > 0);
+    if (!hasContent) {
         alert("최소 하나 이상의 분석 문장을 입력해 주세요!");
         return;
     }
@@ -389,7 +464,7 @@ async function processNLPWithLoading() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sentences: currentSentences,
+                sentences: currentSentences.filter(s => s.length > 0),
                 custom_vocab: []
             })
         });
@@ -405,8 +480,16 @@ async function processNLPWithLoading() {
         oneHotMatrix = data.one_hot || [];
         frequencyMatrix = data.frequency || [];
 
-        renderVocabEditor();
-        renderVectorDisplays();
+        // 문장별 원형 단어 리스트 파싱
+        sentenceVocabLists = processedCorpus.map(corpusStr => {
+            if (!corpusStr.trim()) return [];
+            // 중복 제거된 개별 단어집합
+            return Array.from(new Set(corpusStr.split(/\s+/)));
+        });
+
+        renderLeftSentenceVocab(); // 좌측 문장별 개별 단어집합 렌더링
+        renderVocabEditor();       // 우측 전체 합집합 단어집합 렌더링
+        renderVectorDisplays();     // 원-핫 / 빈도수 벡터 렌더링
 
     } catch (e) {
         console.error(e);
@@ -416,6 +499,30 @@ async function processNLPWithLoading() {
     }
 }
 
+// 🔥 좌측 각 문장 아래 개별 단어집합 렌더링
+function renderLeftSentenceVocab() {
+    let validIndex = 0;
+    for (let i = 0; i < inputCount; i++) {
+        const tagContainer = document.getElementById(`vocab_tags_${i}`);
+        const inputVal = document.getElementById(`input_${i}`).value.trim();
+
+        if (!inputVal) {
+            tagContainer.innerHTML = "<span style='color:#aaa;'>입력 없음</span>";
+            continue;
+        }
+
+        const currentWords = sentenceVocabLists[validIndex] || [];
+        validIndex++;
+
+        if (currentWords.length === 0) {
+            tagContainer.innerHTML = "<span style='color:#aaa;'>추출된 단어 없음</span>";
+        } else {
+            tagContainer.innerHTML = currentWords.map(w => `<span class="mini-tag">${w}</span>`).join("");
+        }
+    }
+}
+
+// 우측 전체 단어집합 (합집합) 렌더링
 function renderVocabEditor() {
     const container = document.getElementById("vocabContainer");
     if (vocabulary.length === 0) {
@@ -466,12 +573,11 @@ function recalculateVectorsLocal() {
     oneHotMatrix = [];
     frequencyMatrix = [];
 
-    processedCorpus.forEach(corpusStr => {
-        const tokens = corpusStr.split(/\s+/);
+    sentenceVocabLists.forEach(wordList => {
         const fVec = new Array(vocabulary.length).fill(0);
         
-        tokens.forEach(t => {
-            const idx = vocabulary.indexOf(t);
+        wordList.forEach(w => {
+            const idx = vocabulary.indexOf(w);
             if (idx !== -1) fVec[idx]++;
         });
 
@@ -497,16 +603,21 @@ function renderVectorDisplays() {
         return;
     }
 
+    let validIndex = 0;
     currentSentences.forEach((sentence, i) => {
-        const tokensStr = processedCorpus[i] ? processedCorpus[i].split(" ").join(", ") : "";
-        const ohVec = oneHotMatrix[i] || [];
-        const fVec = frequencyMatrix[i] || [];
+        if (!sentence.trim()) return;
+
+        const currentWords = sentenceVocabLists[validIndex] || [];
+        const tokensStr = currentWords.join(", ");
+        const ohVec = oneHotMatrix[validIndex] || [];
+        const fVec = frequencyMatrix[validIndex] || [];
+        validIndex++;
 
         const ohRow = document.createElement("div");
         ohRow.className = "vector-row";
         ohRow.innerHTML = `
             <div class="sentence-summary">문장 ${i + 1}: "${sentence}"</div>
-            <div class="tokens-summary">→ Kiwi 추출 형태소 리스트: [ ${tokensStr} ]</div>
+            <div class="tokens-summary">→ 추출 원형 단어 리스트: [ ${tokensStr} ]</div>
             <div class="vector-display">[ ${ohVec.join(", ")} ]</div>
         `;
         oneHotContainer.appendChild(ohRow);
@@ -515,7 +626,7 @@ function renderVectorDisplays() {
         fRow.className = "vector-row";
         fRow.innerHTML = `
             <div class="sentence-summary">문장 ${i + 1}: "${sentence}"</div>
-            <div class="tokens-summary">→ Kiwi 추출 형태소 리스트: [ ${tokensStr} ]</div>
+            <div class="tokens-summary">→ 추출 원형 단어 리스트: [ ${tokensStr} ]</div>
             <div class="vector-display">[ ${fVec.join(", ")} ]</div>
         `;
         freqContainer.appendChild(fRow);
