@@ -138,7 +138,6 @@
         }
         textarea:focus { border-color: var(--c-brand-green); }
 
-        /* 문장별 개별 단어집합 편집 영역 */
         .sentence-vocab-box {
             background-color: var(--c-tab-bg);
             border: 1px dashed rgba(27, 67, 50, 0.2);
@@ -188,7 +187,6 @@
             gap: 4px;
         }
 
-        /* ✏️ 편집 가능한 단어 태그 스타일 */
         .mini-tag {
             background: #FFFFFF;
             border: 1px solid rgba(44, 42, 41, 0.15);
@@ -251,7 +249,6 @@
             border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
         }
 
-        /* 읽기 전용 전체 단어집합 태그 */
         .readonly-tag {
             display: inline-flex;
             align-items: center;
@@ -322,7 +319,6 @@
 
 <canvas id="neural-canvas"></canvas>
 
-<!-- Kiwi 엔진 로딩 레이어 -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div class="loading-text">Kiwi 백엔드 엔진 형태소 분석 중...</div>
@@ -343,7 +339,6 @@
             </div>
         </div>
         <div class="textarea-list" id="textareaList">
-            <!-- 기본 3개 입력 영역 -->
             <div class="textarea-wrapper" id="wrapper_0">
                 <span class="label">문장 1</span>
                 <div class="textarea-inner">
@@ -439,9 +434,9 @@ let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 
-let vocabulary = []; // 합집합 (전체 단어집합)
+let vocabulary = []; // 전체 단어집합
 let currentSentences = [];
-let sentenceVocabMap = {}; // 각 문장 인덱스별 개별 단어집합 배열 { 0: ['읽다', '감동'], 1: [...] }
+let sentenceVocabMap = {}; // 개별 문장 단어집합 맵
 let oneHotMatrix = [];
 let frequencyMatrix = [];
 
@@ -509,12 +504,10 @@ function switchTab(tabId) {
     }
 }
 
-// ✨ 수정 및 개선된 백엔드 요청 함수
 async function processNLPWithLoading() {
     const textFields = [];
     const activeIndices = [];
     
-    // 입력창 중 내용이 있는 것만 수집 (인덱스 추적)
     for(let i = 0; i < inputCount; i++) {
         const val = document.getElementById(`input_${i}`).value.trim();
         if(val.length > 0) {
@@ -547,18 +540,16 @@ async function processNLPWithLoading() {
         }
 
         const data = await response.json();
+        console.log("🚀 백엔드 응답 데이터:", data);
+
         const processedCorpus = data.processed_corpus || [];
 
-        // 문장별 단어집합 맵 초기화
         sentenceVocabMap = {};
         
-        // 백엔드에서 복원되어 온 원형 텍스트(processedCorpus) 파싱
         activeIndices.forEach((fieldIdx, arrayIdx) => {
             const corpusStr = processedCorpus[arrayIdx] || "";
-            // 공백 기준으로 나누고 연속 공백이나 empty 값 필터링
             const rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
             
-            // 순서 보장 중복 제거
             const uniqueWords = [];
             rawWords.forEach(w => {
                 if (!uniqueWords.includes(w)) uniqueWords.push(w);
@@ -572,13 +563,12 @@ async function processNLPWithLoading() {
 
     } catch (e) {
         console.error(e);
-        alert("Kiwi 서버 통신 중 오류가 발생했습니다. (서버 준비 상태를 확인해 주세요)");
+        alert("Kiwi 서버 통신 중 오류가 발생했습니다.");
     } finally {
         overlay.classList.remove("active");
     }
 }
 
-// 개별 문장에 단어 추가
 function addWordToSentence(sentenceIdx) {
     const input = document.getElementById(`add_input_${sentenceIdx}`);
     const word = input.value.trim();
@@ -596,7 +586,6 @@ function addWordToSentence(sentenceIdx) {
     input.value = "";
 }
 
-// ✏️ 개별 문장의 단어 수정 (인덱스 기준)
 function updateWordInSentence(sentenceIdx, wordIdx, newValue) {
     const cleanValue = newValue.trim();
     if (!sentenceVocabMap[sentenceIdx]) return;
@@ -610,7 +599,6 @@ function updateWordInSentence(sentenceIdx, wordIdx, newValue) {
     recalculateUnionAndVectors();
 }
 
-// 개별 문장에서 단어 삭제
 function deleteWordFromSentence(sentenceIdx, wordIdx) {
     if (sentenceVocabMap[sentenceIdx]) {
         sentenceVocabMap[sentenceIdx].splice(wordIdx, 1);
@@ -619,7 +607,6 @@ function deleteWordFromSentence(sentenceIdx, wordIdx) {
     }
 }
 
-// 좌측 개별 문장 단어집합 렌더링 (편집창 포함)
 function renderSentenceVocab(i) {
     const tagContainer = document.getElementById(`vocab_tags_${i}`);
     const words = sentenceVocabMap[i] || [];
@@ -644,7 +631,6 @@ function renderAllSentenceVocabs() {
     }
 }
 
-// 전체 합집합 단어집합 및 벡터 재계산
 function recalculateUnionAndVectors() {
     const unionSet = new Set();
     Object.values(sentenceVocabMap).forEach(list => {
@@ -653,7 +639,6 @@ function recalculateUnionAndVectors() {
 
     vocabulary = Array.from(unionSet).sort();
 
-    // 벡터 행렬 생성
     oneHotMatrix = [];
     frequencyMatrix = [];
 
@@ -679,7 +664,6 @@ function recalculateUnionAndVectors() {
     renderVectorDisplays();
 }
 
-// 우측 읽기 전용 전체 단어집합 렌더링
 function renderReadonlyVocab() {
     const container = document.getElementById("vocabContainer");
     if (vocabulary.length === 0) {
