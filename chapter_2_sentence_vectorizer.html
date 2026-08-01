@@ -509,10 +509,12 @@ function switchTab(tabId) {
     }
 }
 
+// ✨ 수정 및 개선된 백엔드 요청 함수
 async function processNLPWithLoading() {
     const textFields = [];
     const activeIndices = [];
     
+    // 입력창 중 내용이 있는 것만 수집 (인덱스 추적)
     for(let i = 0; i < inputCount; i++) {
         const val = document.getElementById(`input_${i}`).value.trim();
         if(val.length > 0) {
@@ -547,13 +549,22 @@ async function processNLPWithLoading() {
         const data = await response.json();
         const processedCorpus = data.processed_corpus || [];
 
-        // 초기화
+        // 문장별 단어집합 맵 초기화
         sentenceVocabMap = {};
         
+        // 백엔드에서 복원되어 온 원형 텍스트(processedCorpus) 파싱
         activeIndices.forEach((fieldIdx, arrayIdx) => {
             const corpusStr = processedCorpus[arrayIdx] || "";
-            const words = corpusStr.trim() ? corpusStr.split(/\s+/) : [];
-            sentenceVocabMap[fieldIdx] = Array.from(new Set(words));
+            // 공백 기준으로 나누고 연속 공백이나 empty 값 필터링
+            const rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
+            
+            // 순서 보장 중복 제거
+            const uniqueWords = [];
+            rawWords.forEach(w => {
+                if (!uniqueWords.includes(w)) uniqueWords.push(w);
+            });
+
+            sentenceVocabMap[fieldIdx] = uniqueWords;
         });
 
         renderAllSentenceVocabs();
@@ -593,7 +604,6 @@ function updateWordInSentence(sentenceIdx, wordIdx, newValue) {
     if (cleanValue) {
         sentenceVocabMap[sentenceIdx][wordIdx] = cleanValue;
     } else {
-        // 빈 문자열로 수정할 경우 삭제 처리
         sentenceVocabMap[sentenceIdx].splice(wordIdx, 1);
     }
     renderSentenceVocab(sentenceIdx);
