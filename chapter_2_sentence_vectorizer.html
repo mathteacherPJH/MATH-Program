@@ -266,9 +266,11 @@
             border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
         }
 
-        .readonly-tag {
+        /* 💡 드래그 앤 드롭 태그 전용 스타일 추가 */
+        .draggable-tag {
             display: inline-flex;
             align-items: center;
+            gap: 6px;
             background-color: var(--c-tag-bg);
             color: var(--c-tag-text);
             padding: 6px 12px;
@@ -276,6 +278,27 @@
             font-size: 13px;
             font-weight: bold;
             border: 1px solid rgba(165, 214, 167, 0.6);
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.15s, opacity 0.15s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .draggable-tag:active { cursor: grabbing; }
+        .draggable-tag.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+            background-color: #C8E6C9;
+        }
+        .tag-index-badge {
+            font-size: 10px;
+            background-color: var(--c-brand-green);
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .vector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
@@ -427,7 +450,7 @@
 
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
-                <h3>1. 전체 단어집합</h3>
+                <h3>1. 전체 단어집합 <span style="font-size:11px; font-weight:normal; color:var(--c-text-muted);">(💡 마우스 좌클릭 꾹 눌러서 순서 변경 가능)</span></h3>
                 <div class="result-box" id="vocabContainer"></div>
             </div>
 
@@ -505,7 +528,7 @@ function removeInputField() {
     document.getElementById(`wrapper_${inputCount}`).remove();
     delete sentenceVocabMap[inputCount];
     updateControlButtons();
-    recalculateUnionAndVectors();
+    recalculateUnionAndVectors(true); // 자동 정렬 포함 초기화
 }
 
 function updateControlButtons() {
@@ -578,7 +601,7 @@ async function processNLPWithLoading() {
         });
 
         renderAllSentenceVocabs();
-        recalculateUnionAndVectors();
+        recalculateUnionAndVectors(true); // 새 요청 시 vocabulary 자동 정렬
 
     } catch (e) {
         console.error(e);
@@ -625,7 +648,7 @@ function addWordToSentence(sentenceIdx) {
     if (!sentenceVocabMap[sentenceIdx].includes(word)) {
         sentenceVocabMap[sentenceIdx].push(word);
         renderSentenceVocab(sentenceIdx);
-        recalculateUnionAndVectors();
+        recalculateUnionAndVectors(false); // 기존 사용자가 커스텀한 vocabulary 순서 유지하며 새 단어만 추가
     }
     input.value = "";
 }
@@ -640,14 +663,14 @@ function updateWordInSentence(sentenceIdx, wordIdx, newValue) {
         sentenceVocabMap[sentenceIdx].splice(wordIdx, 1);
     }
     renderSentenceVocab(sentenceIdx);
-    recalculateUnionAndVectors();
+    recalculateUnionAndVectors(true);
 }
 
 function deleteWordFromSentence(sentenceIdx, wordIdx) {
     if (sentenceVocabMap[sentenceIdx]) {
         sentenceVocabMap[sentenceIdx].splice(wordIdx, 1);
         renderSentenceVocab(sentenceIdx);
-        recalculateUnionAndVectors();
+        recalculateUnionAndVectors(true);
     }
 }
 
@@ -675,14 +698,35 @@ function renderAllSentenceVocabs() {
     }
 }
 
-function recalculateUnionAndVectors() {
+// 💡 vocabulary 정렬 및 벡터 재계산 로직 (Drag & Drop 대응)
+function recalculateUnionAndVectors(shouldSort = false) {
     const unionSet = new Set();
     Object.values(sentenceVocabMap).forEach(list => {
         list.forEach(w => unionSet.add(w));
     });
 
-    vocabulary = Array.from(unionSet).sort();
+    const currentUnionArray = Array.from(unionSet);
 
+    if (shouldSort || vocabulary.length === 0) {
+        // 새로 분석을 누르거나 초기화 시 사전순 정렬
+        vocabulary = currentUnionArray.sort();
+    } else {
+        // 기존 vocabulary 순서를 최대한 유지하면서 삭제된 건 지우고 새 단어는 뒤에 추가
+        vocabulary = vocabulary.filter(w => unionSet.has(w));
+        currentUnionArray.forEach(w => {
+            if (!vocabulary.includes(w)) {
+                vocabulary.push(w);
+            }
+        });
+    }
+
+    // 변경된 vocabulary 순서에 맞춰 벡터 계산
+    computeMatrixes();
+    renderReadonlyVocab();
+    renderVectorDisplays();
+}
+
+function computeMatrixes() {
     oneHotMatrix = [];
     frequencyMatrix = [];
 
@@ -703,11 +747,9 @@ function recalculateUnionAndVectors() {
         frequencyMatrix.push(fVec);
         oneHotMatrix.push(ohVec);
     }
-
-    renderReadonlyVocab();
-    renderVectorDisplays();
 }
 
+// 💡 1. 전체 단어집합 랜더링 & 드래그 앤 드롭 이벤트 등록
 function renderReadonlyVocab() {
     const container = document.getElementById("vocabContainer");
     if (vocabulary.length === 0) {
@@ -715,9 +757,56 @@ function renderReadonlyVocab() {
         return;
     }
 
-    container.innerHTML = vocabulary.map(word => `
-        <span class="readonly-tag">${word}</span>
+    container.innerHTML = vocabulary.map((word, index) => `
+        <span class="draggable-tag" draggable="true" data-index="${index}">
+            <span class="tag-index-badge">${index + 1}</span>
+            <span>${word}</span>
+        </span>
     `).join("");
+
+    // 드래그 앤 드롭 이벤트 바인딩
+    const tagElements = container.querySelectorAll('.draggable-tag');
+    tagElements.forEach(tag => {
+        tag.addEventListener('dragstart', handleDragStart);
+        tag.addEventListener('dragover', handleDragOver);
+        tag.addEventListener('drop', handleDrop);
+        tag.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+// --- Drag & Drop 핸들러 ---
+let dragSrcIndex = null;
+
+function handleDragStart(e) {
+    dragSrcIndex = Number(this.dataset.index);
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const targetIndex = Number(this.dataset.index);
+
+    if (dragSrcIndex !== null && dragSrcIndex !== targetIndex) {
+        // vocabulary 배열 내 순서 변경
+        const movedWord = vocabulary.splice(dragSrcIndex, 1)[0];
+        vocabulary.splice(targetIndex, 0, movedWord);
+
+        // 변경된 vocabulary 순서에 맞춰 벡터 재계산 및 출력 재갱신
+        computeMatrixes();
+        renderReadonlyVocab();
+        renderVectorDisplays();
+    }
+}
+
+function handleDragEnd() {
+    this.classList.remove('dragging');
+    dragSrcIndex = null;
 }
 
 function renderVectorDisplays() {
