@@ -187,6 +187,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            min-height: 20px;
         }
 
         .mini-tag {
@@ -223,7 +224,6 @@
             line-height: 1;
         }
 
-        /* 하단 버튼 영역 그리드 */
         .action-btn-group {
             display: flex;
             gap: 8px;
@@ -370,7 +370,7 @@
                             <button class="add-mini-btn" onclick="addWordToSentence(0)">추가</button>
                         </div>
                     </div>
-                    <div class="vocab-tags" id="vocab_tags_0"><span style="color:#aaa;">분석 대기 중...</span></div>
+                    <div class="vocab-tags" id="vocab_tags_0"></div>
                 </div>
             </div>
 
@@ -388,7 +388,7 @@
                             <button class="add-mini-btn" onclick="addWordToSentence(1)">추가</button>
                         </div>
                     </div>
-                    <div class="vocab-tags" id="vocab_tags_1"><span style="color:#aaa;">분석 대기 중...</span></div>
+                    <div class="vocab-tags" id="vocab_tags_1"></div>
                 </div>
             </div>
 
@@ -406,12 +406,11 @@
                             <button class="add-mini-btn" onclick="addWordToSentence(2)">추가</button>
                         </div>
                     </div>
-                    <div class="vocab-tags" id="vocab_tags_2"><span style="color:#aaa;">분석 대기 중...</span></div>
+                    <div class="vocab-tags" id="vocab_tags_2"></div>
                 </div>
             </div>
         </div>
 
-        <!-- 하단 버튼 영역 (분석 실행 / 지우기) -->
         <div class="action-btn-group">
             <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
             <button class="clear-btn" id="clearBtn" onclick="clearAllInputs()">지우기 🗑️</button>
@@ -491,7 +490,7 @@ function addInputField() {
                     <button class="add-mini-btn" onclick="addWordToSentence(${idx})">추가</button>
                 </div>
             </div>
-            <div class="vocab-tags" id="vocab_tags_${idx}"><span style="color:#aaa;">분석 대기 중...</span></div>
+            <div class="vocab-tags" id="vocab_tags_${idx}"></div>
         </div>
     `;
     container.appendChild(wrapper);
@@ -589,7 +588,6 @@ async function processNLPWithLoading() {
     }
 }
 
-// 🗑️ 모든 문장 및 단어집합 초기화(지우기) 함수
 function clearAllInputs() {
     for (let i = 0; i < inputCount; i++) {
         const textarea = document.getElementById(`input_${i}`);
@@ -602,17 +600,15 @@ function clearAllInputs() {
         if (addInput) addInput.value = "";
 
         const tagContainer = document.getElementById(`vocab_tags_${i}`);
-        if (tagContainer) tagContainer.innerHTML = "<span style='color:#aaa;'>분석 대기 중...</span>";
+        if (tagContainer) tagContainer.innerHTML = "";
     }
 
-    // 데이터 변수 초기화
     sentenceVocabMap = {};
     vocabulary = [];
     currentSentences = [];
     oneHotMatrix = [];
     frequencyMatrix = [];
 
-    // 우측 결과 화면 초기화
     renderReadonlyVocab();
     renderVectorDisplays();
 }
@@ -660,7 +656,7 @@ function renderSentenceVocab(i) {
     const words = sentenceVocabMap[i] || [];
 
     if (words.length === 0) {
-        tagContainer.innerHTML = "<span style='color:#aaa;'>단어 없음</span>";
+        tagContainer.innerHTML = "";
     } else {
         tagContainer.innerHTML = words.map((w, wIdx) => `
             <span class="mini-tag">
@@ -715,7 +711,7 @@ function recalculateUnionAndVectors() {
 function renderReadonlyVocab() {
     const container = document.getElementById("vocabContainer");
     if (vocabulary.length === 0) {
-        container.innerHTML = "<span style='color:#aaa;'>전체 단어 집합이 비어 있습니다.</span>";
+        container.innerHTML = "";
         return;
     }
 
@@ -732,8 +728,6 @@ function renderVectorDisplays() {
     freqContainer.innerHTML = "";
 
     if(vocabulary.length === 0) {
-        oneHotContainer.innerHTML = "단어 집합이 비어있어 변환이 취소되었습니다.";
-        freqContainer.innerHTML = "단어 집합이 비어있어 변환이 취소되었습니다.";
         return;
     }
 
@@ -768,7 +762,7 @@ function renderVectorDisplays() {
     }
 }
 
-// 신경망 애니메이션
+// 신경망 배경 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
