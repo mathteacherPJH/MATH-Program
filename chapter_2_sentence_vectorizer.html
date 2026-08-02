@@ -21,6 +21,8 @@
             --c-removed-text: #C62828;
             --c-vector-text: #0D47A1;
             --c-tab-bg: #F4F1EA;
+            --c-clear-btn: #7D7569;
+            --c-clear-btn-hover: #5A534A;
         }
 
         body {
@@ -221,12 +223,27 @@
             line-height: 1;
         }
 
+        /* 하단 버튼 영역 그리드 */
+        .action-btn-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
         .run-btn {
-            width: 100%; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
-            cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); flex-shrink: 0;
+            flex: 3; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 15px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
         }
         .run-btn:hover { background-color: var(--c-brand-green-hover); }
+
+        .clear-btn {
+            flex: 1; padding: 14px 12px; background-color: var(--c-clear-btn); color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.03em;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); white-space: nowrap;
+        }
+        .clear-btn:hover { background-color: var(--c-clear-btn-hover); }
 
         .right-panel { flex: 2; height: 100%; overflow: hidden; gap: 14px; }
         .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
@@ -321,7 +338,7 @@
 
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div class="loading-text">Kiwi 백엔드 엔진 형태소 분석 중...</div>
+    <div class="loading-text">단어집합 구성 중...</div>
 </div>
 
 <nav class="top-navbar">
@@ -393,7 +410,12 @@
                 </div>
             </div>
         </div>
-        <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
+
+        <!-- 하단 버튼 영역 (분석 실행 / 지우기) -->
+        <div class="action-btn-group">
+            <button class="run-btn" id="runBtn" onclick="processNLPWithLoading()">분석 실행 ⚡</button>
+            <button class="clear-btn" id="clearBtn" onclick="clearAllInputs()">지우기 🗑️</button>
+        </div>
     </div>
 
     <div class="card right-panel">
@@ -443,7 +465,9 @@ let frequencyMatrix = [];
 function updateCharCount(index) {
     const textarea = document.getElementById(`input_${index}`);
     const counter = document.getElementById(`counter_${index}`);
-    counter.innerText = `${textarea.value.length}/100`;
+    if (textarea && counter) {
+        counter.innerText = `${textarea.value.length}/100`;
+    }
 }
 
 function addInputField() {
@@ -563,6 +587,34 @@ async function processNLPWithLoading() {
     } finally {
         overlay.classList.remove("active");
     }
+}
+
+// 🗑️ 모든 문장 및 단어집합 초기화(지우기) 함수
+function clearAllInputs() {
+    for (let i = 0; i < inputCount; i++) {
+        const textarea = document.getElementById(`input_${i}`);
+        if (textarea) textarea.value = "";
+        
+        const counter = document.getElementById(`counter_${i}`);
+        if (counter) counter.innerText = "0/100";
+
+        const addInput = document.getElementById(`add_input_${i}`);
+        if (addInput) addInput.value = "";
+
+        const tagContainer = document.getElementById(`vocab_tags_${i}`);
+        if (tagContainer) tagContainer.innerHTML = "<span style='color:#aaa;'>분석 대기 중...</span>";
+    }
+
+    // 데이터 변수 초기화
+    sentenceVocabMap = {};
+    vocabulary = [];
+    currentSentences = [];
+    oneHotMatrix = [];
+    frequencyMatrix = [];
+
+    // 우측 결과 화면 초기화
+    renderReadonlyVocab();
+    renderVectorDisplays();
 }
 
 function addWordToSentence(sentenceIdx) {
@@ -716,7 +768,7 @@ function renderVectorDisplays() {
     }
 }
 
-// 배경 신경망 애니메이션
+// 신경망 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
