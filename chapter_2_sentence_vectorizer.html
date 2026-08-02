@@ -266,7 +266,6 @@
             border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
         }
 
-        /* 💡 드래그 앤 드롭 태그 전용 스타일 추가 */
         .draggable-tag {
             display: inline-flex;
             align-items: center;
@@ -387,7 +386,7 @@
                 </div>
                 <div class="sentence-vocab-box">
                     <div class="sentence-vocab-header">
-                        <span class="vocab-title">단어집합</span>
+                        <span class="vocab-title">단어가방 (Bag of Words)</span>
                         <div class="add-mini-section">
                             <input type="text" id="add_input_0" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(0)">
                             <button class="add-mini-btn" onclick="addWordToSentence(0)">추가</button>
@@ -405,7 +404,7 @@
                 </div>
                 <div class="sentence-vocab-box">
                     <div class="sentence-vocab-header">
-                        <span class="vocab-title">단어집합</span>
+                        <span class="vocab-title">단어가방 (Bag of Words)</span>
                         <div class="add-mini-section">
                             <input type="text" id="add_input_1" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(1)">
                             <button class="add-mini-btn" onclick="addWordToSentence(1)">추가</button>
@@ -423,7 +422,7 @@
                 </div>
                 <div class="sentence-vocab-box">
                     <div class="sentence-vocab-header">
-                        <span class="vocab-title">단어집합</span>
+                        <span class="vocab-title">단어가방 (Bag of Words)</span>
                         <div class="add-mini-section">
                             <input type="text" id="add_input_2" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(2)">
                             <button class="add-mini-btn" onclick="addWordToSentence(2)">추가</button>
@@ -450,7 +449,7 @@
 
         <div class="right-panel-content">
             <div id="sec_1" class="result-section">
-                <h3>1. 전체 단어집합 <span style="font-size:11px; font-weight:normal; color:var(--c-text-muted);">(💡 마우스 좌클릭 꾹 눌러서 순서 변경 가능)</span></h3>
+                <h3>1. 전체 단어집합</h3>
                 <div class="result-box" id="vocabContainer"></div>
             </div>
 
@@ -480,7 +479,7 @@ const MAX_INPUTS = 10;
 
 let vocabulary = [];
 let currentSentences = [];
-let sentenceVocabMap = {};
+let sentenceVocabMap = {}; // 각 문장별 단어가방 (중복 허용)
 let oneHotMatrix = [];
 let frequencyMatrix = [];
 
@@ -507,7 +506,7 @@ function addInputField() {
         </div>
         <div class="sentence-vocab-box">
             <div class="sentence-vocab-header">
-                <span class="vocab-title">단어집합</span>
+                <span class="vocab-title">단어가방 (Bag of Words)</span>
                 <div class="add-mini-section">
                     <input type="text" id="add_input_${idx}" class="add-mini-input" placeholder="원형 단어" onkeypress="if(event.key==='Enter') addWordToSentence(${idx})">
                     <button class="add-mini-btn" onclick="addWordToSentence(${idx})">추가</button>
@@ -528,7 +527,7 @@ function removeInputField() {
     document.getElementById(`wrapper_${inputCount}`).remove();
     delete sentenceVocabMap[inputCount];
     updateControlButtons();
-    recalculateUnionAndVectors(true); // 자동 정렬 포함 초기화
+    recalculateUnionAndVectors(true);
 }
 
 function updateControlButtons() {
@@ -586,22 +585,19 @@ async function processNLPWithLoading() {
         }
 
         const data = await response.json();
-        console.log("🔥 백엔드가 보낸 원본 processed_corpus:", data.processed_corpus);
-
         const processedCorpus = data.processed_corpus || [];
 
         sentenceVocabMap = {};
         
         activeIndices.forEach((fieldIdx, arrayIdx) => {
             const corpusStr = processedCorpus[arrayIdx] || "";
+            // 💡 [핵심 수정] Set(중복제거)을 제거하고 형태소 추출된 원본 리스트(중복 포함)를 그대로 보존합니다.
             const rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
-            
-            const uniqueWords = Array.from(new Set(rawWords));
-            sentenceVocabMap[fieldIdx] = uniqueWords;
+            sentenceVocabMap[fieldIdx] = rawWords;
         });
 
         renderAllSentenceVocabs();
-        recalculateUnionAndVectors(true); // 새 요청 시 vocabulary 자동 정렬
+        recalculateUnionAndVectors(true);
 
     } catch (e) {
         console.error(e);
@@ -645,11 +641,10 @@ function addWordToSentence(sentenceIdx) {
         sentenceVocabMap[sentenceIdx] = [];
     }
 
-    if (!sentenceVocabMap[sentenceIdx].includes(word)) {
-        sentenceVocabMap[sentenceIdx].push(word);
-        renderSentenceVocab(sentenceIdx);
-        recalculateUnionAndVectors(false); // 기존 사용자가 커스텀한 vocabulary 순서 유지하며 새 단어만 추가
-    }
+    // 개별 문장 단어가방에는 중복 단어 추가도 가능하도록 허용
+    sentenceVocabMap[sentenceIdx].push(word);
+    renderSentenceVocab(sentenceIdx);
+    recalculateUnionAndVectors(false);
     input.value = "";
 }
 
@@ -698,7 +693,7 @@ function renderAllSentenceVocabs() {
     }
 }
 
-// 💡 vocabulary 정렬 및 벡터 재계산 로직 (Drag & Drop 대응)
+// 💡 전체 단어집합은 중복을 제거한 합집합(Union Set)으로 구성
 function recalculateUnionAndVectors(shouldSort = false) {
     const unionSet = new Set();
     Object.values(sentenceVocabMap).forEach(list => {
@@ -708,10 +703,8 @@ function recalculateUnionAndVectors(shouldSort = false) {
     const currentUnionArray = Array.from(unionSet);
 
     if (shouldSort || vocabulary.length === 0) {
-        // 새로 분석을 누르거나 초기화 시 사전순 정렬
         vocabulary = currentUnionArray.sort();
     } else {
-        // 기존 vocabulary 순서를 최대한 유지하면서 삭제된 건 지우고 새 단어는 뒤에 추가
         vocabulary = vocabulary.filter(w => unionSet.has(w));
         currentUnionArray.forEach(w => {
             if (!vocabulary.includes(w)) {
@@ -720,7 +713,6 @@ function recalculateUnionAndVectors(shouldSort = false) {
         });
     }
 
-    // 변경된 vocabulary 순서에 맞춰 벡터 계산
     computeMatrixes();
     renderReadonlyVocab();
     renderVectorDisplays();
@@ -737,6 +729,7 @@ function computeMatrixes() {
         const wordList = sentenceVocabMap[i] || [];
         const fVec = new Array(vocabulary.length).fill(0);
         
+        // 💡 단어가 나오는 횟수만큼 인덱스 카운트 증가 (빈도수 정확 반영)
         wordList.forEach(w => {
             const idx = vocabulary.indexOf(w);
             if (idx !== -1) fVec[idx]++;
@@ -749,7 +742,6 @@ function computeMatrixes() {
     }
 }
 
-// 💡 1. 전체 단어집합 랜더링 & 드래그 앤 드롭 이벤트 등록
 function renderReadonlyVocab() {
     const container = document.getElementById("vocabContainer");
     if (vocabulary.length === 0) {
@@ -764,7 +756,6 @@ function renderReadonlyVocab() {
         </span>
     `).join("");
 
-    // 드래그 앤 드롭 이벤트 바인딩
     const tagElements = container.querySelectorAll('.draggable-tag');
     tagElements.forEach(tag => {
         tag.addEventListener('dragstart', handleDragStart);
@@ -774,7 +765,7 @@ function renderReadonlyVocab() {
     });
 }
 
-// --- Drag & Drop 핸들러 ---
+// Drag & Drop 핸들러
 let dragSrcIndex = null;
 
 function handleDragStart(e) {
@@ -793,11 +784,9 @@ function handleDrop(e) {
     const targetIndex = Number(this.dataset.index);
 
     if (dragSrcIndex !== null && dragSrcIndex !== targetIndex) {
-        // vocabulary 배열 내 순서 변경
         const movedWord = vocabulary.splice(dragSrcIndex, 1)[0];
         vocabulary.splice(targetIndex, 0, movedWord);
 
-        // 변경된 vocabulary 순서에 맞춰 벡터 재계산 및 출력 재갱신
         computeMatrixes();
         renderReadonlyVocab();
         renderVectorDisplays();
