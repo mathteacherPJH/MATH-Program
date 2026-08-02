@@ -434,9 +434,9 @@ let inputCount = 3;
 const MIN_INPUTS = 3;
 const MAX_INPUTS = 10;
 
-let vocabulary = []; // 전체 단어집합
+let vocabulary = [];
 let currentSentences = [];
-let sentenceVocabMap = {}; // 개별 문장 단어집합 맵
+let sentenceVocabMap = {};
 let oneHotMatrix = [];
 let frequencyMatrix = [];
 
@@ -540,7 +540,7 @@ async function processNLPWithLoading() {
         }
 
         const data = await response.json();
-        console.log("🚀 백엔드 응답 데이터:", data);
+        console.log("🔥 백엔드가 보낸 원본 processed_corpus:", data.processed_corpus);
 
         const processedCorpus = data.processed_corpus || [];
 
@@ -550,11 +550,7 @@ async function processNLPWithLoading() {
             const corpusStr = processedCorpus[arrayIdx] || "";
             const rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
             
-            const uniqueWords = [];
-            rawWords.forEach(w => {
-                if (!uniqueWords.includes(w)) uniqueWords.push(w);
-            });
-
+            const uniqueWords = Array.from(new Set(rawWords));
             sentenceVocabMap[fieldIdx] = uniqueWords;
         });
 
