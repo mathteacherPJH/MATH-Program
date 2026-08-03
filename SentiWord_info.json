@@ -1,4 +1,16 @@
 [
+  {
+    "_comment": "KNU Korean Sentiment Lexicon developed by Kunsan National University DKE Lab",
+    "_source": "https://github.com/parkmyeongbin/KNU_Sentiment_Lexicon"
+  },
+  {
+    "word": "(-;",
+    "word_root": "(",
+    "polarity": "1"
+  },
+  ...
+]
+[
 {
 	"word": "(-;",
 	"word_root": "(",
