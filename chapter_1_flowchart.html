@@ -92,12 +92,12 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 */
+        /* 메인 레이아웃 (3컬럼 구조) */
         .main-layout {
             display: flex;
             width: 100%; 
             height: calc(100vh - 110px); 
-            gap: 20px;
+            gap: 16px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
@@ -107,7 +107,7 @@
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 20px;
+            padding: 18px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -115,12 +115,13 @@
             flex-direction: column;
         }
 
-        /* 좌측 패널 (도형 기호 및 사용법) */
+        /* 1. 좌측 패널 (도형 기호 및 설명) */
         .left-panel {
-            flex: 1; 
-            max-width: 280px;
+            flex: 0.8; 
+            min-width: 200px;
+            max-width: 230px;
             height: 100%;
-            gap: 20px;
+            gap: 16px;
         }
 
         .section-title {
@@ -133,13 +134,13 @@
 
         .symbol-btn {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: 11px;
+            margin-bottom: 8px;
             border: 1px solid rgba(27, 67, 50, 0.2);
             background: var(--c-tag-bg);
             color: var(--c-brand-green);
             font-weight: bold;
-            font-size: 13px;
+            font-size: 12px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
@@ -155,45 +156,44 @@
         }
 
         .info-box {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--c-text-muted);
             line-height: 1.6;
             background-color: rgba(244, 241, 234, 0.6);
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             border: 1px solid var(--c-border);
         }
 
-        /* 우측 패널 (캔버스 및 하단 패널) */
-        .right-panel {
-            flex: 3.5;
+        /* 2. 중앙 패널 (순서도 캔버스) */
+        .center-panel {
+            flex: 2.2;
             height: 100%;
             overflow: hidden;
-            gap: 14px;
+            gap: 10px;
             position: relative;
         }
 
-        /* 툴바 */
         #toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--c-border);
         }
 
         .tool-group {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
         .btn {
-            padding: 9px 16px;
+            padding: 8px 12px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
             letter-spacing: 0.03em;
@@ -205,11 +205,10 @@
         .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
         .btn-danger:hover { background: #ffcdd2; }
 
-        /* 캔버스 영역 */
         #canvas-container {
             flex: 1;
             position: relative;
-            overflow: hidden;
+            overflow: auto; /* 세로 스크롤 지원 */
             background-color: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
@@ -226,11 +225,57 @@
             pointer-events: none;
         }
 
-        /* 노드 디지인 */
+        /* 3. 우측 패널 (의조코드 상단 / 모니터링 하단) */
+        .right-panel {
+            flex: 1.2;
+            min-width: 280px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(244, 241, 234, 0.5);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 12px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .panel-box h4 {
+            margin: 0 0 8px 2px;
+            color: var(--c-brand-green);
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-content {
+            flex: 1;
+            background: #FFFFFF;
+            border: 1px solid var(--c-border);
+            padding: 10px;
+            border-radius: 6px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            color: var(--c-text-main);
+            font-family: 'Consolas', monospace;
+        }
+
+        /* 노드 디자인 */
         .node {
             position: absolute;
-            width: 120px;
-            height: 55px;
+            width: 130px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -243,7 +288,7 @@
             border: 2px solid var(--c-brand-green);
             color: var(--c-text-main);
             text-align: center;
-            font-size: 13px;
+            font-size: 12px;
             padding: 4px;
             box-sizing: border-box;
         }
@@ -258,48 +303,12 @@
         }
 
         /* 도형 종류별 스타일 */
-        .type-start, .type-end { border-radius: 28px; background: #FFF9C4; border-color: #F57F17; color: #F57F17; }
+        .type-start, .type-end { border-radius: 25px; background: #FFF9C4; border-color: #F57F17; color: #F57F17; }
         .type-process { border-radius: 6px; background: #E1F5FE; border-color: #0288D1; color: #0288D1; }
         .type-io { transform: skewX(-15deg); background: #F3E5F5; border-color: #7B1FA2; color: #7B1FA2; }
         .type-io span { transform: skewX(15deg); }
-        .type-decision { width: 95px; height: 95px; transform: rotate(45deg); background: #FFEBEE; border-color: #C62828; color: #C62828; margin: 10px; }
+        .type-decision { width: 90px; height: 90px; transform: rotate(45deg); background: #FFEBEE; border-color: #C62828; color: #C62828; margin: 10px; }
         .type-decision span { transform: rotate(-45deg); display: block; }
-
-        /* 하단 모니터링 패널 */
-        #bottom-panel {
-            height: 150px;
-            background: rgba(244, 241, 234, 0.7);
-            border: 1px solid var(--c-border);
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            gap: 16px;
-            box-sizing: border-box;
-        }
-        .panel-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .panel-box h4 {
-            margin: 0 0 6px 2px;
-            color: var(--c-brand-green);
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .panel-content {
-            flex: 1;
-            background: #FFFFFF;
-            border: 1px solid var(--c-border);
-            padding: 10px;
-            border-radius: 6px;
-            overflow-y: auto;
-            font-size: 12px;
-            white-space: pre-wrap;
-            line-height: 1.5;
-            color: var(--c-text-main);
-            font-family: 'Consolas', monospace;
-        }
     </style>
 </head>
 <body>
@@ -317,7 +326,7 @@
 </nav>
 
 <div class="main-layout">
-    <!-- 좌측 사이드바 -->
+    <!-- 1. 좌측 사이드바: 교과서 표준 기호 -->
     <div class="card left-panel">
         <div>
             <div class="section-title">교육과정 표준 기호</div>
@@ -329,27 +338,25 @@
         </div>
         
         <div class="info-box">
-            💡 <strong>사용 방법</strong><br>
-            • 도형을 클릭한 후 다른 도형을 클릭하면 <strong>화살표 연결</strong>이 됩니다.<br>
-            • 도형을 <strong>더블클릭</strong>하면 내용을 수정할 수 있습니다.
+            💡 <strong>도움말</strong><br>
+            • 노드를 순서대로 클릭하면 <strong>화살표로 연결</strong>됩니다.<br>
+            • 노드 더블클릭 시 <strong>텍스트 수정</strong> 가능.
         </div>
     </div>
 
-    <!-- 우측 메인 에디터 -->
-    <div class="card right-panel">
-        <!-- 상단 툴바 -->
+    <!-- 2. 중앙 메인: 순서도 캔버스 (세로형) -->
+    <div class="card center-panel">
         <div id="toolbar">
             <div class="tool-group">
                 <button class="btn btn-primary" onclick="runSimulation()">▶ 실행 시뮬레이션</button>
                 <button class="btn btn-secondary" onclick="resetCanvas()">🔄 새로고침</button>
             </div>
             <div class="tool-group">
-                <button class="btn btn-secondary" onclick="exportImage()">📷 이미지 내보내기</button>
-                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 선택 삭제</button>
+                <button class="btn btn-secondary" onclick="exportImage()">📷 내보내기</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
             </div>
         </div>
 
-        <!-- 캔버스 영역 -->
         <div id="canvas-container">
             <svg id="connections">
                 <defs>
@@ -359,17 +366,20 @@
                 </defs>
             </svg>
         </div>
+    </div>
 
-        <!-- 하단 정보 패널 -->
-        <div id="bottom-panel">
-            <div class="panel-box">
-                <h4>한국어 의조코드(Pseudocode) 자동 변환</h4>
-                <div id="pseudocode" class="panel-content">// 순서도를 작성하면 한국어 설명 코드가 실시간 생성됩니다.</div>
-            </div>
-            <div class="panel-box">
-                <h4>실행 콘솔 / 상태 모니터링</h4>
-                <div id="console-output" class="panel-content">시뮬레이션을 실행하면 단계별 흐름이 여기에 표시됩니다.</div>
-            </div>
+    <!-- 3. 우측 패널: 위(의조코드), 아래(모니터링) -->
+    <div class="card right-panel">
+        <!-- 상단: 한국어 의조코드 -->
+        <div class="panel-box">
+            <h4>📄 한국어 의조코드 (Pseudocode)</h4>
+            <div id="pseudocode" class="panel-content">// 순서도를 작성하면 한국어 코드가 실시간 자동 생성됩니다.</div>
+        </div>
+
+        <!-- 하단: 실행 모니터링 콘솔 -->
+        <div class="panel-box">
+            <h4>💻 실행 콘솔 & 변수 상태</h4>
+            <div id="console-output" class="panel-content">시뮬레이션을 실행하면 흐름과 상태가 여기에 표시됩니다.</div>
         </div>
     </div>
 </div>
@@ -384,7 +394,7 @@
     const canvas = document.getElementById('canvas-container');
     const svg = document.getElementById('connections');
 
-    // 노드 생성 함수
+    // 노드 생성 (세로 정렬 가이드)
     function createNode(type, defaultText) {
         const id = 'node_' + nodeIdCounter++;
         const nodeEl = document.createElement('div');
@@ -395,9 +405,11 @@
         textSpan.innerText = defaultText;
         nodeEl.appendChild(textSpan);
 
-        // 기본 위치 배치
-        const x = 80 + (nodes.length * 25) % 250;
-        const y = 80 + (nodes.length * 25) % 200;
+        // 중앙 세로 배치를 위한 기본 좌표 계산
+        const canvasWidth = canvas.clientWidth || 400;
+        const x = (canvasWidth / 2) - 65; // 중앙 정렬
+        const y = 40 + (nodes.length * 80); // 위에서 아래로 세로 정렬
+
         nodeEl.style.left = x + 'px';
         nodeEl.style.top = y + 'px';
 
@@ -409,7 +421,6 @@
         updatePseudocode();
     }
 
-    // 노드 이벤트 핸들러
     function initNodeEvents(node) {
         let isDragging = false;
         let offsetX, offsetY;
@@ -468,7 +479,6 @@
         connectSourceNode = null;
     });
 
-    // 노드 연결 함수
     function addConnection(source, target) {
         if (connections.some(c => c.source.id === source.id && c.target.id === target.id)) return;
         
@@ -482,7 +492,6 @@
         updatePseudocode();
     }
 
-    // SVG 연결선 그리기
     function drawConnections() {
         const paths = svg.querySelectorAll('g');
         paths.forEach(p => p.remove());
@@ -491,10 +500,10 @@
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             
-            const sx = conn.source.x + 60;
-            const sy = conn.source.y + 27;
-            const tx = conn.target.x + 60;
-            const ty = conn.target.y + 27;
+            const sx = conn.source.x + 65;
+            const sy = conn.source.y + 25;
+            const tx = conn.target.x + 65;
+            const ty = conn.target.y + 25;
 
             const d = `M ${sx} ${sy} C ${sx} ${(sy + ty) / 2}, ${tx} ${(sy + ty) / 2}, ${tx} ${ty}`;
             path.setAttribute('d', d);
@@ -507,10 +516,10 @@
 
             if (conn.label) {
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', (sx + tx) / 2);
+                text.setAttribute('x', (sx + tx) / 2 + 5);
                 text.setAttribute('y', (sy + ty) / 2 - 5);
                 text.setAttribute('fill', '#C62828');
-                text.setAttribute('font-size', '12');
+                text.setAttribute('font-size', '11');
                 text.setAttribute('font-weight', 'bold');
                 text.textContent = conn.label;
                 g.appendChild(text);
@@ -520,11 +529,10 @@
         });
     }
 
-    // 실시간 의조코드 생성
     function updatePseudocode() {
         const codeBox = document.getElementById('pseudocode');
         if (nodes.length === 0) {
-            codeBox.innerText = "// 순서도를 작성하면 한국어 설명 코드가 실시간 생성됩니다.";
+            codeBox.innerText = "// 순서도를 작성하면 한국어 코드가 실시간 자동 생성됩니다.";
             return;
         }
 
@@ -533,13 +541,12 @@
             if (n.type === 'start') codeStr += `1. 시작\n`;
             else if (n.type === 'io') codeStr += `2. [입출력] ${n.text}\n`;
             else if (n.type === 'process') codeStr += `3. [처리] ${n.text} 실행\n`;
-            else if (n.type === 'decision') codeStr += `4. [조건] 만약 (${n.text}) 조건 검사\n`;
+            else if (n.type === 'decision') codeStr += `4. [조건] 만약 (${n.text}) 검사\n`;
             else if (n.type === 'end') codeStr += `5. 종료\n`;
         });
         codeBox.innerText = codeStr;
     }
 
-    // 시뮬레이터 실행
     async function runSimulation() {
         const consoleBox = document.getElementById('console-output');
         consoleBox.innerText = "▶ 시뮬레이션 시작...\n";
@@ -604,7 +611,7 @@
     }
 
     function exportImage() {
-        alert("화면 캡처나 브라우저 인쇄(Ctrl+P)를 이용하여 이미지/PDF로 보관할 수 있습니다.");
+        alert("화면 캡처나 브라우저 인쇄(Ctrl+P)를 이용하여 보관할 수 있습니다.");
     }
 
     /* 신경망 인터랙티브 배경 스크립트 */
