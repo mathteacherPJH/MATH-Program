@@ -166,8 +166,13 @@
             </div>
 
             <div class="space-y-3" id="master-program-list">
-                <div class="program-node ch1 hidden bg-white border border-[#2C2A29]/10 rounded-xs p-10 text-center text-sm text-gray-400 font-light">
-                    1단원에 등록된 탐구 세부 프로그램이 없습니다. (준비 중)
+                <!-- 💡 [신규 추가] 1단원 링크 (chapter_1_flowchart.html 연동) -->
+                <div class="program-node ch1 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#1B4332] bg-[#E9F5ED] border border-[#BCDFCA] px-2.5 py-0.5 rounded-xs">Chapter 01</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#1B4332] transition-colors">알고리즘 순서도 탐구 프로그램</h4>
+                    </div>
+                    <a href="chapter_1_flowchart.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
                 <!-- 2단원 링크 1 -->
@@ -188,7 +193,7 @@
                     <a href="chapter_2_sentence_vectorizer.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#1B4332] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
-                <!-- 💡 [신규 추가] 2단원 링크 3 (chapter_2_sentiment_analysis.html 연동) -->
+                <!-- 2단원 링크 3 -->
                 <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#1B4332]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#2D6A4F] bg-[#E9F5ED] border border-[#BCDFCA] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
@@ -452,7 +457,7 @@
 
             nodes.forEach(node => {
                 if (filterTag === 'all') {
-                    if(node.classList.contains('ch1') || node.classList.contains('download')) {
+                    if(node.classList.contains('download')) {
                         node.style.display = 'none';
                     } else {
                         node.style.display = 'flex';
