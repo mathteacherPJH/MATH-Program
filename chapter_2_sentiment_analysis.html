@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문장 감성 분석 및 극성 분류기</title>
     <style>
-        /* [이전 CSS 스타일 동일] */
         :root {
             --c-bg-main: #FBF9F4; 
             --c-bg-card: rgba(255, 255, 255, 0.73); 
@@ -34,7 +33,7 @@
         .navbar-brand-text { font-size: 13px; font-weight: bold; color: var(--c-brand-green); letter-spacing: 0.15em; text-transform: uppercase; }
         .main-layout { display: flex; width: 100%; height: calc(100vh - 110px); gap: 20px; position: relative; z-index: 10; box-sizing: border-box; }
         .card { background-color: var(--c-bg-card); border: 1px solid var(--c-border); border-radius: 12px; padding: 24px; box-sizing: border-box; backdrop-filter: blur(6px); box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03); display: flex; flex-direction: column; }
-        .left-panel { flex: 1; height: 100%; gap: 16px; }
+        .left-panel { flex: 1; height: 100%; gap: 14px; }
         .panel-title { margin: 0; font-size: 16px; color: var(--c-brand-green); font-weight: bold; }
         .textarea-wrapper { position: relative; display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.6); padding: 14px; border-radius: 8px; border: 1px solid var(--c-border); }
         textarea { width: 100%; height: 110px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box; border: 1px solid var(--c-border); border-radius: 6px; resize: none; font-family: inherit; font-size: 14px; line-height: 1.5; background-color: rgba(255, 255, 255, 0.9); color: var(--c-text-main); outline: none; transition: border-color 0.2s; }
@@ -50,11 +49,16 @@
         .mini-tag { background: #FFFFFF; border: 1px solid rgba(44, 42, 41, 0.15); padding: 3px 8px; border-radius: 4px; font-size: 12px; color: var(--c-brand-green); font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
         .mini-tag-input { border: none; background: transparent; color: var(--c-brand-green); font-size: 12px; font-family: inherit; font-weight: bold; outline: none; }
         .mini-tag-delete { cursor: pointer; color: var(--c-neg-2-text); font-size: 14px; font-weight: bold; line-height: 1; }
-        .action-btn-group { display: flex; gap: 8px; width: 100%; flex-shrink: 0; }
+        
+        .action-container { display: flex; flex-direction: column; gap: 8px; width: 100%; flex-shrink: 0; }
+        .action-btn-group { display: flex; gap: 8px; width: 100%; }
         .run-btn { flex: 3; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); }
         .run-btn:hover { background-color: var(--c-brand-green-hover); }
         .clear-btn { flex: 1; padding: 14px 12px; background-color: var(--c-clear-btn); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.2s; white-space: nowrap; }
         .clear-btn:hover { background-color: var(--c-clear-btn-hover); }
+        
+        .attribution-text { font-size: 11px; color: var(--c-text-muted); text-align: center; margin: 0; line-height: 1.4; letter-spacing: -0.01em; }
+
         .right-panel { flex: 1.5; height: 100%; overflow: hidden; gap: 14px; }
         .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
         .nav-btn { flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12px; font-weight: bold; color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; text-align: center; }
@@ -104,7 +108,7 @@
 
         <div class="sentence-vocab-box">
             <div class="sentence-vocab-header">
-                <span class="vocab-title">추출 단어가방 (Bag of Words)</span>
+                <span class="vocab-title">단어 가방 (Bag of Words)</span>
                 <div class="add-mini-section">
                     <input type="text" id="addWordInput" class="add-mini-input" placeholder="직접 단어 추가" onkeypress="if(event.key==='Enter') addCustomWord()">
                     <button class="add-mini-btn" onclick="addCustomWord()">추가</button>
@@ -113,18 +117,22 @@
             <div class="vocab-tags" id="vocabTagsContainer"></div>
         </div>
 
-        <div class="action-btn-group">
-            <button class="run-btn" onclick="processSentimentWithLoading()">분석 실행 ⚡</button>
-            <button class="clear-btn" onclick="clearAllInputs()">지우기 🗑️</button>
+        <div class="action-container">
+            <div class="action-btn-group">
+                <button class="run-btn" onclick="processSentimentWithLoading()">분석 실행 ⚡</button>
+                <button class="clear-btn" onclick="clearAllInputs()">지우기 🗑️</button>
+            </div>
+            <p class="attribution-text">이 프로그램은 군산대학교 소프트웨어융합공학과에서 만든 KNU 한국어 감성사전을 활용하였습니다.</p>
         </div>
     </div>
 
     <div class="card right-panel">
+        <!-- 탭 순서: 전체보기 -> 긍정 단어 -> 부정 단어 -> 중립 단어 -->
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
-            <button id="tab_pos" class="nav-btn" onclick="switchTab('pos')">긍정 단어 (+2, +1)</button>
-            <button id="tab_neu" class="nav-btn" onclick="switchTab('neu')">중립 단어 (0)</button>
-            <button id="tab_neg" class="nav-btn" onclick="switchTab('neg')">부정 단어 (-1, -2)</button>
+            <button id="tab_pos" class="nav-btn" onclick="switchTab('pos')">긍정 단어</button>
+            <button id="tab_neg" class="nav-btn" onclick="switchTab('neg')">부정 단어</button>
+            <button id="tab_neu" class="nav-btn" onclick="switchTab('neu')">중립 단어</button>
         </div>
 
         <div class="right-panel-content">
@@ -140,19 +148,20 @@
                 </div>
             </div>
 
+            <!-- 섹션 순서: 긍정 -> 부정 -> 중립 -->
             <div id="sec_pos" class="result-section">
-                <h3>긍정 단어 목록 (+2, +1)</h3>
+                <h3>긍정 단어 목록</h3>
                 <div class="result-box" id="posContainer"></div>
             </div>
 
-            <div id="sec_neu" class="result-section">
-                <h3>중립 단어 목록 (0)</h3>
-                <div class="result-box" id="neuContainer"></div>
+            <div id="sec_neg" class="result-section">
+                <h3>부정 단어 목록</h3>
+                <div class="result-box" id="negContainer"></div>
             </div>
 
-            <div id="sec_neg" class="result-section">
-                <h3>부정 단어 목록 (-1, -2)</h3>
-                <div class="result-box" id="negContainer"></div>
+            <div id="sec_neu" class="result-section">
+                <h3>중립 단어 목록</h3>
+                <div class="result-box" id="neuContainer"></div>
             </div>
         </div>
     </div>
@@ -160,37 +169,42 @@
 
 <script>
 const API_URL = 'https://math-render-apps-791425966280.asia-northeast3.run.app/api/analyze';
-
-// 🌐 1. GitHub Raw URL (상대 경로인 './SentiWord_info.json' 으로 불러와도 됩니다)
 const DICT_JSON_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/SentiWord_info.json';
 
 let DEFAULT_SENTIMENT_DICT = {};
 let extractedWords = [];
 
-// 🚀 2. 웹페이지 시작 시 GitHub에서 KNU 감성 사전 자동 로드
+// 🚀 웹페이지 시작 시 KNU 감성 사전 로드 및 어근 파생어 자동 색인화
 async function loadSentimentDictionary() {
     try {
-        // 상대 경로 './SentiWord_info.json' 도 가능하지만, 외부 연동을 위해 fetch를 사용합니다.
-        const response = await fetch(DICT_JSON_URL);
+        let response = await fetch(DICT_JSON_URL);
+        let data;
         if (!response.ok) {
-            // 원격로드 실패 시 동일 폴더 로컬 로드 시도
-            const localResponse = await fetch('./SentiWord_info.json');
-            var data = await localResponse.json();
+            let localResponse = await fetch('./SentiWord_info.json');
+            data = await localResponse.json();
         } else {
-            var data = await response.json();
+            data = await response.json();
         }
 
-        // 빠른 O(1) 검색을 위해 객체 구조로 변환
         data.forEach(item => {
             let pol = parseInt(item.polarity, 10);
             let formattedScore = pol > 0 ? `+${pol}` : `${pol}`;
             
-            DEFAULT_SENTIMENT_DICT[item.word] = formattedScore;
-            if (item.word_root) {
-                DEFAULT_SENTIMENT_DICT[item.word_root] = formattedScore;
+            const word = item.word;
+            const wordRoot = item.word_root;
+
+            if (word) DEFAULT_SENTIMENT_DICT[word] = formattedScore;
+            if (wordRoot) DEFAULT_SENTIMENT_DICT[wordRoot] = formattedScore;
+
+            // 접미사(~하다, ~되다, ~스럽다 등) 제거 후 어근 사전 자동 등록
+            if (word) {
+                const cleanStem = word.replace(/(하다|되다|스럽다|이다|있다|없다)$/, '');
+                if (cleanStem.length > 0) {
+                    DEFAULT_SENTIMENT_DICT[cleanStem] = formattedScore;
+                }
             }
         });
-        console.log("KNU 감성사전 로드 완료! 총 어휘 수:", Object.keys(DEFAULT_SENTIMENT_DICT).length);
+        console.log("KNU 감성사전 색인 완료! 어휘 수:", Object.keys(DEFAULT_SENTIMENT_DICT).length);
     } catch (e) {
         console.error("감성 사전 로드 실패:", e);
     }
@@ -205,32 +219,32 @@ function updateCharCount() {
 }
 
 function switchTab(tabId) {
-    const tabs = ['all', 'pos', 'neu', 'neg'];
+    const tabs = ['all', 'pos', 'neg', 'neu'];
     tabs.forEach(t => {
         document.getElementById(`tab_${t}`).classList.remove('active');
     });
     document.getElementById(`tab_${tabId}`).classList.add('active');
 
     const secPos = document.getElementById('sec_pos');
-    const secNeu = document.getElementById('sec_neu');
     const secNeg = document.getElementById('sec_neg');
+    const secNeu = document.getElementById('sec_neu');
 
     if (tabId === 'all') {
         secPos.classList.remove('hidden');
-        secNeu.classList.remove('hidden');
         secNeg.classList.remove('hidden');
+        secNeu.classList.remove('hidden');
     } else if (tabId === 'pos') {
         secPos.classList.remove('hidden');
+        secNeg.classList.add('hidden');
         secNeu.classList.add('hidden');
-        secNeg.classList.add('hidden');
-    } else if (tabId === 'neu') {
-        secPos.classList.add('hidden');
-        secNeu.classList.remove('hidden');
-        secNeg.classList.add('hidden');
     } else if (tabId === 'neg') {
         secPos.classList.add('hidden');
-        secNeu.classList.add('hidden');
         secNeg.classList.remove('hidden');
+        secNeu.classList.add('hidden');
+    } else if (tabId === 'neu') {
+        secPos.classList.add('hidden');
+        secNeg.classList.add('hidden');
+        secNeu.classList.remove('hidden');
     }
 }
 
@@ -334,12 +348,12 @@ function renderVocabTags() {
 
 function renderSentimentResults() {
     const posContainer = document.getElementById("posContainer");
-    const neuContainer = document.getElementById("neuContainer");
     const negContainer = document.getElementById("negContainer");
+    const neuContainer = document.getElementById("neuContainer");
 
     posContainer.innerHTML = "";
-    neuContainer.innerHTML = "";
     negContainer.innerHTML = "";
+    neuContainer.innerHTML = "";
 
     let totalScore = 0;
 
@@ -362,10 +376,10 @@ function renderSentimentResults() {
 
         if (scoreInt > 0) {
             posContainer.innerHTML += tagHTML;
-        } else if (scoreInt === 0) {
-            neuContainer.innerHTML += tagHTML;
-        } else {
+        } else if (scoreInt < 0) {
             negContainer.innerHTML += tagHTML;
+        } else {
+            neuContainer.innerHTML += tagHTML;
         }
     });
 
@@ -388,7 +402,7 @@ function clearAllInputs() {
     renderSentimentResults();
 }
 
-// 배경 캔버스 애니메이션
+// 신경망 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
@@ -454,7 +468,7 @@ window.addEventListener('resize', resizeBgCanvas);
 window.addEventListener('DOMContentLoaded', () => {
     resizeBgCanvas();
     animateBg();
-    loadSentimentDictionary(); // 감성 사전 로드 함수 호출
+    loadSentimentDictionary();
 });
 </script>
 
