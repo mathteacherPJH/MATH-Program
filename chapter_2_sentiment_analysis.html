@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문장 감성 분석 및 극성 분류기</title>
     <style>
+        /* [이전 CSS 스타일 동일] */
         :root {
             --c-bg-main: #FBF9F4; 
             --c-bg-card: rgba(255, 255, 255, 0.73); 
@@ -18,7 +19,6 @@
             --c-clear-btn: #7D7569;
             --c-clear-btn-hover: #5A534A;
 
-            /* 감성 극성별 색상 시스템 */
             --c-pos-2-bg: #E8F5E9; --c-pos-2-text: #1B5E20; --c-pos-2-border: #A5D6A7;
             --c-pos-1-bg: #F1F8E9; --c-pos-1-text: #33691E; --c-pos-1-border: #C5E1A5;
             --c-neu-bg: #F5F5F5;   --c-neu-text: #424242;   --c-neu-border: #E0E0E0;
@@ -26,201 +26,56 @@
             --c-neg-2-bg: #FFEBEE; --c-neg-2-text: #B71C1C; --c-neg-2-border: #FFCDD2;
         }
 
-        body {
-            font-family: 'Malgun Gothic', -apple-system, sans-serif;
-            background-color: var(--c-bg-main);
-            color: var(--c-text-main);
-            margin: 0;
-            padding: 24px;
-            padding-top: 85px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            letter-spacing: 0.03em;
-            position: relative;
-            height: 100vh;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        #neural-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .top-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: rgba(251, 249, 244, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--c-border);
-            z-index: 1000;
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-sizing: border-box;
-        }
-
-        .back-btn {
-            background: transparent;
-            border: none;
-            color: var(--c-brand-green);
-            font-family: "Consolas", monospace;
-            font-size: 13px;
-            font-weight: 900;
-            letter-spacing: 0.15em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
-            transition: all 0.2s ease;
-        }
+        body { font-family: 'Malgun Gothic', -apple-system, sans-serif; background-color: var(--c-bg-main); color: var(--c-text-main); margin: 0; padding: 24px; padding-top: 85px; display: flex; flex-direction: column; align-items: center; letter-spacing: 0.03em; position: relative; height: 100vh; box-sizing: border-box; overflow: hidden; }
+        #neural-canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        .top-navbar { position: fixed; top: 0; left: 0; width: 100%; background-color: rgba(251, 249, 244, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--c-border); z-index: 1000; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
+        .back-btn { background: transparent; border: none; color: var(--c-brand-green); font-family: "Consolas", monospace; font-size: 13px; font-weight: 900; letter-spacing: 0.15em; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px 8px; transition: all 0.2s ease; }
         .back-btn:hover { transform: translateX(-3px); opacity: 0.8; }
         .navbar-brand-text { font-size: 13px; font-weight: bold; color: var(--c-brand-green); letter-spacing: 0.15em; text-transform: uppercase; }
-
-        .main-layout {
-            display: flex;
-            width: 100%; 
-            height: calc(100vh - 110px); 
-            gap: 20px;
-            position: relative;
-            z-index: 10;
-            box-sizing: border-box;
-        }
-
-        .card {
-            background-color: var(--c-bg-card);
-            border: 1px solid var(--c-border);
-            border-radius: 12px;
-            padding: 24px;
-            box-sizing: border-box;
-            backdrop-filter: blur(6px);
-            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
-            display: flex;
-            flex-direction: column;
-        }
-
+        .main-layout { display: flex; width: 100%; height: calc(100vh - 110px); gap: 20px; position: relative; z-index: 10; box-sizing: border-box; }
+        .card { background-color: var(--c-bg-card); border: 1px solid var(--c-border); border-radius: 12px; padding: 24px; box-sizing: border-box; backdrop-filter: blur(6px); box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03); display: flex; flex-direction: column; }
         .left-panel { flex: 1; height: 100%; gap: 16px; }
         .panel-title { margin: 0; font-size: 16px; color: var(--c-brand-green); font-weight: bold; }
-
-        .textarea-wrapper { 
-            position: relative; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.6);
-            padding: 14px;
-            border-radius: 8px;
-            border: 1px solid var(--c-border);
-        }
-
-        textarea {
-            width: 100%; height: 110px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box;
-            border: 1px solid var(--c-border); border-radius: 6px; resize: none; font-family: inherit; font-size: 14px;
-            line-height: 1.5; background-color: rgba(255, 255, 255, 0.9); color: var(--c-text-main); outline: none; transition: border-color 0.2s;
-        }
+        .textarea-wrapper { position: relative; display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.6); padding: 14px; border-radius: 8px; border: 1px solid var(--c-border); }
+        textarea { width: 100%; height: 110px; padding: 10px 12px; padding-bottom: 22px; box-sizing: border-box; border: 1px solid var(--c-border); border-radius: 6px; resize: none; font-family: inherit; font-size: 14px; line-height: 1.5; background-color: rgba(255, 255, 255, 0.9); color: var(--c-text-main); outline: none; transition: border-color 0.2s; }
         textarea:focus { border-color: var(--c-brand-green); }
         .char-counter { position: absolute; bottom: 20px; right: 22px; font-size: 11px; color: var(--c-text-muted); pointer-events: none; }
-
-        .sentence-vocab-box {
-            background-color: var(--c-tab-bg);
-            border: 1px dashed rgba(27, 67, 50, 0.2);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1;
-            overflow-y: auto;
-        }
+        .sentence-vocab-box { background-color: var(--c-tab-bg); border: 1px dashed rgba(27, 67, 50, 0.2); border-radius: 8px; padding: 12px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
         .sentence-vocab-header { display: flex; justify-content: space-between; align-items: center; }
         .vocab-title { font-weight: bold; font-size: 12px; color: var(--c-brand-green); }
         .add-mini-section { display: flex; gap: 4px; }
         .add-mini-input { padding: 4px 8px; border: 1px solid var(--c-border); border-radius: 4px; font-size: 11px; width: 100px; outline: none; background: white; }
         .add-mini-btn { padding: 4px 8px; background-color: var(--c-accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .vocab-tags { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
-
-        .mini-tag {
-            background: #FFFFFF; border: 1px solid rgba(44, 42, 41, 0.15); padding: 3px 8px; border-radius: 4px;
-            font-size: 12px; color: var(--c-brand-green); font-weight: bold; display: inline-flex; align-items: center; gap: 6px;
-        }
+        .mini-tag { background: #FFFFFF; border: 1px solid rgba(44, 42, 41, 0.15); padding: 3px 8px; border-radius: 4px; font-size: 12px; color: var(--c-brand-green); font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
         .mini-tag-input { border: none; background: transparent; color: var(--c-brand-green); font-size: 12px; font-family: inherit; font-weight: bold; outline: none; }
         .mini-tag-delete { cursor: pointer; color: var(--c-neg-2-text); font-size: 14px; font-weight: bold; line-height: 1; }
-
         .action-btn-group { display: flex; gap: 8px; width: 100%; flex-shrink: 0; }
-        .run-btn {
-            flex: 3; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px;
-            cursor: pointer; font-size: 15px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
-        }
+        .run-btn { flex: 3; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); }
         .run-btn:hover { background-color: var(--c-brand-green-hover); }
-        .clear-btn {
-            flex: 1; padding: 14px 12px; background-color: var(--c-clear-btn); color: white; border: none; border-radius: 8px;
-            cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.2s; white-space: nowrap;
-        }
+        .clear-btn { flex: 1; padding: 14px 12px; background-color: var(--c-clear-btn); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.2s; white-space: nowrap; }
         .clear-btn:hover { background-color: var(--c-clear-btn-hover); }
-
-        /* 우측 패널 및 탭 */
         .right-panel { flex: 1.5; height: 100%; overflow: hidden; gap: 14px; }
         .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
-        .nav-btn {
-            flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12px; font-weight: bold;
-            color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; text-align: center;
-        }
+        .nav-btn { flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12px; font-weight: bold; color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; text-align: center; }
         .nav-btn.active { background: #FFFFFF; color: var(--c-brand-green); box-shadow: 0 2px 6px rgba(44,42,41,0.08); }
-
         .right-panel-content { width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding-right: 6px; box-sizing: border-box; }
         .result-section { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
         .result-section.hidden { display: none !important; }
         .result-section h3 { margin: 0 0 10px 4px; font-size: 14px; color: var(--c-brand-green); font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
-
-        .sentiment-summary-card {
-            background: #FFFFFF; border: 1px solid var(--c-border); border-radius: 8px; padding: 16px; margin-bottom: 14px;
-            display: flex; justify-content: space-around; align-items: center; text-align: center;
-        }
+        .sentiment-summary-card { background: #FFFFFF; border: 1px solid var(--c-border); border-radius: 8px; padding: 16px; margin-bottom: 14px; display: flex; justify-content: space-around; align-items: center; text-align: center; }
         .score-val { font-size: 22px; font-weight: bold; font-family: 'Consolas', monospace; }
-
-        .result-box { 
-            background-color: rgba(244, 241, 234, 0.6); padding: 14px; border-radius: 8px; min-height: 60px; 
-            display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; align-items: center;
-            border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; 
-        }
-
-        /* 감성 태그 고유 스타일 */
-        .sentiment-tag {
-            display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px;
-            font-size: 13px; font-weight: bold; border: 1px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        }
+        .result-box { background-color: rgba(244, 241, 234, 0.6); padding: 14px; border-radius: 8px; min-height: 60px; display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; align-items: center; border: 1px solid var(--c-border); box-sizing: border-box; width: 100%; }
+        .sentiment-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         .sentiment-tag[data-score="+2"] { background-color: var(--c-pos-2-bg); color: var(--c-pos-2-text); border-color: var(--c-pos-2-border); }
         .sentiment-tag[data-score="+1"] { background-color: var(--c-pos-1-bg); color: var(--c-pos-1-text); border-color: var(--c-pos-1-border); }
         .sentiment-tag[data-score="0"]  { background-color: var(--c-neu-bg);   color: var(--c-neu-text);   border-color: var(--c-neu-border); }
         .sentiment-tag[data-score="-1"] { background-color: var(--c-neg-1-bg); color: var(--c-neg-1-text); border-color: var(--c-neg-1-border); }
         .sentiment-tag[data-score="-2"] { background-color: var(--c-neg-2-bg); color: var(--c-neg-2-text); border-color: var(--c-neg-2-border); }
-
-        .score-select {
-            border: none; background: rgba(255,255,255,0.7); font-size: 11px; font-weight: bold; border-radius: 4px;
-            padding: 2px 4px; cursor: pointer; color: inherit; outline: none;
-        }
-
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(251, 249, 244, 0.7); backdrop-filter: blur(8px); z-index: 5000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
+        .score-select { border: none; background: rgba(255,255,255,0.7); font-size: 11px; font-weight: bold; border-radius: 4px; padding: 2px 4px; cursor: pointer; color: inherit; outline: none; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(251, 249, 244, 0.7); backdrop-filter: blur(8px); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .loading-overlay.active { opacity: 1; pointer-events: auto; }
-        .spinner {
-            width: 48px; height: 48px; border: 4px solid rgba(27, 67, 50, 0.1); border-left-color: var(--c-brand-green);
-            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px;
-        }
+        .spinner { width: 48px; height: 48px; border: 4px solid rgba(27, 67, 50, 0.1); border-left-color: var(--c-brand-green); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
         .loading-text { font-size: 15px; font-weight: bold; color: var(--c-brand-green); }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -231,7 +86,7 @@
 
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div class="loading-text">형태소 분석 및 감성 분류 중...</div>
+    <div class="loading-text" id="loadingText">형태소 분석 및 감성 분류 중...</div>
 </div>
 
 <nav class="top-navbar">
@@ -240,10 +95,8 @@
 </nav>
 
 <div class="main-layout">
-    <!-- 좌측 단일 입력 패널 -->
     <div class="card left-panel">
         <div class="panel-title">문장 입력 (200자 이내)</div>
-        
         <div class="textarea-wrapper">
             <textarea id="sentenceInput" maxlength="200" placeholder="분석할 문장을 입력하세요... (예: 오늘 날씨가 정말 화창해서 기분이 최고다! 하지만 교통 체증은 짜증난다.)" oninput="updateCharCount()"></textarea>
             <div class="char-counter" id="charCounter">0/200</div>
@@ -266,7 +119,6 @@
         </div>
     </div>
 
-    <!-- 우측 분석 결과 패널 -->
     <div class="card right-panel">
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
@@ -276,7 +128,6 @@
         </div>
 
         <div class="right-panel-content">
-            <!-- 전체 요약 카드 -->
             <div id="sec_summary" class="sentiment-summary-card">
                 <div>
                     <div style="font-size:11px; color:var(--c-text-muted);">총 분석 단어</div>
@@ -289,19 +140,16 @@
                 </div>
             </div>
 
-            <!-- 1. 긍정 단어 구역 -->
             <div id="sec_pos" class="result-section">
                 <h3>긍정 단어 목록 (+2, +1)</h3>
                 <div class="result-box" id="posContainer"></div>
             </div>
 
-            <!-- 2. 중립 단어 구역 -->
             <div id="sec_neu" class="result-section">
                 <h3>중립 단어 목록 (0)</h3>
                 <div class="result-box" id="neuContainer"></div>
             </div>
 
-            <!-- 3. 부정 단어 구역 -->
             <div id="sec_neg" class="result-section">
                 <h3>부정 단어 목록 (-1, -2)</h3>
                 <div class="result-box" id="negContainer"></div>
@@ -313,15 +161,40 @@
 <script>
 const API_URL = 'https://math-render-apps-791425966280.asia-northeast3.run.app/api/analyze';
 
-// 기본 감성 어휘 사전 (사전 정의)
-const DEFAULT_SENTIMENT_DICT = {
-    '최고': '+2', '완벽': '+2', '행복': '+2', '사랑': '+2', '훌륭': '+2',
-    '좋다': '+1', '좋아': '+1', '화창': '+1', '기쁨': '+1', '만족': '+1', '희망': '+1',
-    '싫다': '-1', '짜증': '-1', '아쉽다': '-1', '불편': '-1', '걱정': '-1',
-    '최악': '-2', '절망': '-2', '끔찍': '-2', '분노': '-2', '체증': '-1'
-};
+// 🌐 1. GitHub Raw URL (상대 경로인 './SentiWord_info.json' 으로 불러와도 됩니다)
+const DICT_JSON_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/SentiWord_info.json';
 
-let extractedWords = []; // { word: '단어', score: '+1' } 형태로 관리
+let DEFAULT_SENTIMENT_DICT = {};
+let extractedWords = [];
+
+// 🚀 2. 웹페이지 시작 시 GitHub에서 KNU 감성 사전 자동 로드
+async function loadSentimentDictionary() {
+    try {
+        // 상대 경로 './SentiWord_info.json' 도 가능하지만, 외부 연동을 위해 fetch를 사용합니다.
+        const response = await fetch(DICT_JSON_URL);
+        if (!response.ok) {
+            // 원격로드 실패 시 동일 폴더 로컬 로드 시도
+            const localResponse = await fetch('./SentiWord_info.json');
+            var data = await localResponse.json();
+        } else {
+            var data = await response.json();
+        }
+
+        // 빠른 O(1) 검색을 위해 객체 구조로 변환
+        data.forEach(item => {
+            let pol = parseInt(item.polarity, 10);
+            let formattedScore = pol > 0 ? `+${pol}` : `${pol}`;
+            
+            DEFAULT_SENTIMENT_DICT[item.word] = formattedScore;
+            if (item.word_root) {
+                DEFAULT_SENTIMENT_DICT[item.word_root] = formattedScore;
+            }
+        });
+        console.log("KNU 감성사전 로드 완료! 총 어휘 수:", Object.keys(DEFAULT_SENTIMENT_DICT).length);
+    } catch (e) {
+        console.error("감성 사전 로드 실패:", e);
+    }
+}
 
 function updateCharCount() {
     const textarea = document.getElementById("sentenceInput");
@@ -387,14 +260,13 @@ async function processSentimentWithLoading() {
             const corpusStr = (data.processed_corpus && data.processed_corpus[0]) || "";
             rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
         } else {
-            // API 미응답 시 공백 기준 단순 분할 처리 (Fallback)
             rawWords = text.split(/\s+/);
         }
 
-        // 극성 자동 매핑
+        // 사전 매핑
         extractedWords = rawWords.map(w => {
             const cleanWord = w.replace(/[^\w\u3131-\uD79D]/g, '');
-            const score = DEFAULT_SENTIMENT_DICT[cleanWord] || '0';
+            const score = DEFAULT_SENTIMENT_DICT[cleanWord] || DEFAULT_SENTIMENT_DICT[w] || '0';
             return { word: cleanWord || w, score: score };
         }).filter(item => item.word.length > 0);
 
@@ -403,7 +275,6 @@ async function processSentimentWithLoading() {
 
     } catch (e) {
         console.error(e);
-        // 클라이언트단 분할 로직 실행
         const rawWords = text.split(/\s+/);
         extractedWords = rawWords.map(w => ({
             word: w,
@@ -449,7 +320,6 @@ function updateWordScore(index, newScore) {
     renderSentimentResults();
 }
 
-// 좌측 단어가방 태그 렌더링
 function renderVocabTags() {
     const container = document.getElementById("vocabTagsContainer");
     container.innerHTML = extractedWords.map((item, idx) => `
@@ -462,7 +332,6 @@ function renderVocabTags() {
     `).join("");
 }
 
-// 우측 감성 그룹 렌더링 및 총점 계산
 function renderSentimentResults() {
     const posContainer = document.getElementById("posContainer");
     const neuContainer = document.getElementById("neuContainer");
@@ -500,7 +369,6 @@ function renderSentimentResults() {
         }
     });
 
-    // 요약 업데이트
     document.getElementById("totalWordCount").innerText = extractedWords.length;
     const scoreElem = document.getElementById("totalSentimentScore");
     scoreElem.innerText = totalScore > 0 ? `+${totalScore}` : totalScore;
@@ -520,7 +388,7 @@ function clearAllInputs() {
     renderSentimentResults();
 }
 
-// 배경 신경망 애니메이션
+// 배경 캔버스 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
@@ -586,6 +454,7 @@ window.addEventListener('resize', resizeBgCanvas);
 window.addEventListener('DOMContentLoaded', () => {
     resizeBgCanvas();
     animateBg();
+    loadSentimentDictionary(); // 감성 사전 로드 함수 호출
 });
 </script>
 
