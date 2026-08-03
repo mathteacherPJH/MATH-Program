@@ -4,4 +4,4 @@
 
 - **원작자/개발 기관**: 군산대학교 소프트웨어융합공학과 DKE Lab
 - **참고 자료**: KNU 한국어 감성사전 (KNU Korean Sentiment Lexicon)
-- **원출처 저장소**: [KNU_Sentiment_Lexicon GitHub](https://github.com/parkmyeongbin/KNU_Sentiment_Lexicon)
+- **원출처 저장소**: http://dilab.kunsan.ac.kr/knu/knu.html
