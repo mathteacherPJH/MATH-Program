@@ -1,113 +1,380 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>한국 교육용 순서도 에디터 & 시뮬레이터</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', '맑은 고딕', sans-serif; }
-    body { display: flex; height: 100vh; background-color: #f8f9fa; color: #333; }
-    
-    /* 사이드바 */
-    #sidebar { width: 280px; background: #ffffff; border-right: 1px solid #e0e0e0; padding: 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
-    .section-title { font-size: 14px; font-weight: bold; color: #666; margin-bottom: 8px; text-transform: uppercase; }
-    .symbol-btn { width: 100%; padding: 12px; margin-bottom: 8px; border: 2px solid #3b82f6; background: #eff6ff; color: #1d4ed8; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .symbol-btn:hover { background: #dbeafe; transform: translateY(-2px); }
-    
-    /* 캔버스 영역 */
-    #main { flex: 1; display: flex; flex-direction: column; }
-    #toolbar { height: 60px; background: #ffffff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 20px; gap: 12px; justify-content: space-between; }
-    .tool-group { display: flex; gap: 8px; align-items: center; }
-    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    .btn-primary { background: #10b981; color: white; } .btn-primary:hover { background: #059669; }
-    .btn-secondary { background: #6b7280; color: white; } .btn-secondary:hover { background: #4b5563; }
-    .btn-danger { background: #ef4444; color: white; } .btn-danger:hover { background: #dc2626; }
-    
-    #canvas-container { flex: 1; position: relative; overflow: hidden; background-size: 20px 20px; background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px); }
-    svg#connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-    
-    /* 노드 스타일 */
-    .node { position: absolute; width: 120px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: move; user-select: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: box-shadow 0.2s, border-color 0.2s; background: white; border: 2px solid #333; text-align: center; font-size: 13px; padding: 4px; }
-    .node.selected { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3); }
-    .node.active-exec { border-color: #10b981; background-color: #d1fae5; box-shadow: 0 0 12px #10b981; }
-    
-    /* 도형별 모양 */
-    .type-start, .type-end { border-radius: 30px; background: #fef3c7; border-color: #d97706; }
-    .type-process { border-radius: 4px; background: #e0f2fe; border-color: #0284c7; }
-    .type-io { transform: skewX(-15deg); background: #f3e8ff; border-color: #9333ea; }
-    .type-io span { transform: skewX(15deg); }
-    .type-decision { width: 100px; height: 100px; transform: rotate(45deg); background: #ffe4e6; border-color: #e11d48; margin: 10px; }
-    .type-decision span { transform: rotate(-45deg); display: block; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국 교육용 순서도 에디터</title>
+    <style>
+        :root {
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-brand-green: #1B4332;
+            --c-tag-bg: #E8F5E9;
+            --c-tag-text: #2E7D32;
+            --c-removed-bg: #FFEBEE;
+            --c-removed-text: #C62828;
+            --c-tab-bg: #F4F1EA;
+        }
 
-    /* 연결점 */
-    .port { width: 10px; height: 10px; background: #2563eb; border-radius: 50%; position: absolute; cursor: crosshair; }
-    
-    /* 하단 코드/실행 콘솔 */
-    #bottom-panel { height: 180px; background: #1e293b; color: #f8fafc; padding: 15px; display: flex; gap: 20px; font-family: monospace; }
-    .panel-box { flex: 1; display: flex; flex-direction: column; }
-    .panel-box h4 { margin-bottom: 8px; color: #94a3b8; font-size: 12px; }
-    .panel-content { flex: 1; background: #0f172a; padding: 10px; border-radius: 4px; overflow-y: auto; font-size: 13px; white-space: pre-wrap; line-height: 1.4; }
-  </style>
+        body {
+            font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 24px;
+            padding-top: 85px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: 0.03em;
+            position: relative;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 배경 신경망 애니메이션 Canvas */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 상단 네비게이션 바 */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--c-border);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--c-brand-green);
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.8;
+        }
+
+        .navbar-brand-text {
+            font-size: 13px; 
+            font-weight: bold; 
+            color: var(--c-brand-green); 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase;
+        }
+
+        /* 메인 레이아웃 */
+        .main-layout {
+            display: flex;
+            width: 100%; 
+            height: calc(100vh - 110px); 
+            gap: 20px;
+            position: relative;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 좌측 패널 (도형 기호 및 사용법) */
+        .left-panel {
+            flex: 1; 
+            max-width: 280px;
+            height: 100%;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .symbol-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(27, 67, 50, 0.2);
+            background: var(--c-tag-bg);
+            color: var(--c-brand-green);
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+        .symbol-btn:hover {
+            background: #d8f3dc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(27, 67, 50, 0.08);
+        }
+
+        .info-box {
+            font-size: 12px;
+            color: var(--c-text-muted);
+            line-height: 1.6;
+            background-color: rgba(244, 241, 234, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--c-border);
+        }
+
+        /* 우측 패널 (캔버스 및 하단 패널) */
+        .right-panel {
+            flex: 3.5;
+            height: 100%;
+            overflow: hidden;
+            gap: 14px;
+            position: relative;
+        }
+
+        /* 툴바 */
+        #toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--c-border);
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.03em;
+        }
+        .btn-primary { background: var(--c-brand-green); color: white; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--c-tab-bg); color: var(--c-text-main); border: 1px solid var(--c-border); }
+        .btn-secondary:hover { background: #e8e4d9; }
+        .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
+        .btn-danger:hover { background: #ffcdd2; }
+
+        /* 캔버스 영역 */
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            border: 1px solid var(--c-border);
+            background-size: 20px 20px;
+            background-image: radial-gradient(circle, rgba(44, 42, 41, 0.1) 1px, transparent 1px);
+        }
+
+        svg#connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 노드 디지인 */
+        .node {
+            position: absolute;
+            width: 120px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: move;
+            user-select: none;
+            box-shadow: 0 4px 12px rgba(44, 42, 41, 0.06);
+            transition: box-shadow 0.2s, border-color 0.2s, background-color 0.2s;
+            background: white;
+            border: 2px solid var(--c-brand-green);
+            color: var(--c-text-main);
+            text-align: center;
+            font-size: 13px;
+            padding: 4px;
+            box-sizing: border-box;
+        }
+        .node.selected {
+            border-color: var(--c-accent);
+            box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.25);
+        }
+        .node.active-exec {
+            border-color: #2E7D32;
+            background-color: #E8F5E9;
+            box-shadow: 0 0 15px rgba(46, 125, 50, 0.4);
+        }
+
+        /* 도형 종류별 스타일 */
+        .type-start, .type-end { border-radius: 28px; background: #FFF9C4; border-color: #F57F17; color: #F57F17; }
+        .type-process { border-radius: 6px; background: #E1F5FE; border-color: #0288D1; color: #0288D1; }
+        .type-io { transform: skewX(-15deg); background: #F3E5F5; border-color: #7B1FA2; color: #7B1FA2; }
+        .type-io span { transform: skewX(15deg); }
+        .type-decision { width: 95px; height: 95px; transform: rotate(45deg); background: #FFEBEE; border-color: #C62828; color: #C62828; margin: 10px; }
+        .type-decision span { transform: rotate(-45deg); display: block; }
+
+        /* 하단 모니터링 패널 */
+        #bottom-panel {
+            height: 150px;
+            background: rgba(244, 241, 234, 0.7);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            gap: 16px;
+            box-sizing: border-box;
+        }
+        .panel-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-box h4 {
+            margin: 0 0 6px 2px;
+            color: var(--c-brand-green);
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .panel-content {
+            flex: 1;
+            background: #FFFFFF;
+            border: 1px solid var(--c-border);
+            padding: 10px;
+            border-radius: 6px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            color: var(--c-text-main);
+            font-family: 'Consolas', monospace;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- 사이드바: 교과서 기호 모음 -->
-  <div id="sidebar">
-    <div>
-      <div class="section-title">교육과정 표준 기호</div>
-      <button class="symbol-btn" onclick="createNode('start', '시작')">🟡 단말 (시작)</button>
-      <button class="symbol-btn" onclick="createNode('io', '입력: X')">▱ 입출력 (입/출력)</button>
-      <button class="symbol-btn" onclick="createNode('process', 'X = X + 1')">▭ 처리 (연산/대입)</button>
-      <button class="symbol-btn" onclick="createNode('decision', 'X > 5 ?')">◇ 판단 (조건문)</button>
-      <button class="symbol-btn" onclick="createNode('end', '끝')">🔴 단말 (끝)</button>
-    </div>
-    
-    <div>
-      <div class="section-title">선 연결 방법</div>
-      <p style="font-size: 12px; color: #666; line-height: 1.5;">
-        도형을 클릭하여 선택한 후, 다른 도형을 클릭하면 두 도형이 화살표로 연결됩니다.
-      </p>
-    </div>
-  </div>
+<canvas id="neural-canvas"></canvas>
 
-  <!-- 메인 작업 영역 -->
-  <div id="main">
-    <!-- 상단 툴바 -->
-    <div id="toolbar">
-      <div class="tool-group">
-        <button class="btn btn-primary" onclick="runSimulation()">▶ 실행 시뮬레이션</button>
-        <button class="btn btn-secondary" onclick="resetCanvas()">🔄 새로고침</button>
-      </div>
-      <div class="tool-group">
-        <button class="btn btn-secondary" onclick="exportImage()">📷 학습지용 이미지(PNG) 내보내기</button>
-        <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 선택 삭제</button>
-      </div>
+<!-- 상단 네비게이션 바 -->
+<nav class="top-navbar">
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
+        ← BACK
+    </button>
+    <div class="navbar-brand-text">
+        FLOWCHART
+    </div>
+</nav>
+
+<div class="main-layout">
+    <!-- 좌측 사이드바 -->
+    <div class="card left-panel">
+        <div>
+            <div class="section-title">교육과정 표준 기호</div>
+            <button class="symbol-btn" onclick="createNode('start', '시작')">🟡 단말 (시작)</button>
+            <button class="symbol-btn" onclick="createNode('io', '입력: X')">▱ 입출력 (입/출력)</button>
+            <button class="symbol-btn" onclick="createNode('process', 'X = X + 1')">▭ 처리 (연산/대입)</button>
+            <button class="symbol-btn" onclick="createNode('decision', 'X > 5 ?')">◇ 판단 (조건문)</button>
+            <button class="symbol-btn" onclick="createNode('end', '끝')">🔴 단말 (끝)</button>
+        </div>
+        
+        <div class="info-box">
+            💡 <strong>사용 방법</strong><br>
+            • 도형을 클릭한 후 다른 도형을 클릭하면 <strong>화살표 연결</strong>이 됩니다.<br>
+            • 도형을 <strong>더블클릭</strong>하면 내용을 수정할 수 있습니다.
+        </div>
     </div>
 
-    <!-- 캔버스 -->
-    <div id="canvas-container">
-      <svg id="connections">
-        <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="20" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-          </marker>
-        </defs>
-      </svg>
-    </div>
+    <!-- 우측 메인 에디터 -->
+    <div class="card right-panel">
+        <!-- 상단 툴바 -->
+        <div id="toolbar">
+            <div class="tool-group">
+                <button class="btn btn-primary" onclick="runSimulation()">▶ 실행 시뮬레이션</button>
+                <button class="btn btn-secondary" onclick="resetCanvas()">🔄 새로고침</button>
+            </div>
+            <div class="tool-group">
+                <button class="btn btn-secondary" onclick="exportImage()">📷 이미지 내보내기</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 선택 삭제</button>
+            </div>
+        </div>
 
-    <!-- 하단 실시간 모니터링 패널 -->
-    <div id="bottom-panel">
-      <div class="panel-box">
-        <h4>국어 의조코드(Pseudocode) 자동 변환</h4>
-        <div id="pseudocode" class="panel-content">// 순서도를 작성하면 한국어 설명 코드가 생성됩니다.</div>
-      </div>
-      <div class="panel-box">
-        <h4>실행 콘솔 / 변수 상태</h4>
-        <div id="console-output" class="panel-content">시뮬레이션을 실행하면 변수의 변화가 여기에 표시됩니다.</div>
-      </div>
-    </div>
-  </div>
+        <!-- 캔버스 영역 -->
+        <div id="canvas-container">
+            <svg id="connections">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="20" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#1B4332"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
 
-  <script>
+        <!-- 하단 정보 패널 -->
+        <div id="bottom-panel">
+            <div class="panel-box">
+                <h4>한국어 의조코드(Pseudocode) 자동 변환</h4>
+                <div id="pseudocode" class="panel-content">// 순서도를 작성하면 한국어 설명 코드가 실시간 생성됩니다.</div>
+            </div>
+            <div class="panel-box">
+                <h4>실행 콘솔 / 상태 모니터링</h4>
+                <div id="console-output" class="panel-content">시뮬레이션을 실행하면 단계별 흐름이 여기에 표시됩니다.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
     let nodes = [];
     let connections = [];
     let selectedNode = null;
@@ -117,243 +384,292 @@
     const canvas = document.getElementById('canvas-container');
     const svg = document.getElementById('connections');
 
-    // 노드 생성
+    // 노드 생성 함수
     function createNode(type, defaultText) {
-      const id = 'node_' + nodeIdCounter++;
-      const nodeEl = document.createElement('div');
-      nodeEl.className = `node type-${type}`;
-      nodeEl.id = id;
-      
-      const textSpan = document.createElement('span');
-      textSpan.innerText = defaultText;
-      nodeEl.appendChild(textSpan);
-
-      // 위치 설정
-      const x = 100 + (nodes.length * 20) % 300;
-      const y = 100 + (nodes.length * 20) % 300;
-      nodeEl.style.left = x + 'px';
-      nodeEl.style.top = y + 'px';
-
-      const nodeData = { id, type, text: defaultText, x, y, el: nodeEl };
-      nodes.push(nodeData);
-      canvas.appendChild(nodeEl);
-
-      // 이벤트 리스너 (드래그 및 클릭)
-      initNodeEvents(nodeData);
-      updatePseudocode();
-    }
-
-    // 노드 이벤트 처리
-    function initNodeEvents(node) {
-      let isDragging = false;
-      let offsetX, offsetY;
-
-      node.el.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
+        const id = 'node_' + nodeIdCounter++;
+        const nodeEl = document.createElement('div');
+        nodeEl.className = `node type-${type}`;
+        nodeEl.id = id;
         
-        // 연결 로직
-        if (connectSourceNode && connectSourceNode !== node) {
-          addConnection(connectSourceNode, node);
-          connectSourceNode = null;
-          clearSelection();
-          return;
-        }
+        const textSpan = document.createElement('span');
+        textSpan.innerText = defaultText;
+        nodeEl.appendChild(textSpan);
 
-        selectNode(node);
-        isDragging = true;
-        offsetX = e.clientX - node.x;
-        offsetY = e.clientY - node.y;
-      });
+        // 기본 위치 배치
+        const x = 80 + (nodes.length * 25) % 250;
+        const y = 80 + (nodes.length * 25) % 200;
+        nodeEl.style.left = x + 'px';
+        nodeEl.style.top = y + 'px';
 
-      window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        node.x = e.clientX - offsetX;
-        node.y = e.clientY - offsetY;
-        node.el.style.left = node.x + 'px';
-        node.el.style.top = node.y + 'px';
-        drawConnections();
-      });
+        const nodeData = { id, type, text: defaultText, x, y, el: nodeEl };
+        nodes.push(nodeData);
+        canvas.appendChild(nodeEl);
 
-      window.addEventListener('mouseup', () => { isDragging = false; });
-
-      // 더블 클릭 시 텍스트 수정
-      node.el.addEventListener('dblclick', () => {
-        const newText = prompt('노드 텍스트를 입력하세요:', node.text);
-        if (newText !== null) {
-          node.text = newText;
-          node.el.querySelector('span').innerText = newText;
-          updatePseudocode();
-        }
-      });
+        initNodeEvents(nodeData);
+        updatePseudocode();
     }
 
-    // 선택 및 연결 처리
+    // 노드 이벤트 핸들러
+    function initNodeEvents(node) {
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        node.el.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            
+            if (connectSourceNode && connectSourceNode !== node) {
+                addConnection(connectSourceNode, node);
+                connectSourceNode = null;
+                clearSelection();
+                return;
+            }
+
+            selectNode(node);
+            isDragging = true;
+            offsetX = e.clientX - node.x;
+            offsetY = e.clientY - node.y;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            node.x = e.clientX - offsetX;
+            node.y = e.clientY - offsetY;
+            node.el.style.left = node.x + 'px';
+            node.el.style.top = node.y + 'px';
+            drawConnections();
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        node.el.addEventListener('dblclick', () => {
+            const newText = prompt('노드 텍스트를 입력하세요:', node.text);
+            if (newText !== null) {
+                node.text = newText;
+                node.el.querySelector('span').innerText = newText;
+                updatePseudocode();
+            }
+        });
+    }
+
     function selectNode(node) {
-      clearSelection();
-      selectedNode = node;
-      connectSourceNode = node;
-      node.el.classList.add('selected');
+        clearSelection();
+        selectedNode = node;
+        connectSourceNode = node;
+        node.el.classList.add('selected');
     }
 
     function clearSelection() {
-      nodes.forEach(n => n.el.classList.remove('selected'));
-      selectedNode = null;
+        nodes.forEach(n => n.el.classList.remove('selected'));
+        selectedNode = null;
     }
 
     canvas.addEventListener('click', () => {
-      clearSelection();
-      connectSourceNode = null;
+        clearSelection();
+        connectSourceNode = null;
     });
 
-    // 화살표 연결 추가
+    // 노드 연결 함수
     function addConnection(source, target) {
-      // 중복 방지
-      if (connections.some(c => c.source.id === source.id && c.target.id === target.id)) return;
-      
-      let label = "";
-      if (source.type === 'decision') {
-        label = prompt("'참(Yes)' 연결이면 '참', '거짓(No)' 연결이면 '거짓'을 입력하세요:", "참") || "";
-      }
-
-      connections.push({ source, target, label });
-      drawConnections();
-      updatePseudocode();
-    }
-
-    // 화살표 그리기 (SVG)
-    function drawConnections() {
-      // 기존 선 삭제 (defs 유지)
-      const paths = svg.querySelectorAll('g');
-      paths.forEach(p => p.remove());
-
-      connections.forEach(conn => {
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        if (connections.some(c => c.source.id === source.id && c.target.id === target.id)) return;
         
-        // 중심 좌표 계산
-        const sx = conn.source.x + 60;
-        const sy = conn.source.y + 30;
-        const tx = conn.target.x + 60;
-        const ty = conn.target.y + 30;
-
-        const d = `M ${sx} ${sy} C ${sx} ${(sy + ty) / 2}, ${tx} ${(sy + ty) / 2}, ${tx} ${ty}`;
-        path.setAttribute('d', d);
-        path.setAttribute('stroke', '#475569');
-        path.setAttribute('stroke-width', '2');
-        path.setAttribute('fill', 'none');
-        path.setAttribute('marker-end', 'url(#arrow)');
-
-        g.appendChild(path);
-
-        // 라벨 추가 (참/거짓)
-        if (conn.label) {
-          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          text.setAttribute('x', (sx + tx) / 2);
-          text.setAttribute('y', (sy + ty) / 2 - 5);
-          text.setAttribute('fill', '#e11d48');
-          text.setAttribute('font-size', '12');
-          text.setAttribute('font-weight', 'bold');
-          text.textContent = conn.label;
-          g.appendChild(text);
+        let label = "";
+        if (source.type === 'decision') {
+            label = prompt("'참(Yes)' 연결이면 '참', '거짓(No)' 연결이면 '거짓'을 입력하세요:", "참") || "";
         }
 
-        svg.appendChild(g);
-      });
+        connections.push({ source, target, label });
+        drawConnections();
+        updatePseudocode();
     }
 
-    // 의조코드(Pseudocode) 실시간 생성
+    // SVG 연결선 그리기
+    function drawConnections() {
+        const paths = svg.querySelectorAll('g');
+        paths.forEach(p => p.remove());
+
+        connections.forEach(conn => {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            const sx = conn.source.x + 60;
+            const sy = conn.source.y + 27;
+            const tx = conn.target.x + 60;
+            const ty = conn.target.y + 27;
+
+            const d = `M ${sx} ${sy} C ${sx} ${(sy + ty) / 2}, ${tx} ${(sy + ty) / 2}, ${tx} ${ty}`;
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', '#1B4332');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('marker-end', 'url(#arrow)');
+
+            g.appendChild(path);
+
+            if (conn.label) {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', (sx + tx) / 2);
+                text.setAttribute('y', (sy + ty) / 2 - 5);
+                text.setAttribute('fill', '#C62828');
+                text.setAttribute('font-size', '12');
+                text.setAttribute('font-weight', 'bold');
+                text.textContent = conn.label;
+                g.appendChild(text);
+            }
+
+            svg.appendChild(g);
+        });
+    }
+
+    // 실시간 의조코드 생성
     function updatePseudocode() {
-      const codeBox = document.getElementById('pseudocode');
-      if (nodes.length === 0) {
-        codeBox.innerText = "// 순서도를 작성하면 한국어 설명 코드가 생성됩니다.";
-        return;
-      }
+        const codeBox = document.getElementById('pseudocode');
+        if (nodes.length === 0) {
+            codeBox.innerText = "// 순서도를 작성하면 한국어 설명 코드가 실시간 생성됩니다.";
+            return;
+        }
 
-      let codeStr = "알고리즘 시작:\n";
-      nodes.forEach((n, idx) => {
-        if (n.type === 'start') codeStr += `1. 시작합니다.\n`;
-        else if (n.type === 'io') codeStr += `2. [입출력] ${n.text}\n`;
-        else if (n.type === 'process') codeStr += `3. [연산] ${n.text} 실행\n`;
-        else if (n.type === 'decision') codeStr += `4. [조건] 만약 (${n.text}) 이라면?\n`;
-        else if (n.type === 'end') codeStr += `5. 종료합니다.\n`;
-      });
-      codeBox.innerText = codeStr;
+        let codeStr = "알고리즘 시작:\n";
+        nodes.forEach((n) => {
+            if (n.type === 'start') codeStr += `1. 시작\n`;
+            else if (n.type === 'io') codeStr += `2. [입출력] ${n.text}\n`;
+            else if (n.type === 'process') codeStr += `3. [처리] ${n.text} 실행\n`;
+            else if (n.type === 'decision') codeStr += `4. [조건] 만약 (${n.text}) 조건 검사\n`;
+            else if (n.type === 'end') codeStr += `5. 종료\n`;
+        });
+        codeBox.innerText = codeStr;
     }
 
-    // 🌟 시뮬레이션 디버거 (실행 기능)
+    // 시뮬레이터 실행
     async function runSimulation() {
-      const consoleBox = document.getElementById('console-output');
-      consoleBox.innerText = "▶ 시뮬레이션 시작...\n";
+        const consoleBox = document.getElementById('console-output');
+        consoleBox.innerText = "▶ 시뮬레이션 시작...\n";
 
-      const startNode = nodes.find(n => n.type === 'start');
-      if (!startNode) {
-        alert('시작 노드가 없습니다!');
-        return;
-      }
-
-      let currentNode = startNode;
-      let memory = { X: 0 }; // 기본 가상 변수
-
-      while (currentNode) {
-        // 하이라이트 효과
-        nodes.forEach(n => n.el.classList.remove('active-exec'));
-        currentNode.el.classList.add('active-exec');
-
-        consoleBox.innerText += `[실행 중] -> ${currentNode.text}\n`;
-        await new Promise(r => setTimeout(r, 1000)); // 1초 대기 (애니메이션 효과)
-
-        if (currentNode.type === 'end') {
-          consoleBox.innerText += "✅ 성공적으로 종료되었습니다.\n";
-          break;
+        const startNode = nodes.find(n => n.type === 'start');
+        if (!startNode) {
+            alert('시작 노드가 없습니다!');
+            return;
         }
 
-        // 다음 노드 찾기
-        const nextConns = connections.filter(c => c.source.id === currentNode.id);
-        if (nextConns.length === 0) {
-          consoleBox.innerText += "⚠️ 연결된 다음 흐름선이 없습니다.\n";
-          break;
+        let currentNode = startNode;
+
+        while (currentNode) {
+            nodes.forEach(n => n.el.classList.remove('active-exec'));
+            currentNode.el.classList.add('active-exec');
+
+            consoleBox.innerText += `[실행 중] -> ${currentNode.text}\n`;
+            await new Promise(r => setTimeout(r, 900));
+
+            if (currentNode.type === 'end') {
+                consoleBox.innerText += "✅ 성공적으로 종료되었습니다.\n";
+                break;
+            }
+
+            const nextConns = connections.filter(c => c.source.id === currentNode.id);
+            if (nextConns.length === 0) {
+                consoleBox.innerText += "⚠️ 연결된 다음 흐름선이 없습니다.\n";
+                break;
+            }
+
+            if (currentNode.type === 'decision') {
+                const yesConn = nextConns.find(c => c.label === '참') || nextConns[0];
+                currentNode = yesConn.target;
+            } else {
+                currentNode = nextConns[0].target;
+            }
         }
 
-        if (currentNode.type === 'decision') {
-          // 단순화된 조건 처리 (기본적으로 '참' 방향 우선 흐름)
-          const yesConn = nextConns.find(c => c.label === '참') || nextConns[0];
-          currentNode = yesConn.target;
-        } else {
-          currentNode = nextConns[0].target;
-        }
-      }
-
-      setTimeout(() => {
-        nodes.forEach(n => n.el.classList.remove('active-exec'));
-      }, 1000);
+        setTimeout(() => {
+            nodes.forEach(n => n.el.classList.remove('active-exec'));
+        }, 1000);
     }
 
-    // 선택 요소 삭제
     function deleteSelected() {
-      if (!selectedNode) return;
-      nodes = nodes.filter(n => n.id !== selectedNode.id);
-      connections = connections.filter(c => c.source.id !== selectedNode.id && c.target.id !== selectedNode.id);
-      selectedNode.el.remove();
-      clearSelection();
-      drawConnections();
-      updatePseudocode();
+        if (!selectedNode) return;
+        nodes = nodes.filter(n => n.id !== selectedNode.id);
+        connections = connections.filter(c => c.source.id !== selectedNode.id && c.target.id !== selectedNode.id);
+        selectedNode.el.remove();
+        clearSelection();
+        drawConnections();
+        updatePseudocode();
     }
 
-    // 리셋
     function resetCanvas() {
-      nodes.forEach(n => n.el.remove());
-      nodes = [];
-      connections = [];
-      nodeIdCounter = 1;
-      drawConnections();
-      updatePseudocode();
-      document.getElementById('console-output').innerText = "초기화되었습니다.";
+        nodes.forEach(n => n.el.remove());
+        nodes = [];
+        connections = [];
+        nodeIdCounter = 1;
+        drawConnections();
+        updatePseudocode();
+        document.getElementById('console-output').innerText = "초기화되었습니다.";
     }
 
-    // 이미지 내보내기 (학습지용)
     function exportImage() {
-      alert("현재 캔버스 화면을 캡처하거나 프린트(Ctrl+P)하여 PDF/이미지로 활용할 수 있습니다.");
+        alert("화면 캡처나 브라우저 인쇄(Ctrl+P)를 이용하여 이미지/PDF로 보관할 수 있습니다.");
     }
-  </script>
+
+    /* 신경망 인터랙티브 배경 스크립트 */
+    const bgCanvas = document.getElementById('neural-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: null, y: null, radius: 150 };
+
+    function resizeBgCanvas() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        initParticles();
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = (Math.random() - 0.5) * 0.35;
+            this.radius = Math.random() * 2 + 1.5; 
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+            let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < mouse.radius) {
+                const force = (mouse.radius - distance) / mouse.radius;
+                this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
+            }
+        }
+        draw() {
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+    }
+
+    function animateBg() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update(); particles[i].draw();
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 110) {
+                    bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
+                    bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateBg);
+    }
+
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+    window.addEventListener('resize', resizeBgCanvas);
+    window.addEventListener('DOMContentLoaded', () => { resizeBgCanvas(); animateBg(); });
+</script>
 </body>
 </html>
