@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>한국 교육용 순서도 에디터 & 시뮬레이터</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', '맑은 고딕', sans-serif; }
+    body { display: flex; height: 100vh; background-color: #f8f9fa; color: #333; }
+    
+    /* 사이드바 */
+    #sidebar { width: 280px; background: #ffffff; border-right: 1px solid #e0e0e0; padding: 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+    .section-title { font-size: 14px; font-weight: bold; color: #666; margin-bottom: 8px; text-transform: uppercase; }
+    .symbol-btn { width: 100%; padding: 12px; margin-bottom: 8px; border: 2px solid #3b82f6; background: #eff6ff; color: #1d4ed8; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .symbol-btn:hover { background: #dbeafe; transform: translateY(-2px); }
+    
+    /* 캔버스 영역 */
+    #main { flex: 1; display: flex; flex-direction: column; }
+    #toolbar { height: 60px; background: #ffffff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 20px; gap: 12px; justify-content: space-between; }
+    .tool-group { display: flex; gap: 8px; align-items: center; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: #10b981; color: white; } .btn-primary:hover { background: #059669; }
+    .btn-secondary { background: #6b7280; color: white; } .btn-secondary:hover { background: #4b5563; }
+    .btn-danger { background: #ef4444; color: white; } .btn-danger:hover { background: #dc2626; }
+    
+    #canvas-container { flex: 1; position: relative; overflow: hidden; background-size: 20px 20px; background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px); }
+    svg#connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    
+    /* 노드 스타일 */
+    .node { position: absolute; width: 120px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: move; user-select: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: box-shadow 0.2s, border-color 0.2s; background: white; border: 2px solid #333; text-align: center; font-size: 13px; padding: 4px; }
+    .node.selected { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3); }
+    .node.active-exec { border-color: #10b981; background-color: #d1fae5; box-shadow: 0 0 12px #10b981; }
+    
+    /* 도형별 모양 */
+    .type-start, .type-end { border-radius: 30px; background: #fef3c7; border-color: #d97706; }
+    .type-process { border-radius: 4px; background: #e0f2fe; border-color: #0284c7; }
+    .type-io { transform: skewX(-15deg); background: #f3e8ff; border-color: #9333ea; }
+    .type-io span { transform: skewX(15deg); }
+    .type-decision { width: 100px; height: 100px; transform: rotate(45deg); background: #ffe4e6; border-color: #e11d48; margin: 10px; }
+    .type-decision span { transform: rotate(-45deg); display: block; }
+
+    /* 연결점 */
+    .port { width: 10px; height: 10px; background: #2563eb; border-radius: 50%; position: absolute; cursor: crosshair; }
+    
+    /* 하단 코드/실행 콘솔 */
+    #bottom-panel { height: 180px; background: #1e293b; color: #f8fafc; padding: 15px; display: flex; gap: 20px; font-family: monospace; }
+    .panel-box { flex: 1; display: flex; flex-direction: column; }
+    .panel-box h4 { margin-bottom: 8px; color: #94a3b8; font-size: 12px; }
+    .panel-content { flex: 1; background: #0f172a; padding: 10px; border-radius: 4px; overflow-y: auto; font-size: 13px; white-space: pre-wrap; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바: 교과서 기호 모음 -->
+  <div id="sidebar">
+    <div>
+      <div class="section-title">교육과정 표준 기호</div>
+      <button class="symbol-btn" onclick="createNode('start', '시작')">🟡 단말 (시작)</button>
+      <button class="symbol-btn" onclick="createNode('io', '입력: X')">▱ 입출력 (입/출력)</button>
+      <button class="symbol-btn" onclick="createNode('process', 'X = X + 1')">▭ 처리 (연산/대입)</button>
+      <button class="symbol-btn" onclick="createNode('decision', 'X > 5 ?')">◇ 판단 (조건문)</button>
+      <button class="symbol-btn" onclick="createNode('end', '끝')">🔴 단말 (끝)</button>
+    </div>
+    
+    <div>
+      <div class="section-title">선 연결 방법</div>
+      <p style="font-size: 12px; color: #666; line-height: 1.5;">
+        도형을 클릭하여 선택한 후, 다른 도형을 클릭하면 두 도형이 화살표로 연결됩니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 메인 작업 영역 -->
+  <div id="main">
+    <!-- 상단 툴바 -->
+    <div id="toolbar">
+      <div class="tool-group">
+        <button class="btn btn-primary" onclick="runSimulation()">▶ 실행 시뮬레이션</button>
+        <button class="btn btn-secondary" onclick="resetCanvas()">🔄 새로고침</button>
+      </div>
+      <div class="tool-group">
+        <button class="btn btn-secondary" onclick="exportImage()">📷 학습지용 이미지(PNG) 내보내기</button>
+        <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 선택 삭제</button>
+      </div>
+    </div>
+
+    <!-- 캔버스 -->
+    <div id="canvas-container">
+      <svg id="connections">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="20" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- 하단 실시간 모니터링 패널 -->
+    <div id="bottom-panel">
+      <div class="panel-box">
+        <h4>국어 의조코드(Pseudocode) 자동 변환</h4>
+        <div id="pseudocode" class="panel-content">// 순서도를 작성하면 한국어 설명 코드가 생성됩니다.</div>
+      </div>
+      <div class="panel-box">
+        <h4>실행 콘솔 / 변수 상태</h4>
+        <div id="console-output" class="panel-content">시뮬레이션을 실행하면 변수의 변화가 여기에 표시됩니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let nodes = [];
+    let connections = [];
+    let selectedNode = null;
+    let connectSourceNode = null;
+    let nodeIdCounter = 1;
+
+    const canvas = document.getElementById('canvas-container');
+    const svg = document.getElementById('connections');
+
+    // 노드 생성
+    function createNode(type, defaultText) {
+      const id = 'node_' + nodeIdCounter++;
+      const nodeEl = document.createElement('div');
+      nodeEl.className = `node type-${type}`;
+      nodeEl.id = id;
+      
+      const textSpan = document.createElement('span');
+      textSpan.innerText = defaultText;
+      nodeEl.appendChild(textSpan);
+
+      // 위치 설정
+      const x = 100 + (nodes.length * 20) % 300;
+      const y = 100 + (nodes.length * 20) % 300;
+      nodeEl.style.left = x + 'px';
+      nodeEl.style.top = y + 'px';
+
+      const nodeData = { id, type, text: defaultText, x, y, el: nodeEl };
+      nodes.push(nodeData);
+      canvas.appendChild(nodeEl);
+
+      // 이벤트 리스너 (드래그 및 클릭)
+      initNodeEvents(nodeData);
+      updatePseudocode();
+    }
+
+    // 노드 이벤트 처리
+    function initNodeEvents(node) {
+      let isDragging = false;
+      let offsetX, offsetY;
+
+      node.el.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        
+        // 연결 로직
+        if (connectSourceNode && connectSourceNode !== node) {
+          addConnection(connectSourceNode, node);
+          connectSourceNode = null;
+          clearSelection();
+          return;
+        }
+
+        selectNode(node);
+        isDragging = true;
+        offsetX = e.clientX - node.x;
+        offsetY = e.clientY - node.y;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        node.x = e.clientX - offsetX;
+        node.y = e.clientY - offsetY;
+        node.el.style.left = node.x + 'px';
+        node.el.style.top = node.y + 'px';
+        drawConnections();
+      });
+
+      window.addEventListener('mouseup', () => { isDragging = false; });
+
+      // 더블 클릭 시 텍스트 수정
+      node.el.addEventListener('dblclick', () => {
+        const newText = prompt('노드 텍스트를 입력하세요:', node.text);
+        if (newText !== null) {
+          node.text = newText;
+          node.el.querySelector('span').innerText = newText;
+          updatePseudocode();
+        }
+      });
+    }
+
+    // 선택 및 연결 처리
+    function selectNode(node) {
+      clearSelection();
+      selectedNode = node;
+      connectSourceNode = node;
+      node.el.classList.add('selected');
+    }
+
+    function clearSelection() {
+      nodes.forEach(n => n.el.classList.remove('selected'));
+      selectedNode = null;
+    }
+
+    canvas.addEventListener('click', () => {
+      clearSelection();
+      connectSourceNode = null;
+    });
+
+    // 화살표 연결 추가
+    function addConnection(source, target) {
+      // 중복 방지
+      if (connections.some(c => c.source.id === source.id && c.target.id === target.id)) return;
+      
+      let label = "";
+      if (source.type === 'decision') {
+        label = prompt("'참(Yes)' 연결이면 '참', '거짓(No)' 연결이면 '거짓'을 입력하세요:", "참") || "";
+      }
+
+      connections.push({ source, target, label });
+      drawConnections();
+      updatePseudocode();
+    }
+
+    // 화살표 그리기 (SVG)
+    function drawConnections() {
+      // 기존 선 삭제 (defs 유지)
+      const paths = svg.querySelectorAll('g');
+      paths.forEach(p => p.remove());
+
+      connections.forEach(conn => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        
+        // 중심 좌표 계산
+        const sx = conn.source.x + 60;
+        const sy = conn.source.y + 30;
+        const tx = conn.target.x + 60;
+        const ty = conn.target.y + 30;
+
+        const d = `M ${sx} ${sy} C ${sx} ${(sy + ty) / 2}, ${tx} ${(sy + ty) / 2}, ${tx} ${ty}`;
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', '#475569');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('marker-end', 'url(#arrow)');
+
+        g.appendChild(path);
+
+        // 라벨 추가 (참/거짓)
+        if (conn.label) {
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', (sx + tx) / 2);
+          text.setAttribute('y', (sy + ty) / 2 - 5);
+          text.setAttribute('fill', '#e11d48');
+          text.setAttribute('font-size', '12');
+          text.setAttribute('font-weight', 'bold');
+          text.textContent = conn.label;
+          g.appendChild(text);
+        }
+
+        svg.appendChild(g);
+      });
+    }
+
+    // 의조코드(Pseudocode) 실시간 생성
+    function updatePseudocode() {
+      const codeBox = document.getElementById('pseudocode');
+      if (nodes.length === 0) {
+        codeBox.innerText = "// 순서도를 작성하면 한국어 설명 코드가 생성됩니다.";
+        return;
+      }
+
+      let codeStr = "알고리즘 시작:\n";
+      nodes.forEach((n, idx) => {
+        if (n.type === 'start') codeStr += `1. 시작합니다.\n`;
+        else if (n.type === 'io') codeStr += `2. [입출력] ${n.text}\n`;
+        else if (n.type === 'process') codeStr += `3. [연산] ${n.text} 실행\n`;
+        else if (n.type === 'decision') codeStr += `4. [조건] 만약 (${n.text}) 이라면?\n`;
+        else if (n.type === 'end') codeStr += `5. 종료합니다.\n`;
+      });
+      codeBox.innerText = codeStr;
+    }
+
+    // 🌟 시뮬레이션 디버거 (실행 기능)
+    async function runSimulation() {
+      const consoleBox = document.getElementById('console-output');
+      consoleBox.innerText = "▶ 시뮬레이션 시작...\n";
+
+      const startNode = nodes.find(n => n.type === 'start');
+      if (!startNode) {
+        alert('시작 노드가 없습니다!');
+        return;
+      }
+
+      let currentNode = startNode;
+      let memory = { X: 0 }; // 기본 가상 변수
+
+      while (currentNode) {
+        // 하이라이트 효과
+        nodes.forEach(n => n.el.classList.remove('active-exec'));
+        currentNode.el.classList.add('active-exec');
+
+        consoleBox.innerText += `[실행 중] -> ${currentNode.text}\n`;
+        await new Promise(r => setTimeout(r, 1000)); // 1초 대기 (애니메이션 효과)
+
+        if (currentNode.type === 'end') {
+          consoleBox.innerText += "✅ 성공적으로 종료되었습니다.\n";
+          break;
+        }
+
+        // 다음 노드 찾기
+        const nextConns = connections.filter(c => c.source.id === currentNode.id);
+        if (nextConns.length === 0) {
+          consoleBox.innerText += "⚠️ 연결된 다음 흐름선이 없습니다.\n";
+          break;
+        }
+
+        if (currentNode.type === 'decision') {
+          // 단순화된 조건 처리 (기본적으로 '참' 방향 우선 흐름)
+          const yesConn = nextConns.find(c => c.label === '참') || nextConns[0];
+          currentNode = yesConn.target;
+        } else {
+          currentNode = nextConns[0].target;
+        }
+      }
+
+      setTimeout(() => {
+        nodes.forEach(n => n.el.classList.remove('active-exec'));
+      }, 1000);
+    }
+
+    // 선택 요소 삭제
+    function deleteSelected() {
+      if (!selectedNode) return;
+      nodes = nodes.filter(n => n.id !== selectedNode.id);
+      connections = connections.filter(c => c.source.id !== selectedNode.id && c.target.id !== selectedNode.id);
+      selectedNode.el.remove();
+      clearSelection();
+      drawConnections();
+      updatePseudocode();
+    }
+
+    // 리셋
+    function resetCanvas() {
+      nodes.forEach(n => n.el.remove());
+      nodes = [];
+      connections = [];
+      nodeIdCounter = 1;
+      drawConnections();
+      updatePseudocode();
+      document.getElementById('console-output').innerText = "초기화되었습니다.";
+    }
+
+    // 이미지 내보내기 (학습지용)
+    function exportImage() {
+      alert("현재 캔버스 화면을 캡처하거나 프린트(Ctrl+P)하여 PDF/이미지로 활용할 수 있습니다.");
+    }
+  </script>
+</body>
+</html>
