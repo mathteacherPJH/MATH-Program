@@ -127,7 +127,6 @@
     </div>
 
     <div class="card right-panel">
-        <!-- 탭 순서: 전체보기 -> 긍정 단어 -> 부정 단어 -> 중립 단어 -->
         <div class="nav-group">
             <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
             <button id="tab_pos" class="nav-btn" onclick="switchTab('pos')">긍정 단어</button>
@@ -148,7 +147,6 @@
                 </div>
             </div>
 
-            <!-- 섹션 순서: 긍정 -> 부정 -> 중립 -->
             <div id="sec_pos" class="result-section">
                 <h3>긍정 단어 목록</h3>
                 <div class="result-box" id="posContainer"></div>
@@ -169,45 +167,72 @@
 
 <script>
 const API_URL = 'https://math-render-apps-791425966280.asia-northeast3.run.app/api/analyze';
+
+// 🚀 올바른 Raw JSON 파일 주소 사용 (/blob/ -> raw.githubusercontent.com)
 const DICT_JSON_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/SentiWord_info.json';
+
+// 백업용 단어장
+const FALLBACK_DICT = {
+    "화창": "+2", "화창하다": "+2", "기분": "+1", "최고": "+2", "최고다": "+2", 
+    "좋다": "+2", "좋아": "+2", "행복": "+2", "사랑": "+2", "기쁘다": "+2", "기쁨": "+2",
+    "짜증": "-2", "짜증나다": "-2", "짜증난다": "-2", "체증": "-1", "막히다": "-1",
+    "슬프다": "-2", "슬픔": "-2", "싫다": "-2", "나쁘다": "-2", "최악": "-2", "우울": "-2"
+};
 
 let DEFAULT_SENTIMENT_DICT = {};
 let extractedWords = [];
 
-// 🚀 웹페이지 시작 시 KNU 감성 사전 로드 및 어근 파생어 자동 색인화
+// 사전 로드 및 색인 함수
 async function loadSentimentDictionary() {
-    try {
-        let response = await fetch(DICT_JSON_URL);
-        let data;
-        if (!response.ok) {
-            let localResponse = await fetch('./SentiWord_info.json');
-            data = await localResponse.json();
-        } else {
-            data = await response.json();
-        }
-
-        data.forEach(item => {
-            let pol = parseInt(item.polarity, 10);
-            let formattedScore = pol > 0 ? `+${pol}` : `${pol}`;
-            
-            const word = item.word;
-            const wordRoot = item.word_root;
-
-            if (word) DEFAULT_SENTIMENT_DICT[word] = formattedScore;
-            if (wordRoot) DEFAULT_SENTIMENT_DICT[wordRoot] = formattedScore;
-
-            // 접미사(~하다, ~되다, ~스럽다 등) 제거 후 어근 사전 자동 등록
-            if (word) {
-                const cleanStem = word.replace(/(하다|되다|스럽다|이다|있다|없다)$/, '');
-                if (cleanStem.length > 0) {
-                    DEFAULT_SENTIMENT_DICT[cleanStem] = formattedScore;
-                }
+    let loaded = false;
+    
+    const urlsToTry = [
+        DICT_JSON_URL,
+        'https://raw.githubusercontent.com/park1200656/knu_senti_dict/master/SentiWord_info.json',
+        './SentiWord_info.json',
+        'SentiWord_info.json'
+    ];
+    
+    for (let url of urlsToTry) {
+        try {
+            let response = await fetch(url);
+            if (response.ok) {
+                let data = await response.json();
+                registerDictData(data);
+                console.log(`✅ [성공] 사전 데이터 로드 완료 (${url}): ${Object.keys(DEFAULT_SENTIMENT_DICT).length}개 어휘`);
+                loaded = true;
+                break;
             }
-        });
-        console.log("KNU 감성사전 색인 완료! 어휘 수:", Object.keys(DEFAULT_SENTIMENT_DICT).length);
-    } catch (e) {
-        console.error("감성 사전 로드 실패:", e);
+        } catch (e) {
+            console.warn(`경로 읽기 실패: ${url}`);
+        }
     }
+
+    if (!loaded) {
+        console.warn("⚠️ 외부 JSON 로드 실패로 백업 사전 데이터를 사용합니다.");
+        Object.assign(DEFAULT_SENTIMENT_DICT, FALLBACK_DICT);
+    }
+}
+
+function registerDictData(data) {
+    data.forEach(item => {
+        let pol = parseInt(item.polarity, 10);
+        if (isNaN(pol)) return;
+        
+        let formattedScore = pol > 0 ? `+${pol}` : `${pol}`;
+        const word = item.word ? item.word.trim() : "";
+        const wordRoot = item.word_root ? item.word_root.trim() : "";
+
+        if (word) DEFAULT_SENTIMENT_DICT[word] = formattedScore;
+        if (wordRoot) DEFAULT_SENTIMENT_DICT[wordRoot] = formattedScore;
+
+        if (word && word.length > 1) {
+            const cleanStem = word.replace(/(하다|되다|스럽다|이다|있다|없다)$/, '');
+            if (cleanStem.length > 0) {
+                DEFAULT_SENTIMENT_DICT[cleanStem] = formattedScore;
+            }
+        }
+    });
 }
 
 function updateCharCount() {
@@ -248,17 +273,24 @@ function switchTab(tabId) {
     }
 }
 
-// 단어에 해당하는 감성 점수를 찾는 헬퍼 함수
+// 🔥 단어 및 어근 감성 점수 매칭 함수
 function getWordScore(targetWord) {
     if (!targetWord) return '0';
 
-    // 1차: 완전 일치 매칭
+    // 1. 완전 일치
     if (DEFAULT_SENTIMENT_DICT[targetWord]) {
         return DEFAULT_SENTIMENT_DICT[targetWord];
     }
 
-    // 2차: 부분 문자열/어근 매칭 (사전 키 중 길이가 2자 이상인 어근 포함 여부 검색)
-    for (const dictKey in DEFAULT_SENTIMENT_DICT) {
+    // 2. 어두/어근 매칭 (예: "화창해서" -> "화창", "최고다" -> "최고")
+    for (let dictKey in DEFAULT_SENTIMENT_DICT) {
+        if (dictKey.length >= 2 && targetWord.startsWith(dictKey)) {
+            return DEFAULT_SENTIMENT_DICT[dictKey];
+        }
+    }
+
+    // 3. 부분 포함 매칭 (예: "짜증난다" -> "짜증")
+    for (let dictKey in DEFAULT_SENTIMENT_DICT) {
         if (dictKey.length >= 2 && targetWord.includes(dictKey)) {
             return DEFAULT_SENTIMENT_DICT[dictKey];
         }
@@ -298,11 +330,10 @@ async function processSentimentWithLoading() {
                 rawWords = text.split(/\s+/);
             }
         } catch (netErr) {
-            console.warn("API 서버 통신 실패, 자체 토큰화 분석으로 전환합니다.", netErr);
             rawWords = text.split(/\s+/);
         }
 
-        // [핵심 수정] 정규식 범위 수정 (\uAC00-\uD7A3 완성형 한글 포함) 및 어근 매칭
+        // [정규식 보완] 한글 완성형(\uAC00-\uD7A3) 및 자모 정상 포함
         extractedWords = rawWords.map(w => {
             const cleanWord = w.replace(/[^a-zA-Z0-9\u3131-\u318E\uAC00-\uD7A3]/g, '');
             const target = cleanWord || w;
@@ -315,15 +346,7 @@ async function processSentimentWithLoading() {
         renderSentimentResults();
 
     } catch (e) {
-        console.error("분석 로직 처리 중 오류:", e);
-        const rawWords = text.split(/\s+/);
-        extractedWords = rawWords.map(w => {
-            const cleanWord = w.replace(/[^a-zA-Z0-9\u3131-\u318E\uAC00-\uD7A3]/g, '');
-            const target = cleanWord || w;
-            return { word: target, score: getWordScore(target) };
-        });
-        renderVocabTags();
-        renderSentimentResults();
+        console.error("분석 중 오류 발생:", e);
     } finally {
         overlay.classList.remove("active");
     }
@@ -432,7 +455,7 @@ function clearAllInputs() {
     renderSentimentResults();
 }
 
-// 신경망 애니메이션
+// 배경 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
