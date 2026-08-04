@@ -41,16 +41,14 @@
 
         #neural-canvas {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             z-index: 1;
             pointer-events: none;
         }
 
         .top-navbar {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
             background-color: rgba(251, 249, 244, 0.85);
             backdrop-filter: blur(16px);
@@ -129,6 +127,8 @@
             border-radius: 8px;
             padding: 10px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
         }
 
         .media-title {
@@ -140,14 +140,50 @@
 
         video {
             width: 100%;
-            height: 120px;
+            height: 130px;
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid var(--c-border);
             transform: scaleX(-1);
         }
 
-        /* 클래스 이름 설정 인풋 스타일 */
+        /* 드래그 앤 드롭 전용 드롭존 (웹캠 크기와 동일하게 구성) */
+        .dropzone {
+            width: 100%;
+            height: 130px;
+            border: 2px dashed var(--c-brand-green);
+            border-radius: 6px;
+            background: rgba(244, 241, 234, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            padding: 10px;
+        }
+        .dropzone:hover, .dropzone.dragover {
+            background: rgba(27, 67, 50, 0.08);
+            border-color: var(--c-accent);
+        }
+        .dropzone-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .dropzone-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+            text-align: center;
+            line-height: 1.3;
+        }
+        .dropzone-subtext {
+            font-size: 9px;
+            color: var(--c-text-muted);
+            margin-top: 4px;
+        }
+
         .class-name-container {
             display: flex;
             gap: 8px;
@@ -180,23 +216,22 @@
             font-family: inherit;
         }
 
-        /* 미리보기 갤러리 그리드 스타일 */
         .preview-gallery {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            max-height: 120px;
+            max-height: 110px;
             overflow-y: auto;
             margin-top: 8px;
-            padding: 4px;
+            padding: 6px;
             background: rgba(244, 241, 234, 0.4);
             border-radius: 6px;
             border: 1px solid var(--c-border);
         }
         .thumb-box {
             position: relative;
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 6px;
             overflow: hidden;
             border: 1px solid var(--c-border);
@@ -431,19 +466,28 @@
 
         <h3 style="color: var(--c-brand-green); font-size: 15px; margin-top: 5px;">2. 데이터 수집</h3>
         <div class="media-grid">
+            <!-- 웹캠 영역 -->
             <div class="media-card">
                 <div class="media-title">실시간 웹캠</div>
                 <video id="webcam" autoplay playsinline muted></video>
-                <div style="margin-top: 6px; display: flex; gap: 4px;">
+                <div style="margin-top: 8px; display: flex; gap: 4px;">
                     <button class="action-btn btn-class-a" style="padding: 6px; font-size: 11px;" onclick="addExampleFromSource(0, videoElement)">웹캠 → <span class="label-a">Class A</span></button>
                     <button class="action-btn btn-class-b" style="padding: 6px; font-size: 11px;" onclick="addExampleFromSource(1, videoElement)">웹캠 → <span class="label-b">Class B</span></button>
                 </div>
             </div>
 
+            <!-- 드래그 앤 드롭 업로드 영역 (웹캠과 동일한 규격) -->
             <div class="media-card">
-                <div class="media-title">사진 업로드 수집</div>
-                <input type="file" id="file-input" accept="image/*" multiple style="font-size: 11px; width: 100%;">
-                <div style="margin-top: 6px; display: flex; gap: 4px;">
+                <div class="media-title">이미지 드래그 앤 드롭</div>
+                <div id="dropzone" class="dropzone" onclick="document.getElementById('file-input').click()">
+                    <div class="dropzone-icon">📁</div>
+                    <div class="dropzone-text">이미지 드래그 또는 클릭</div>
+                    <div class="dropzone-subtext">(PNG, JPG, WEBP, GIF 등 지원)</div>
+                </div>
+                <!-- 다양한 이미지 확장자 지원 (14가지 포맷) -->
+                <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp, image/svg+xml, image/avif, image/tiff, image/heic, image/heif, image/x-icon, image/vnd.microsoft.icon" multiple style="display: none;">
+                
+                <div style="margin-top: 8px; display: flex; gap: 4px;">
                     <button class="action-btn btn-class-a" style="padding: 6px; font-size: 11px;" onclick="addUploadedExamples(0)">전체 → <span class="label-a">Class A</span></button>
                     <button class="action-btn btn-class-b" style="padding: 6px; font-size: 11px;" onclick="addUploadedExamples(1)">전체 → <span class="label-b">Class B</span></button>
                 </div>
@@ -453,7 +497,7 @@
         <!-- 업로드된 이미지 미리보기 섬네일 갤러리 -->
         <div style="font-size: 12px; font-weight: bold; color: var(--c-text-muted);">📷 업로드 이미지 목록 (<span id="upload-count">0</span>장)</div>
         <div id="preview-gallery" class="preview-gallery">
-            <div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 15px 0;">사진 파일을 선택하면 이곳에 네모박스로 표시됩니다.</div>
+            <div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 12px 0;">사진 파일을 드래그해서 넣으면 여기에 네모박스로 표시됩니다.</div>
         </div>
 
         <button class="run-btn" onclick="trainModelWithLoading()">분류기 재학습 실행 ⚡</button>
@@ -528,6 +572,7 @@ let customClassifier;
 
 const videoElement = document.getElementById('webcam');
 const fileInput = document.getElementById('file-input');
+const dropzone = document.getElementById('dropzone');
 const galleryContainer = document.getElementById('preview-gallery');
 
 let uploadedImagesData = []; // { id, imgElement, src }
@@ -558,12 +603,14 @@ async function init() {
     requestAnimationFrame(processPipeline);
 }
 
-// 파일 업로드 (다중 선택 처리)
-fileInput.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+// 다중 파일 처리 공통 함수
+function handleFiles(files) {
+    const fileList = Array.from(files);
+    if (!fileList.length) return;
 
-    files.forEach(file => {
+    fileList.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
         const reader = new FileReader();
         reader.onload = (f) => {
             const img = new Image();
@@ -580,19 +627,44 @@ fileInput.addEventListener('change', (e) => {
         };
         reader.readAsDataURL(file);
     });
+}
+
+// 클릭으로 수집
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+// 드래그 앤 드롭 이벤트 처리
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, false);
 });
 
-// 섬네일 갤러리 렌더링 및 X 삭제 버튼 구현
+['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+});
+
+dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+});
+
+// 섬네일 갤러리 렌더링 및 삭제 기능
 function renderGallery() {
     document.getElementById('upload-count').innerText = uploadedImagesData.length;
     
     if (uploadedImagesData.length === 0) {
-        galleryContainer.innerHTML = `<div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 15px 0;">사진 파일을 선택하면 이곳에 네모박스로 표시됩니다.</div>`;
+        galleryContainer.innerHTML = `<div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 12px 0;">사진 파일을 드래그해서 넣으면 여기에 네모박스로 표시됩니다.</div>`;
         return;
     }
 
     galleryContainer.innerHTML = '';
-    uploadedImagesData.forEach((item, index) => {
+    uploadedImagesData.forEach((item) => {
         const thumbBox = document.createElement('div');
         thumbBox.className = 'thumb-box';
 
@@ -677,7 +749,7 @@ function addExampleFromSource(classId, sourceElement) {
 
 function addUploadedExamples(classId) {
     if (uploadedImagesData.length === 0) {
-        alert("먼저 사진 파일을 업로드해 주세요!");
+        alert("먼저 사진 파일을 드래그해 넣거나 업로드해 주세요!");
         return;
     }
     uploadedImagesData.forEach(item => {
