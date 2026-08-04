@@ -3,803 +3,543 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>티처블 머신 인터랙티브 시각화</title>
-    <!-- TensorFlow.js 및 MobileNet 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <title>인공지능 수학 대시보드</title>
+    <!-- Tailwind CSS 최신 CDN 매칭 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        :root {
-            --c-bg-main: #FBF9F4; 
-            --c-bg-card: rgba(255, 255, 255, 0.73); 
-            --c-text-main: #2C2A29;
-            --c-text-muted: #7D7569;
-            --c-border: rgba(44, 42, 41, 0.1);
-            --c-accent: #2383E2;
-            --c-brand-green: #1B4332;
-            --c-tab-bg: #F4F1EA;
-            --c-class-a: #3498db;
-            --c-class-b: #e67e22;
-            --c-removed-text: #C62828;
-        }
-
-        body {
-            font-family: 'Malgun Gothic', -apple-system, sans-serif;
-            background-color: var(--c-bg-main);
-            color: var(--c-text-main);
-            margin: 0;
-            padding: 24px;
-            padding-top: 85px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            letter-spacing: 0.03em;
-            position: relative;
-            height: 100vh;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        #neural-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .top-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: rgba(251, 249, 244, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--c-border);
-            z-index: 1000;
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-sizing: border-box;
-        }
-
-        .back-btn {
-            background: transparent;
-            border: none;
-            color: var(--c-brand-green);
-            font-family: "Consolas", monospace;
-            font-size: 13px;
-            font-weight: 900;
-            letter-spacing: 0.15em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
-            transition: all 0.2s ease;
-        }
-        .back-btn:hover { transform: translateX(-3px); opacity: 0.8; }
-
-        .navbar-brand-text {
-            font-size: 13px; 
-            font-weight: bold; 
-            color: var(--c-brand-green); 
-            letter-spacing: 0.15em; 
-            text-transform: uppercase;
-        }
-
-        .main-layout {
-            display: flex;
-            width: 100%; 
-            height: calc(100vh - 110px); 
-            gap: 20px;
-            position: relative;
-            z-index: 10;
-            box-sizing: border-box;
-        }
-
-        .card {
-            background-color: var(--c-bg-card);
-            border: 1px solid var(--c-border);
-            border-radius: 12px;
-            padding: 24px;
-            box-sizing: border-box;
-            backdrop-filter: blur(6px);
-            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .left-panel {
-            flex: 1.1; 
-            height: 100%;
-            overflow-y: auto;
-        }
-
-        .media-grid {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .media-card {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid var(--c-border);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .media-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--c-text-muted);
-            margin-bottom: 8px;
-        }
-
-        video {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px solid var(--c-border);
-            transform: scaleX(-1);
-        }
-
-        /* 클래스 이름 설정 인풋 스타일 */
-        .class-name-container {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        .class-input-box {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            background: white;
-            border: 1px solid var(--c-border);
-            border-radius: 6px;
-            padding: 4px 8px;
-        }
-        .class-badge {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-        .class-badge.a { background-color: var(--c-class-a); }
-        .class-badge.b { background-color: var(--c-class-b); }
-        .class-input {
-            border: none;
-            outline: none;
-            width: 100%;
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--c-text-main);
-            font-family: inherit;
-        }
-
-        /* 미리보기 갤러리 그리드 스타일 */
-        .preview-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            max-height: 120px;
-            overflow-y: auto;
-            margin-top: 8px;
-            padding: 4px;
-            background: rgba(244, 241, 234, 0.4);
-            border-radius: 6px;
-            border: 1px solid var(--c-border);
-        }
-        .thumb-box {
-            position: relative;
-            width: 50px;
-            height: 50px;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid var(--c-border);
-            background: #fff;
-        }
-        .thumb-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .thumb-delete-btn {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
-            background: rgba(198, 40, 40, 0.85);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 1;
-            transition: background 0.2s;
-        }
-        .thumb-delete-btn:hover {
-            background: var(--c-removed-text);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-        }
-
-        .btn-class-a { background-color: var(--c-class-a); }
-        .btn-class-b { background-color: var(--c-class-b); }
-        .btn-class-a:hover, .btn-class-b:hover { opacity: 0.9; }
-
-        .run-btn {
-            width: 100%;
-            padding: 14px 20px;
-            background-color: var(--c-brand-green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-            letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
-            margin-top: 8px;
-            margin-bottom: 20px;
-        }
-        .run-btn:hover { opacity: 0.9; }
-
-        .prob-box { margin-bottom: 12px; }
-        .prob-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .progress-container {
-            background: rgba(44, 42, 41, 0.05);
-            height: 18px;
-            border-radius: 9px;
-            overflow: hidden;
-            border: 1px solid var(--c-border);
-        }
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            transition: width 0.15s ease-out;
-        }
-        #bar-a { background-color: var(--c-class-a); }
-        #bar-b { background-color: var(--c-class-b); }
-
-        .right-panel {
-            flex: 1.8;
-            height: 100%;
-            overflow: hidden;
-            gap: 14px;
-            position: relative;
-        }
-
-        .nav-group {
-            display: flex;
-            gap: 4px;
-            background: var(--c-tab-bg); 
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid rgba(44, 42, 41, 0.05);
-            flex-shrink: 0;
-        }
-        .nav-btn {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 8px 4px;
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--c-text-muted);
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-            white-space: nowrap;
-            text-align: center;
-        }
-        .nav-btn.active {
-            background: #FFFFFF;
-            color: var(--c-brand-green); 
-            box-shadow: 0 2px 6px rgba(44,42,41,0.08);
-        }
-
-        .right-panel-content {
-            width: 100%;
-            height: 100%;
-            overflow-y: auto; 
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            padding-right: 6px; 
-            box-sizing: border-box;
-        }
-
-        .result-section {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .result-section.hidden { display: none !important; }
+        /* 글로벌 모던 자간 및 가독성 최적화 */
+        .premium-text { tracking: 0.03em; font-feature-settings: "ss01", "ss02"; }
+        .smooth-motion { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
         
-        .result-section h3 {
-            margin: 0 0 8px 4px;
-            font-size: 14px;
-            color: var(--c-brand-green);
-            font-weight: bold;
-        }
+        /* 가로 스크롤바 숨김 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 레이어 우선순위 강제 설정 (캔버스를 가장 아래로, 컨텐츠는 위로) */
+        canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        nav, section, footer, div, aside { position: relative; z-index: 10; }
+        .bg-white { background-color: rgba(255, 255, 255, 0.85) !important; backdrop-blur-md: 8px; }
 
-        .result-box { 
-            background-color: rgba(244, 241, 234, 0.6); 
-            padding: 14px; 
-            border-radius: 8px; 
-            min-height: 48px; 
-            display: flex; 
-            flex-direction: column;
-            gap: 6px; 
-            border: 1px solid var(--c-border);
-            box-sizing: border-box;
-            width: 100%; 
-            font-family: 'Consolas', monospace;
-            font-size: 12px;
-            color: var(--c-text-main);
-            word-break: break-all;
-            line-height: 1.5;
+        /* 🧭 우측 고정형 플로팅 메뉴 상시 노출 스타일 */
+        #floating-sidebar {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100; /* 최상단 배치 레이어 */
         }
-
-        .loading-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(251, 249, 244, 0.85);
-            backdrop-filter: blur(4px);
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 12px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .loading-overlay.active { opacity: 1; pointer-events: auto; }
-        .spinner {
-            width: 45px; height: 45px;
-            border: 4px solid rgba(27, 67, 50, 0.1);
-            border-left-color: var(--c-brand-green);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 12px;
-        }
-        .loading-text { font-size: 14px; font-weight: bold; color: var(--c-brand-green); }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="bg-[#FBF9F4] text-[#2C2A29] font-sans antialiased selection:bg-[#1B4332] selection:text-white min-h-screen relative overflow-x-hidden flex flex-col justify-between premium-text">
 
-<canvas id="neural-canvas"></canvas>
+    <!-- 🌐 차분함과 가시성 밸런스를 재조정한 동적 신경망 배경 레이어 -->
+    <canvas id="neural-canvas"></canvas>
 
-<!-- 상단 네비게이션 바 -->
-<nav class="top-navbar">
-    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
-        ← BACK
-    </button>
-    <div class="navbar-brand-text">TEACHABLE MACHINE</div>
-</nav>
+    <!-- [상단 프리미엄 미니멀리즘 내비게이션 바] -->
+    <nav class="fixed top-0 left-0 w-full bg-[#FBF9F4]/80 backdrop-blur-xl border-b border-[#2C2A29]/10 z-50 px-6 py-4 flex items-center justify-between transition-all duration-300">
+        <div class="flex items-center gap-2 select-none cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <span class="text-sm tracking-[0.3em] font-black text-[#1B4332] font-mono">MATHMATICS FOR AI</span>
+        </div>
+        
+        <div class="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar structural-tabs">
+            <button onclick="scrollToSection('hero')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]">ABOUT US</button>
+            <button onclick="scrollToSection('services')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">OUR SERVICES</button>
+            <button onclick="scrollToSection('programs')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">PROGRAMS</button>
+            <button onclick="scrollToSection('tools')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">EXTERNAL TOOLS</button>
+        </div>
+    </nav>
 
-<div class="main-layout">
-    <!-- 왼쪽 패널 -->
-    <div class="card left-panel">
-        <h3 style="margin-top: 0; color: var(--c-brand-green); font-size: 15px;">1. 클래스 이름 설정</h3>
-        <div class="class-name-container">
-            <div class="class-input-box">
-                <div class="class-badge a"></div>
-                <input type="text" id="classNameA" class="class-input" value="Class A" oninput="updateClassNames()">
-            </div>
-            <div class="class-input-box">
-                <div class="class-badge b"></div>
-                <input type="text" id="classNameB" class="class-input" value="Class B" oninput="updateClassNames()">
+    <!-- 🧭 [우측 고정형 5단 프리미엄 플로팅 퀵 바 시스템] -->
+    <aside id="floating-sidebar" class="right-4 md:right-8 flex flex-col items-end gap-3 bg-white/95 backdrop-blur-xl border border-[#1B4332]/25 p-4 rounded-2xl shadow-2xl pt-6">
+        <button onclick="scrollToSection('hero')" id="q-hero" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-[#1B4332] transition-all">ABOUT US</span>
+            <div class="w-2 h-2 rounded-full bg-[#1B4332] scale-125 shadow-[0_0_6px_#1B4332] transition-all"></div>
+        </button>
+        
+        <button onclick="scrollToSection('services')" id="q-services" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">OUR SERVICES</span>
+            <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
+        </button>
+
+        <button onclick="scrollToSection('programs')" id="q-programs" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">PROGRAMS</span>
+            <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
+        </button>
+
+        <button onclick="scrollToSection('tools')" id="q-tools" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">EXTERNAL TOOLS</span>
+            <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
+        </button>
+
+        <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="group flex items-center gap-3 mt-2 pt-3 border-t border-[#1B4332]/10 cursor-pointer w-full justify-end">
+            <span class="text-[11px] font-black tracking-widest text-[#1B4332] group-hover:scale-110 transition-transform">TOP ↑</span>
+            <div class="w-2 h-2 rounded-full bg-[#1B4332]"></div>
+        </button>
+    </aside>
+
+    <!-- ================= [SECTION 1: HERO 비주얼 메인 배너] ================= -->
+    <section id="hero" class="relative w-full h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#2C2A29]/10 pt-16 bg-[#F4F1EA]/50">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#FBF9F4]/30 to-[#FBF9F4] z-10"></div>
+        
+        <!-- 교실 풍경 이미지 투명도 조절 -->
+        <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-15 filter sepia-10 contrast-95 brightness-105">
+
+        <!-- 중앙 메인 카피 단락 -->
+        <div class="relative z-20 text-center space-y-6 max-w-4xl px-6 select-none">
+            <p class="text-sm md:text-base tracking-[0.5em] font-black text-[#7D7569] uppercase">
+                VISUAL MATHEMATICS COMPASS
+            </p>
+            <h1 class="text-5xl sm:text-7xl font-light tracking-tight leading-[1.1] text-[#1B4332] pt-1">
+                EXPLORE AI MECHANISMS
+            </h1>
+            <p class="text-base sm:text-xl font-light text-[#5C564F] max-w-3xl mx-auto leading-relaxed tracking-wide pt-2">
+                인공지능의 핵심 원리를 시각적으로 보여줍니다.
+            </p>
+            <div class="pt-6">
+                <button onclick="scrollToSection('services')" class="px-8 py-3 bg-[#1B4332] text-xs font-bold tracking-widest text-white hover:bg-[#2D5A44] transition-all smooth-motion uppercase rounded-xs cursor-pointer shadow-lg shadow-[#1B4332]/10">SHORTCUT</button>
             </div>
         </div>
+    </section>
 
-        <h3 style="color: var(--c-brand-green); font-size: 15px; margin-top: 5px;">2. 데이터 수집</h3>
-        <div class="media-grid">
-            <div class="media-card">
-                <div class="media-title">실시간 웹캠</div>
-                <video id="webcam" autoplay playsinline muted></video>
-                <div style="margin-top: 6px; display: flex; gap: 4px;">
-                    <button class="action-btn btn-class-a" style="padding: 6px; font-size: 11px;" onclick="addExampleFromSource(0, videoElement)">웹캠 → <span class="label-a">Class A</span></button>
-                    <button class="action-btn btn-class-b" style="padding: 6px; font-size: 11px;" onclick="addExampleFromSource(1, videoElement)">웹캠 → <span class="label-b">Class B</span></button>
+    <!-- ================= [SECTION 2: OUR SERVICES] ================= -->
+    <section id="services" class="max-w-5xl mx-auto w-full px-6 py-24 space-y-16">
+        <div class="text-center space-y-3 select-none">
+            <h2 class="text-sm font-bold tracking-[0.4em] text-[#1B4332] uppercase">OUR SERVICES</h2>
+            <div class="w-10 h-[1px] bg-[#1B4332] mx-auto opacity-30"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 1단원 개요 (스카이 블루) -->
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#0284C7]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 01</span><span class="w-1.5 h-1.5 rounded-full bg-[#0284C7] shadow-[0_0_8px_#0284C7]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-wide">인공지능과 빅데이터</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    데이터 분류와 가공의 기초인 정량화 메커니즘을 배웁니다. 원시 데이터를 격자 형태의 수치 구조인 행렬 형식으로 매핑하고 처리하는 데이터 과학의 수학적 본질을 다룹니다.
+                </p>
+            </div>
+
+            <!-- 2단원 개요 (앰버 옐로우) -->
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#D97706]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 02</span><span class="w-1.5 h-1.5 rounded-full bg-[#D97706] shadow-[0_0_8px_#D97706]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-wide">텍스트 데이터의 처리</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    인간의 자연어를 컴퓨터가 연산 가능한 벡터 공간의 좌표로 변환하는 기술을 추적합니다. 문장을 단어들을 쪼개는 토큰화와 형태소 분석 뒤에 숨겨진 기하학적 수치 구조를 탐구합니다.
+                </p>
+            </div>
+
+            <!-- 3단원 개요 (인디고 / 바이올렛) -->
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#3A0CA3]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 03</span><span class="w-1.5 h-1.5 rounded-full bg-[#3A0CA3] shadow-[0_0_8px_#3A0CA3]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-tight">이미지 데이터의 처리</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    시각적 픽셀 정보가 거대한 디지털 행렬로 환원되는 구조를 가시화합니다. 행렬의 연산, 일차변환, 삼각함수를 활용하여 이미지의 밝기 제어, 대칭, 회전 이동을 수학적으로 통제합니다.
+                </p>
+            </div>
+
+            <!-- 4단원 개요 (버건디 / 크림슨) -->
+            <div class="bg-white border border-[#2C2A29]/10 p-8 rounded-xs space-y-4 shadow-xl shadow-[#2C2A29]/[0.02] hover:shadow-2xl hover:shadow-[#2C2A29]/[0.05] hover:border-[#9B2226]/30 transition-all duration-300">
+                <div class="flex items-baseline justify-between"><span class="font-mono text-xs tracking-widest text-[#9A9286]">CHAPTER 04</span><span class="w-1.5 h-1.5 rounded-full bg-[#9B2226] shadow-[0_0_8px_#9B2226]"></span></div>
+                <h3 class="text-xl font-bold text-[#2C2A29] tracking-tight">인공지능과 확률</h3>
+                <p class="text-sm sm:text-base text-[#5C564F] leading-relaxed font-light tracking-wide">
+                    원시 불확실성 데이터들 사이에서 규칙적인 상관관계를 찾아내는 인공지능의 예측 모형을 설계합니다. 산점도 가시화와 최적 추세선 도출, 결정계수(R²) 선형회귀 분석의 정밀함을 다룹니다.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= [SECTION 3: PROGRAMS] ================= -->
+    <section id="programs" class="bg-[#F4F1EA]/40 w-full border-y border-[#2C2A29]/10 py-24">
+        <div class="max-w-4xl mx-auto px-6 space-y-12">
+            <div class="text-center space-y-2 select-none">
+                <h2 class="text-sm font-bold tracking-[0.4em] text-[#1B4332] uppercase">EXPLORATION PROGRAMS</h2>
+                <div class="w-10 h-[1px] bg-[#1B4332] mx-auto opacity-30"></div>
+            </div>
+
+            <!-- 🗂️ 중첩 내부 단원별 필터 탭 바 -->
+            <div class="flex items-center justify-center border-b border-[#2C2A29]/10 pb-4 overflow-x-auto no-scrollbar gap-1 md:gap-4 inner-tabs-container">
+                <button onclick="filterPrograms('all')" id="inner-all" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm">전체보기</button>
+                <button onclick="filterPrograms('ch1')" id="inner-ch1" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">1단원</button>
+                <button onclick="filterPrograms('ch2')" id="inner-ch2" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">2단원</button>
+                <button onclick="filterPrograms('ch3')" id="inner-ch3" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">3단원</button>
+                <button onclick="filterPrograms('ch4')" id="inner-ch4" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">4단원</button>
+                <button onclick="filterPrograms('download')" id="inner-download" class="px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]">DOWNLOAD</button>
+            </div>
+
+            <div class="space-y-3" id="master-program-list">
+                <!-- 1단원 링크 1 (스카이 블루) -->
+                <div class="program-node ch1 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#0284C7]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#0284C7] bg-[#E0F2FE] border border-[#BAE6FD] px-2.5 py-0.5 rounded-xs">Chapter 01</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#0284C7] transition-colors">알고리즘과 순서도</h4>
+                    </div>
+                    <a href="chapter_1_flowchart.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#0284C7] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 💡 [신규 추가] 1단원 링크 2 (chapter_1_teachable_machine.html 연동) -->
+                <div class="program-node ch1 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#0284C7]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#0284C7] bg-[#E0F2FE] border border-[#BAE6FD] px-2.5 py-0.5 rounded-xs">Chapter 01</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#0284C7] transition-colors">티처블 머신 연동 모델 실습</h4>
+                    </div>
+                    <a href="chapter_1_teachable_machine.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#0284C7] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 2단원 링크 1 (앰버 옐로우) -->
+                <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#D97706]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#D97706] bg-[#FEF3C7] border border-[#FDE68A] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#D97706] transition-colors">단어집합 구성 과정</h4>
+                    </div>
+                    <a href="chapter_2_morphological_analysis.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#D97706] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 2단원 링크 2 (앰버 옐로우) -->
+                <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#D97706]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#D97706] bg-[#FEF3C7] border border-[#FDE68A] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#D97706] transition-colors">원 핫 벡터와 빈도수 벡터</h4>
+                    </div>
+                    <a href="chapter_2_sentence_vectorizer.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#D97706] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 2단원 링크 3 (앰버 옐로우) -->
+                <div class="program-node ch2 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#D97706]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#D97706] bg-[#FEF3C7] border border-[#FDE68A] px-2.5 py-0.5 rounded-xs">Chapter 02</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#D97706] transition-colors">텍스트 감성 분석</h4>
+                    </div>
+                    <a href="chapter_2_sentiment_analysis.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#D97706] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 1 (인디고 / 바이올렛) -->
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 데이터 표현</h4>
+                    </div>
+                    <a href="chapter_3_image_representation.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 2 (인디고 / 바이올렛) -->
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 데이터 밝기 및 흑백 변환</h4>
+                    </div>
+                    <a href="chapter_3_image_processing_1.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 3 (인디고 / 바이올렛) -->
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 데이터 대칭 및 회전 변환</h4>
+                    </div>
+                    <a href="chapter_3_reflection_and_rotation.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 4 (인디고 / 바이올렛) -->
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">두 이미지 가중치 합성</h4>
+                    </div>
+                    <a href="chapter_3_image_blending.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 5 (인디고 / 바이올렛) -->
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">이미지 블러 및 샤프닝 필터</h4>
+                    </div>
+                    <a href="chapter_3_blur_and_sharpening.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 3단원 링크 6 (인디고 / 바이올렛) -->
+                <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#3A0CA3] transition-colors">강아지, 고양이 분류 원리</h4>
+                    </div>
+                    <a href="chapter_3_classification.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <!-- 4단원 링크 (버건디 / 크림슨) -->
+                <div class="program-node ch4 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#9B2226]/40 hover:shadow-lg hover:shadow-black/[0.02] transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono font-bold tracking-wider text-[#9B2226] bg-[#FDF0F0] border border-[#F5C6C6] px-2.5 py-0.5 rounded-xs">Chapter 04</span>
+                        <h4 class="text-base font-bold text-[#2C2A29] group-hover:text-[#9B2226] transition-colors">산점도와 선형 추세선</h4>
+                    </div>
+                    <a href="chapter_4_regression_line.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#9B2226] transition-all whitespace-nowrap">LAUNCH →</a>
+                </div>
+
+                <div class="program-node download hidden bg-white border border-[#2C2A29]/10 rounded-xs p-10 text-center text-sm text-gray-400 font-light">
+                    공유 가능한 배포자료용 강의록 PDF 및 학습지 파일 리스트가 비어 있습니다.
+                </div>
+
+                <div id="inner-empty-notice" class="hidden bg-[#F4F1EA] border border-dashed border-[#2C2A29]/20 rounded-xs p-12 text-center text-sm text-gray-400 font-light">
+                    선택한 조건의 탐구 아카이브 데이터가 부재합니다.
                 </div>
             </div>
-
-            <div class="media-card">
-                <div class="media-title">사진 업로드 수집</div>
-                <input type="file" id="file-input" accept="image/*" multiple style="font-size: 11px; width: 100%;">
-                <div style="margin-top: 6px; display: flex; gap: 4px;">
-                    <button class="action-btn btn-class-a" style="padding: 6px; font-size: 11px;" onclick="addUploadedExamples(0)">전체 → <span class="label-a">Class A</span></button>
-                    <button class="action-btn btn-class-b" style="padding: 6px; font-size: 11px;" onclick="addUploadedExamples(1)">전체 → <span class="label-b">Class B</span></button>
-                </div>
-            </div>
         </div>
+    </section>
 
-        <!-- 업로드된 이미지 미리보기 섬네일 갤러리 -->
-        <div style="font-size: 12px; font-weight: bold; color: var(--c-text-muted);">📷 업로드 이미지 목록 (<span id="upload-count">0</span>장)</div>
-        <div id="preview-gallery" class="preview-gallery">
-            <div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 15px 0;">사진 파일을 선택하면 이곳에 네모박스로 표시됩니다.</div>
+    <!-- ================= [SECTION 4: EXTERNAL TOOLS] ================= -->
+    <footer id="tools" class="w-full max-w-4xl mx-auto px-6 py-16 text-center space-y-6">
+        <p class="text-xs font-bold text-[#1B4332] uppercase tracking-[0.3em]">EXTERNAL OPEN FRAMEWORKS</p>
+        <div class="flex flex-wrap items-center justify-center gap-3">
+            <a href="https://www.geogebra.org" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">GEOGEBRA ↗</a>
+            <a href="https://www.desmos.com" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">DESMOS ↗</a>
+            <a href="https://www.algeomath.kr" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">ALGEOMATH ↗</a>
+            <a href="https://tong.mods.go.kr/front/main/main.do" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">TONG_RAMI ↗</a>
+            <a href="https://www.wolframalpha.com" target="_blank" class="px-6 py-2.5 border border-[#2C2A29]/10 rounded-xs text-xs font-semibold text-[#5C564F] tracking-wider hover:text-black hover:border-[#1B4332] transition-all bg-white smooth-motion">WOLFRAMALPHA ↗</a>
         </div>
-
-        <button class="run-btn" onclick="trainModelWithLoading()">분류기 재학습 실행 ⚡</button>
-
-        <h3 style="color: var(--c-brand-green); font-size: 15px; margin-bottom: 12px;">3. 추론 결과</h3>
-        <div class="prob-box">
-            <div class="prob-label"><span class="label-a">Class A</span> (<span id="count0">0</span>개 수집): <span id="prob0">0%</span></div>
-            <div class="progress-container"><div id="bar-a" class="progress-bar"></div></div>
+        <div class="text-[11px] text-[#9A9286] font-mono pt-4 space-y-1.5">
+            <p>&copy; 2026 AI &times; MATHEMATICS EDUCATION PROJECT LAB. ALL RIGHTS RESERVED.</p>
+            <p class="text-[#7D7569] font-medium">made by Ji Hwan Park (estintoshout)</p>
         </div>
-        <div class="prob-box">
-            <div class="prob-label"><span class="label-b">Class B</span> (<span id="count1">0</span>개 수집): <span id="prob1">0%</span></div>
-            <div class="progress-container"><div id="bar-b" class="progress-bar"></div></div>
-        </div>
-    </div>
+    </footer>
 
-    <!-- 오른쪽 패널 -->
-    <div class="card right-panel">
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="spinner"></div>
-            <div id="loadingText" class="loading-text">MobileNet 1024차원 가중치 재학습 중...</div>
-        </div>
+    <!-- ========================================================================= -->
+    <!-- 인터랙션, 필터링 및 애니메이션 스크립트 핵심 코어 엔진 -->
+    <script>
+        /* 🌐 1. 인공지능 신경망(Neural Network) & 보정형 유성 기믹 애니메이션 엔진 */
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
 
-        <div class="nav-group">
-            <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
-            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 픽셀 텐서</button>
-            <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 특징 추출</button>
-            <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 특징 벡터</button>
-            <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. Softmax 연산</button>
-        </div>
+        let particles = [];
+        let shootingStars = []; 
+        const mouse = { x: null, y: null, radius: 150 };
 
-        <div class="right-panel-content">
-            <div id="sec_1" class="result-section">
-                <h3>1. 입력 이미지 텐서 (RGB 픽셀 행렬)</h3>
-                <div id="step1" class="result-box"></div>
-            </div>
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        }
 
-            <div id="sec_2" class="result-section">
-                <h3>2. MobileNet 커널 연산 (특징 추출기)</h3>
-                <div id="step2" class="result-box"></div>
-            </div>
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.35;
+                this.vy = (Math.random() - 0.5) * 0.35;
+                this.radius = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
 
-            <div id="sec_3" class="result-section">
-                <h3>3. 1024차원 특징 벡터 (Feature Vector)</h3>
-                <div id="step3" class="result-box"></div>
-            </div>
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
 
-            <div id="sec_4" class="result-section">
-                <h3>4. 가중치 연산($Y = W \cdot X + B$) & Softmax 변환</h3>
-                <div id="step4" class="result-box"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function switchTab(tabId) {
-    const tabs = ['all', '1', '2', '3', '4'];
-    tabs.forEach(t => {
-        document.getElementById(`tab_${t}`).classList.remove('active');
-        if(t !== 'all') document.getElementById(`sec_${t}`).classList.add('hidden');
-    });
-    document.getElementById(`tab_${tabId}`).classList.add('active');
-    if (tabId === 'all') {
-        tabs.forEach(t => { if(t !== 'all') document.getElementById(`sec_${t}`).classList.remove('hidden'); });
-    } else {
-        document.getElementById(`sec_${tabId}`).classList.remove('hidden');
-    }
-}
-
-let mobilenetModel;
-let customClassifier;
-
-const videoElement = document.getElementById('webcam');
-const fileInput = document.getElementById('file-input');
-const galleryContainer = document.getElementById('preview-gallery');
-
-let uploadedImagesData = []; // { id, imgElement, src }
-const xs = [];
-const ys = [];
-let counts = [0, 0];
-let isPredicting = false;
-
-// 클래스 이름 실시간 반영
-function updateClassNames() {
-    const nameA = document.getElementById('classNameA').value.trim() || 'Class A';
-    const nameB = document.getElementById('classNameB').value.trim() || 'Class B';
-
-    document.querySelectorAll('.label-a').forEach(el => el.innerText = nameA);
-    document.querySelectorAll('.label-b').forEach(el => el.innerText = nameB);
-}
-
-// 1. 모델 및 웹캠 초기화
-async function init() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        videoElement.srcObject = stream;
-    } catch (err) {
-        console.warn("웹캠을 시작할 수 없습니다.");
-    }
-
-    mobilenetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
-    requestAnimationFrame(processPipeline);
-}
-
-// 파일 업로드 (다중 선택 처리)
-fileInput.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (f) => {
-            const img = new Image();
-            img.src = f.target.result;
-            img.onload = () => {
-                const imgObj = {
-                    id: Date.now() + Math.random(),
-                    imgElement: img,
-                    src: f.target.result
-                };
-                uploadedImagesData.push(imgObj);
-                renderGallery();
-            };
-        };
-        reader.readAsDataURL(file);
-    });
-});
-
-// 섬네일 갤러리 렌더링 및 X 삭제 버튼 구현
-function renderGallery() {
-    document.getElementById('upload-count').innerText = uploadedImagesData.length;
-    
-    if (uploadedImagesData.length === 0) {
-        galleryContainer.innerHTML = `<div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 15px 0;">사진 파일을 선택하면 이곳에 네모박스로 표시됩니다.</div>`;
-        return;
-    }
-
-    galleryContainer.innerHTML = '';
-    uploadedImagesData.forEach((item, index) => {
-        const thumbBox = document.createElement('div');
-        thumbBox.className = 'thumb-box';
-
-        const imgEl = document.createElement('img');
-        imgEl.src = item.src;
-
-        const delBtn = document.createElement('div');
-        delBtn.className = 'thumb-delete-btn';
-        delBtn.innerHTML = '×';
-        delBtn.title = '이 사진 삭제';
-        delBtn.onclick = (e) => {
-            e.stopPropagation();
-            removeUploadedImage(item.id);
-        };
-
-        thumbBox.appendChild(imgEl);
-        thumbBox.appendChild(delBtn);
-        galleryContainer.appendChild(thumbBox);
-    });
-}
-
-function removeUploadedImage(id) {
-    uploadedImagesData = uploadedImagesData.filter(item => item.id !== id);
-    renderGallery();
-}
-
-// 2. 파이프라인 연산 루프
-async function processPipeline() {
-    if (mobilenetModel) {
-        tf.tidy(() => {
-            if (videoElement.readyState === 4) {
-                const imgTensor = tf.browser.fromPixels(videoElement);
-                const rawPixels = imgTensor.dataSync();
-
-                document.getElementById('step1').innerText = 
-                    `Shape: [${imgTensor.shape.join(', ')}] | Type: ${imgTensor.dtype}\n` +
-                    `RGB 픽셀 샘플: [${rawPixels.slice(0, 12).join(', ')}...]`;
-
-                const featureVector = mobilenetModel.infer(imgTensor, true);
-                const vectorData = featureVector.dataSync();
-
-                document.getElementById('step2').innerText = `Depthwise Separable Conv2D 및 Global Average Pooling 완료`;
-                document.getElementById('step3').innerText = 
-                    `특징 벡터 크기: [${featureVector.shape.join(', ')}]\n` +
-                    `1024개 특징 샘플:\n[${vectorData.slice(0, 10).map(n => n.toFixed(4)).join(', ')}, ...]`;
-
-                if (customClassifier && isPredicting) {
-                    const prediction = customClassifier.predict(featureVector);
-                    const probs = prediction.dataSync();
-                    const weights = customClassifier.layers[0].getWeights()[0].dataSync();
-
-                    document.getElementById('step4').innerText = 
-                        `[행렬 연산] 입력 1024차원 × 가중치 W[1024, 2] + B\n` +
-                        `가중치(W) 샘플: [${weights.slice(0, 6).map(n => n.toFixed(4)).join(', ')}...]\n\n` +
-                        `[Softmax 확률 변환 결과]\n` +
-                        `${document.getElementById('classNameA').value}: ${(probs[0]*100).toFixed(2)}% | ` +
-                        `${document.getElementById('classNameB').value}: ${(probs[1]*100).toFixed(2)}%`;
-
-                    updateUI(probs);
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < mouse.radius) {
+                    const force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= dx * force * 0.03;
+                    this.y -= dy * force * 0.03;
                 }
             }
-        });
-    }
-    requestAnimationFrame(processPipeline);
-}
-
-// 3. 데이터 수집
-function addExampleFromSource(classId, sourceElement) {
-    if (!mobilenetModel) return;
-
-    tf.tidy(() => {
-        const imgTensor = tf.browser.fromPixels(sourceElement);
-        const featureVector = mobilenetModel.infer(imgTensor, true);
-
-        xs.push(featureVector.clone());
-        ys.push(classId);
-
-        counts[classId]++;
-        document.getElementById(`count${classId}`).innerText = counts[classId];
-    });
-}
-
-function addUploadedExamples(classId) {
-    if (uploadedImagesData.length === 0) {
-        alert("먼저 사진 파일을 업로드해 주세요!");
-        return;
-    }
-    uploadedImagesData.forEach(item => {
-        addExampleFromSource(classId, item.imgElement);
-    });
-}
-
-// 4. 재학습 실행
-async function trainModelWithLoading() {
-    if (xs.length === 0) {
-        alert("학습할 데이터를 먼저 수집해 주세요!");
-        return;
-    }
-
-    const overlay = document.getElementById("loadingOverlay");
-    overlay.classList.add("active");
-
-    try {
-        const xDataset = tf.concat(xs, 0);
-        const yDataset = tf.oneHot(tf.tensor1d(ys, 'int32'), 2);
-
-        customClassifier = tf.sequential();
-        customClassifier.add(tf.layers.dense({
-            inputShape: [1024],
-            units: 2,
-            activation: 'softmax'
-        }));
-
-        customClassifier.compile({
-            optimizer: tf.train.adam(0.0001),
-            loss: 'categoricalCrossentropy'
-        });
-
-        await customClassifier.fit(xDataset, yDataset, { epochs: 20 });
-        isPredicting = true;
-    } catch(e) {
-        console.error(e);
-        alert("학습 도중 오류가 발생했습니다.");
-    } finally {
-        overlay.classList.remove("active");
-    }
-}
-
-function updateUI(probs) {
-    const p0 = (probs[0] * 100).toFixed(1);
-    const p1 = (probs[1] * 100).toFixed(1);
-
-    document.getElementById('prob0').innerText = p0 + "%";
-    document.getElementById('prob1').innerText = p1 + "%";
-
-    document.getElementById('bar-a').style.width = p0 + "%";
-    document.getElementById('bar-b').style.width = p1 + "%";
-}
-
-// 신경망 애니메이션 배경 (Neural Canvas)
-const bgCanvas = document.getElementById('neural-canvas');
-const bgCtx = bgCanvas.getContext('2d');
-let particles = [];
-const mouse = { x: null, y: null, radius: 150 };
-
-function resizeBgCanvas() {
-    bgCanvas.width = window.innerWidth;
-    bgCanvas.height = window.innerHeight;
-    initParticles();
-}
-
-class Particle {
-    constructor() {
-        this.x = Math.random() * bgCanvas.width;
-        this.y = Math.random() * bgCanvas.height;
-        this.vx = (Math.random() - 0.5) * 0.35;
-        this.vy = (Math.random() - 0.5) * 0.35;
-        this.radius = Math.random() * 2 + 1.5; 
-    }
-    update() {
-        this.x += this.vx; this.y += this.vy;
-        if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
-        let dx = mouse.x - this.x; let dy = mouse.y - this.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < mouse.radius) {
-            const force = (mouse.radius - distance) / mouse.radius;
-            this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
-        }
-    }
-    draw() {
-        bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
-    }
-}
-
-function initParticles() {
-    particles = [];
-    const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
-    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
-}
-
-function animateBg() {
-    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-    for (let i = 0; i < particles.length; i++) {
-        particles[i].update(); particles[i].draw();
-        for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 110) {
-                bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
-                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
+                ctx.fill();
             }
         }
-    }
-    requestAnimationFrame(animateBg);
-}
 
-window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-window.addEventListener('resize', resizeBgCanvas);
-window.addEventListener('DOMContentLoaded', () => { 
-    resizeBgCanvas(); 
-    animateBg(); 
-    updateClassNames();
-    init();
-});
-</script>
+        // 정밀 주기로 보정된 5초 간격 유성(별똥별) 클래스
+        class ShootingStar {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                if (Math.random() > 0.4) {
+                    this.x = Math.random() * canvas.width * 0.7;
+                    this.y = -30;
+                } else {
+                    this.x = -30;
+                    this.y = Math.random() * canvas.height * 0.6;
+                }
+                this.speed = Math.random() * 4 + 5; 
+                this.length = Math.random() * 100 + 60; 
+                this.opacity = Math.random() * 0.35 + 0.25;
+            }
+            update() {
+                this.x += this.speed;
+                this.y += this.speed * 0.75;
+                
+                if (this.x > canvas.width + 120 || this.y > canvas.height + 120) {
+                    return false;
+                }
+                return true;
+            }
+            draw() {
+                ctx.save();
+                let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.75);
+                grad.addColorStop(0, `rgba(27, 67, 50, ${this.opacity})`);
+                grad.addColorStop(0.3, `rgba(27, 67, 50, ${this.opacity * 0.4})`);
+                grad.addColorStop(1, 'rgba(27, 67, 50, 0)');
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.length, this.y - this.length * 0.75);
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2.2; 
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 1. 인공지능 연결 인력망 연산 루프
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.04 * (1 - dist / 110)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 2. 평균 5초에 1번 꼴로 스폰되도록 조율된 무작위 연산
+            if (Math.random() < 0.0035 && shootingStars.length < 2) {
+                shootingStars.push(new ShootingStar());
+            }
+
+            // 3. 유성 업데이트 및 렌더링 스택 제어
+            shootingStars = shootingStars.filter(star => {
+                let alive = star.update();
+                if (alive) star.draw();
+                return alive;
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animate();
+
+
+        /* 🗂️ 2. 페이지 스크롤 워프 함수 */
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                const offset = 70;
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+                window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+            }
+        }
+
+
+        /* 🎛️ 3. 중첩 내부 아카이브 프로그램 단원 필터링 함수 */
+        function filterPrograms(filterTag) {
+            const nodes = document.querySelectorAll('.program-node');
+            let visibleCount = 0;
+
+            nodes.forEach(node => {
+                if (filterTag === 'all') {
+                    if(node.classList.contains('download')) {
+                        node.style.display = 'none';
+                    } else {
+                        node.style.display = 'flex';
+                        visibleCount++;
+                    }
+                } else if (node.classList.contains(filterTag)) {
+                    node.style.display = node.classList.contains('group') ? 'flex' : 'block';
+                    visibleCount++;
+                } else {
+                    node.style.display = 'none';
+                }
+            });
+
+            const innerButtons = document.querySelectorAll('.inner-tabs-container button');
+            innerButtons.forEach(btn => {
+                btn.className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]";
+            });
+            document.getElementById(`inner-${filterTag}`).className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm";
+
+            document.getElementById('inner-empty-notice').style.display = (visibleCount === 0) ? 'block' : 'none';
+        }
+
+
+        /* 🧭 4. 헤더 탭 바 & 5단 우측 플로팅 퀵바 하이브리드 제어 커널 */
+        const sections = ['hero', 'services', 'programs', 'tools'];
+        const navButtons = document.querySelectorAll('.structural-tabs button');
+
+        filterPrograms('all');
+
+        window.addEventListener('scroll', () => {
+            let currentSection = 'hero';
+            
+            // 스크롤 최하단 인식 보정 버퍼
+            const isBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 50;
+
+            if (isBottom) {
+                currentSection = 'tools';
+            } else {
+                sections.forEach(id => {
+                    const sec = document.getElementById(id);
+                    if (sec) {
+                        const rect = sec.getBoundingClientRect();
+                        if (rect.top <= 140) currentSection = id;
+                    }
+                });
+            }
+
+            // 상단 메뉴 텍스트 언더바 하이라이팅 제어
+            const indexMap = { 'hero': 0, 'services': 1, 'programs': 2, 'tools': 3 };
+            const activeIdx = indexMap[currentSection];
+
+            navButtons.forEach((btn, idx) => {
+                if (idx === activeIdx) {
+                    btn.className = "px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors";
+                }
+            });
+
+            // 우측 퀵바 점형 도트 하이라이팅 연동 제어
+            sections.forEach(id => {
+                const btnText = document.querySelector(`#q-${id} span`);
+                const btnDot = document.querySelector(`#q-${id} div`);
+                
+                if (id === currentSection) {
+                    btnText.className = "text-[11px] font-bold tracking-wider text-[#1B4332] scale-105 transition-all";
+                    btnDot.className = "w-2 h-2 rounded-full bg-[#1B4332] scale-125 shadow-[0_0_6px_#1B4332] transition-all";
+                } else {
+                    btnText.className = "text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-all";
+                    btnDot.className = "w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all";
+                }
+            });
+        });
+    </script>
 </body>
 </html>
