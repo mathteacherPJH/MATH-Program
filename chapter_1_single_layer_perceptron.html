@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>단층 퍼셉트론 계산 시뮬레이터</title>
+    <!-- MathJax 수식 렌더링 라이브러리 추가 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -126,13 +139,13 @@
         }
 
         .card-left {
-            flex: 0 0 380px;
+            flex: 0 0 390px;
         }
 
         .section-title {
             font-size: 14px;
             font-weight: bold;
-            margin: 12px 0 8px 0;
+            margin: 14px 0 8px 0;
             color: var(--c-brand-green); 
             letter-spacing: 0.05em;
             display: flex;
@@ -156,10 +169,10 @@
 
         .nav-btn {
             flex: 1;
-            min-width: 35px;
+            min-width: 32px;
             border: none;
             background: transparent;
-            padding: 8px 12px;
+            padding: 8px 10px;
             font-size: 13px;
             font-weight: bold;
             color: var(--c-text-muted);
@@ -177,10 +190,10 @@
         .param-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .param-table th, .param-table td {
-            padding: 8px;
+            padding: 6px 8px;
             text-align: left;
             border-bottom: 1px dashed rgba(44, 42, 41, 0.1);
         }
@@ -190,8 +203,8 @@
         }
 
         .input-num {
-            width: 80px;
-            padding: 6px 10px;
+            width: 75px;
+            padding: 6px 8px;
             font-family: "Consolas", monospace;
             font-size: 13px;
             border: 1px solid rgba(44, 42, 41, 0.15);
@@ -205,7 +218,6 @@
             background-color: #E9F5ED;
         }
 
-        /* 수식/결과 디스플레이 박스 */
         .math-box {
             background: #F4F1EA;
             border: 1px solid rgba(44, 42, 41, 0.1);
@@ -227,10 +239,9 @@
             font-weight: bold;
         }
 
-        /* 캔버스 도식화 영역 */
         .diagram-wrapper {
             flex: 1;
-            min-height: 450px;
+            min-height: 520px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -274,15 +285,13 @@
     </nav>
 
     <div class="main-container">
-        <!-- 왼쪽 컨트롤 파라미터 카드 -->
+        <!-- 왼쪽 카드 -->
         <div class="card card-left">
             <div class="section-title">🔢 입력값 개수 선택 (2 ~ 10개)</div>
-            <div class="nav-group" id="countGroup">
-                <!-- 2 ~ 10 동적 생성 -->
-            </div>
+            <div class="nav-group" id="countGroup"></div>
 
             <div class="section-title">⚖️ 입력값($x_i$) 및 가중치($w_i$) 설정</div>
-            <div style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
+            <div style="max-height: 200px; overflow-y: auto; padding-right: 5px;">
                 <table class="param-table">
                     <thead>
                         <tr>
@@ -291,14 +300,12 @@
                             <th>가중치 ($w_i$)</th>
                         </tr>
                     </thead>
-                    <tbody id="paramTbody">
-                        <!-- 동적 생성 -->
-                    </tbody>
+                    <tbody id="paramTbody"></tbody>
                 </table>
             </div>
 
             <div class="section-title">🎯 편향 (Bias, $b$) 설정</div>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
                 <span style="font-size:13px; color:var(--c-text-muted);">Bias ($b$):</span>
                 <input type="number" id="biasInput" class="input-num" value="0.0" step="0.1" onchange="updatePerceptron()">
             </div>
@@ -320,7 +327,7 @@
             </div>
         </div>
 
-        <!-- 오른쪽 마인드맵 도식화 카드 -->
+        <!-- 오른쪽 마인드맵 카드 -->
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <div class="section-title" style="margin:0;">🧠 단층 퍼셉트론 마인드맵 연산 구조도</div>
@@ -410,14 +417,17 @@
 
     window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
     window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-    window.addEventListener('resize', resizeBgCanvas);
+    window.addEventListener('resize', () => {
+        resizeBgCanvas();
+        updatePerceptron();
+    });
 
     // --- 퍼셉트론 시뮬레이터 로직 ---
     let nodeCount = 3;
     let inputs = [1.0, 0.5, -0.2];
     let weights = [0.8, -0.4, 1.0];
     let bias = 0.0;
-    let activationType = 'step'; // 'step', 'relu', 'sigmoid'
+    let activationType = 'step'; 
 
     const canvas = document.getElementById('perceptronCanvas');
     const ctx = canvas.getContext('2d');
@@ -446,7 +456,6 @@
         nodeCount = count;
         initNodeCountUI();
 
-        // 기존 배열 크기 재조정
         while (inputs.length < count) {
             inputs.push(parseFloat((Math.random() * 2 - 1).toFixed(1)));
             weights.push(parseFloat((Math.random() * 2 - 1).toFixed(1)));
@@ -464,11 +473,16 @@
         for (let i = 0; i < nodeCount; i++) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="font-weight:bold; color:var(--c-brand-green);">#${i+1}</td>
+                <td style="font-weight:bold; color:var(--c-brand-green);">$x_{${i+1}}$</td>
                 <td><input type="number" class="input-num" value="${inputs[i]}" step="0.1" onchange="onValueChange(${i}, 'x', this.value)"></td>
                 <td><input type="number" class="input-num" value="${weights[i]}" step="0.1" onchange="onValueChange(${i}, 'w', this.value)"></td>
             `;
             tbody.appendChild(tr);
+        }
+        
+        // MathJax 다시 스캔하여 수식 변환
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise([tbody]);
         }
     }
 
@@ -512,24 +526,26 @@
     function updatePerceptron() {
         bias = parseFloat(document.getElementById('biasInput').value) || 0;
 
-        // 1. 내적값(가중합) 계산: sum(x_i * w_i) + b
         let dotProduct = 0;
         let formulaTerms = [];
         for (let i = 0; i < nodeCount; i++) {
             dotProduct += inputs[i] * weights[i];
-            formulaTerms.push(`(${inputs[i]} × ${weights[i]})`);
+            formulaTerms.push(`(${inputs[i]} \\cdot ${weights[i]})`);
         }
         const weightedSum = dotProduct + bias;
-
-        // 2. 활성화 함수 계산
         const finalOutput = calculateActivation(weightedSum);
 
-        // 3. UI 수식 업데이트
+        // 수식 텍스트 업데이트
+        const formulaContainer = document.getElementById('dotProductFormula');
         const formulaStr = formulaTerms.join(' + ') + (bias >= 0 ? ` + ${bias}` : ` - ${Math.abs(bias)}`);
-        document.getElementById('dotProductFormula').innerText = `${formulaStr} = ${weightedSum.toFixed(2)}`;
-        document.getElementById('activationResult').innerText = `Y = ${finalOutput.toFixed(3)}`;
+        formulaContainer.innerHTML = `$x = ${formulaStr} = ${weightedSum.toFixed(2)}$`;
+        
+        document.getElementById('activationResult').innerHTML = `$Y = f(x) = ${finalOutput.toFixed(3)}$`;
 
-        // 4. 캔버스 다이어그램 그리기
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise([formulaContainer, document.getElementById('activationResult')]);
+        }
+
         drawDiagram(weightedSum, finalOutput);
     }
 
@@ -544,49 +560,51 @@
         const w = canvas.width;
         const h = canvas.height;
 
-        // 마인드맵 계층별 X 좌표
-        const xInput = w * 0.15;
-        const xSum = w * 0.50;
-        const xAct = w * 0.72;
+        const xInput = w * 0.16;
+        const xSum = w * 0.52;
+        const xAct = w * 0.74;
         const xOutput = w * 0.90;
 
-        // 입력 노드 Y 좌표 계산
-        const inputYList = [];
-        const spacing = Math.min(45, (h - 80) / (nodeCount + 1));
-        const startY = (h - spacing * (nodeCount - 1)) / 2;
+        // 노드 간 간격 개선: 최소 간격(spacing)을 확보하여 넉넉히 벌어지도록 조정
+        const minSpacing = 55; 
+        const calculatedSpacing = (h - 100) / (nodeCount + 1);
+        const spacing = Math.max(minSpacing, calculatedSpacing);
+        
+        const totalHeight = spacing * (nodeCount - 1);
+        const startY = (h - totalHeight) / 2;
 
+        const inputYList = [];
         for (let i = 0; i < nodeCount; i++) {
             inputYList.push(startY + i * spacing);
         }
 
         const centerY = h / 2;
 
-        // 1. 가중치 연결선 그리기 (x_i -> Sum)
+        // 1. 가중치 연결선
         for (let i = 0; i < nodeCount; i++) {
             const iy = inputYList[i];
             const weightVal = weights[i];
 
             ctx.beginPath();
-            ctx.moveTo(xInput + 25, iy);
-            ctx.lineTo(xSum - 35, centerY);
+            ctx.moveTo(xInput + 24, iy);
+            ctx.lineTo(xSum - 36, centerY);
             
-            // 가중치 양수/음수에 따른 색상
-            ctx.strokeStyle = weightVal >= 0 ? 'rgba(35, 131, 226, 0.4)' : 'rgba(235, 87, 87, 0.4)';
+            ctx.strokeStyle = weightVal >= 0 ? 'rgba(35, 131, 226, 0.45)' : 'rgba(235, 87, 87, 0.45)';
             ctx.lineWidth = Math.min(Math.abs(weightVal) * 2 + 1, 5);
             ctx.stroke();
 
             // 가중치 텍스트 표시
-            const midX = (xInput + xSum) / 2 - 10;
+            const midX = (xInput + xSum) / 2 - 5;
             const midY = (iy + centerY) / 2;
             ctx.fillStyle = '#7D7569';
             ctx.font = '11px Consolas';
-            ctx.fillText(`w${i+1}:${weightVal}`, midX, midY - 4);
+            ctx.fillText(`w${i+1}=${weightVal}`, midX, midY - 4);
         }
 
         // 2. Bias 연결선
         ctx.beginPath();
-        ctx.moveTo(xSum, centerY - 80);
-        ctx.lineTo(xSum, centerY - 35);
+        ctx.moveTo(xSum, centerY - 75);
+        ctx.lineTo(xSum, centerY - 36);
         ctx.strokeStyle = 'rgba(226, 133, 35, 0.5)';
         ctx.lineWidth = 2;
         ctx.setLineDash([3, 3]);
@@ -594,63 +612,77 @@
         ctx.setLineDash([]);
 
         // Bias 노드
-        drawNode(xSum, centerY - 85, 18, '#E28523', `b`, `b:${bias}`);
+        drawNode(xSum, centerY - 80, 18, '#E28523', `${bias}`, `b (Bias)`, '#FFFFFF');
 
         // 3. 연결선 (Sum -> Activation -> Output)
         ctx.beginPath();
-        ctx.moveTo(xSum + 35, centerY);
-        ctx.lineTo(xAct - 30, centerY);
+        ctx.moveTo(xSum + 36, centerY);
+        ctx.lineTo(xAct - 28, centerY);
         ctx.strokeStyle = '#1B4332';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(xAct + 30, centerY);
-        ctx.lineTo(xOutput - 20, centerY);
+        ctx.moveTo(xAct + 28, centerY);
+        ctx.lineTo(xOutput - 22, centerY);
         ctx.strokeStyle = '#1B4332';
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // 4. 입력 노드들 그리기
+        // 4. 입력 노드들 그리기 (원 안에 입력값 x_i 표시)
         for (let i = 0; i < nodeCount; i++) {
-            drawNode(xInput, inputYList[i], 20, '#2383E2', `x${i+1}`, `${inputs[i]}`);
+            drawNode(
+                xInput, 
+                inputYList[i], 
+                22, 
+                '#2383E2', 
+                `${inputs[i]}`,       // 원 안에 실제 입력값 x_i 내포
+                `x${i+1}`,           // 원 상단에 노드명 표시
+                '#FFFFFF',
+                true                  // 상단 서브라벨 모드
+            );
         }
 
-        // 5. 가중합 노드 ($\sum$)
-        drawNode(xSum, centerY, 35, '#1B4332', 'Σ', `x = ${weightedSum.toFixed(2)}`);
+        // 5. 가중합 노드 (Σ)
+        drawNode(xSum, centerY, 36, '#1B4332', 'Σ', `x = ${weightedSum.toFixed(2)}`, '#F4F1EA');
 
-        // 6. 활성화 함수 노드 ($f$)
+        // 6. 활성화 함수 노드
         let actLabel = 'Step';
         if (activationType === 'relu') actLabel = 'ReLU';
         if (activationType === 'sigmoid') actLabel = 'σ';
-        drawNode(xAct, centerY, 28, '#2383E2', actLabel, `f(x)`);
+        drawNode(xAct, centerY, 28, '#2383E2', actLabel, `f(x)`, '#FFFFFF');
 
-        // 7. 최종 출력 노드 ($Y$)
-        drawNode(xOutput, centerY, 22, '#1B4332', 'Y', `${finalOutput.toFixed(2)}`);
+        // 7. 최종 출력 노드 (Y)
+        drawNode(xOutput, centerY, 22, '#1B4332', `${finalOutput.toFixed(2)}`, 'Output Y', '#FFFFFF');
     }
 
-    function drawNode(x, y, radius, color, mainText, subText) {
+    function drawNode(x, y, radius, color, mainText, subText, bgColor = '#FFFFFF', subOnTop = false) {
         // 노드 원형
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = bgColor;
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // 메인 텍스트
+        // 원 내부 메인 텍스트 (입력값/결과값)
         ctx.fillStyle = color;
-        ctx.font = 'bold 13px sans-serif';
+        ctx.font = 'bold 12px Consolas, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(mainText, x, y);
 
-        // 하단 하브 텍스트
+        // 원 외부 서브 텍스트 (노드 명칭 등)
         if (subText) {
             ctx.fillStyle = '#2C2A29';
-            ctx.font = '11px Consolas';
-            ctx.fillText(subText, x, y + radius + 14);
+            ctx.font = 'bold 11px sans-serif';
+            
+            if (subOnTop) {
+                ctx.fillText(subText, x, y - radius - 8);
+            } else {
+                ctx.fillText(subText, x, y + radius + 14);
+            }
         }
     }
 </script>
