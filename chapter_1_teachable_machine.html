@@ -100,7 +100,7 @@
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -109,47 +109,83 @@
         }
 
         .left-panel {
-            flex: 1.1; 
+            flex: 1.25; 
             height: 100%;
             overflow-y: auto;
-        }
-
-        .media-grid {
             display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
+            flex-direction: column;
+            gap: 16px;
         }
 
-        .media-card {
-            flex: 1;
+        /* 공통 웹캠 미리보기 박스 */
+        .webcam-container {
             background: rgba(255, 255, 255, 0.8);
             border: 1px solid var(--c-border);
             border-radius: 8px;
             padding: 10px;
             text-align: center;
-            display: flex;
-            flex-direction: column;
         }
-
-        .media-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--c-text-muted);
-            margin-bottom: 8px;
-        }
-
         video {
             width: 100%;
-            height: 130px;
+            height: 120px;
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid var(--c-border);
             transform: scaleX(-1);
         }
 
+        /* Class 전용 수집 카드 */
+        .class-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--c-border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .class-card.border-a { border-left: 5px solid var(--c-class-a); }
+        .class-card.border-b { border-left: 5px solid var(--c-class-b); }
+
+        .class-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .class-input-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+        .class-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .class-badge.a { background-color: var(--c-class-a); }
+        .class-badge.b { background-color: var(--c-class-b); }
+        .class-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--c-text-main);
+            font-family: inherit;
+            border-bottom: 1px dashed var(--c-border);
+            padding: 2px 4px;
+            width: 140px;
+        }
+
+        .class-action-grid {
+            display: flex;
+            gap: 8px;
+        }
+
         .dropzone {
-            width: 100%;
-            height: 130px;
+            flex: 1;
+            height: 80px;
             border: 2px dashed var(--c-brand-green);
             border-radius: 6px;
             background: rgba(244, 241, 234, 0.3);
@@ -160,71 +196,43 @@
             cursor: pointer;
             box-sizing: border-box;
             transition: all 0.2s ease;
-            padding: 10px;
+            padding: 4px;
         }
         .dropzone:hover, .dropzone.dragover {
             background: rgba(27, 67, 50, 0.08);
             border-color: var(--c-accent);
-        }
-        .dropzone-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
         }
         .dropzone-text {
             font-size: 11px;
             font-weight: bold;
             color: var(--c-brand-green);
             text-align: center;
-            line-height: 1.3;
-        }
-        .dropzone-subtext {
-            font-size: 9px;
-            color: var(--c-text-muted);
-            margin-top: 4px;
         }
 
-        .class-name-container {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        .class-input-box {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            background: white;
-            border: 1px solid var(--c-border);
-            border-radius: 6px;
-            padding: 4px 8px;
-        }
-        .class-badge {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-        .class-badge.a { background-color: var(--c-class-a); }
-        .class-badge.b { background-color: var(--c-class-b); }
-        .class-input {
+        .action-btn {
+            padding: 8px 12px;
             border: none;
-            outline: none;
-            width: 100%;
-            font-size: 13px;
+            border-radius: 6px;
             font-weight: bold;
-            color: var(--c-text-main);
-            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            white-space: nowrap;
         }
+        .btn-class-a { background-color: var(--c-class-a); }
+        .btn-class-b { background-color: var(--c-class-b); }
+        .btn-class-a:hover, .btn-class-b:hover { opacity: 0.9; }
 
-        /* 갤러리 영역 세로 길이 확장 (max-height: 220px, 최소 높이 120px) */
+        /* 갤러리 영역 */
         .preview-gallery {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            min-height: 120px;
-            max-height: 220px;
+            gap: 6px;
+            min-height: 50px;
+            max-height: 120px;
             overflow-y: auto;
-            margin-top: 8px;
-            padding: 8px;
+            padding: 6px;
             background: rgba(244, 241, 234, 0.4);
             border-radius: 6px;
             border: 1px solid var(--c-border);
@@ -232,9 +240,9 @@
         }
         .thumb-box {
             position: relative;
-            width: 58px;
-            height: 58px;
-            border-radius: 6px;
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
             overflow: hidden;
             border: 1px solid var(--c-border);
             background: #fff;
@@ -246,78 +254,52 @@
         }
         .thumb-delete-btn {
             position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
+            top: 1px;
+            right: 1px;
+            width: 15px;
+            height: 15px;
             background: rgba(198, 40, 40, 0.85);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             cursor: pointer;
             line-height: 1;
             transition: background 0.2s;
         }
-        .thumb-delete-btn:hover {
-            background: var(--c-removed-text);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-        }
-
-        .btn-class-a { background-color: var(--c-class-a); }
-        .btn-class-b { background-color: var(--c-class-b); }
-        .btn-class-a:hover, .btn-class-b:hover { opacity: 0.9; }
+        .thumb-delete-btn:hover { background: var(--c-removed-text); }
 
         .run-btn {
             width: 100%;
-            padding: 14px 20px;
+            padding: 12px 16px;
             background-color: var(--c-brand-green);
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             transition: opacity 0.2s;
             letter-spacing: 0.05em;
             box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
-            margin-top: 12px;
-            margin-bottom: 20px;
         }
         .run-btn:hover { opacity: 0.9; }
 
-        .prob-box { margin-bottom: 12px; }
+        .prob-box { margin-bottom: 8px; }
         .prob-label {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .progress-container {
             background: rgba(44, 42, 41, 0.05);
-            height: 18px;
-            border-radius: 9px;
+            height: 16px;
+            border-radius: 8px;
             overflow: hidden;
             border: 1px solid var(--c-border);
         }
@@ -330,7 +312,7 @@
         #bar-b { background-color: var(--c-class-b); }
 
         .right-panel {
-            flex: 1.8;
+            flex: 1.75;
             height: 100%;
             overflow: hidden;
             gap: 14px;
@@ -372,7 +354,7 @@
             overflow-y: auto; 
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 16px;
             padding-right: 6px; 
             box-sizing: border-box;
         }
@@ -386,17 +368,17 @@
         .result-section.hidden { display: none !important; }
         
         .result-section h3 {
-            margin: 0 0 8px 4px;
-            font-size: 14px;
+            margin: 0 0 6px 4px;
+            font-size: 13px;
             color: var(--c-brand-green);
             font-weight: bold;
         }
 
         .result-box { 
             background-color: rgba(244, 241, 234, 0.6); 
-            padding: 14px; 
+            padding: 12px; 
             border-radius: 8px; 
-            min-height: 48px; 
+            min-height: 40px; 
             display: flex; 
             flex-direction: column;
             gap: 6px; 
@@ -404,10 +386,10 @@
             box-sizing: border-box;
             width: 100%; 
             font-family: 'Consolas', monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--c-text-main);
             word-break: break-all;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         .loading-overlay {
@@ -428,14 +410,14 @@
         }
         .loading-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner {
-            width: 45px; height: 45px;
+            width: 40px; height: 40px;
             border: 4px solid rgba(27, 67, 50, 0.1);
             border-left-color: var(--c-brand-green);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
-        .loading-text { font-size: 14px; font-weight: bold; color: var(--c-brand-green); }
+        .loading-text { font-size: 13px; font-weight: bold; color: var(--c-brand-green); }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -452,64 +434,79 @@
 </nav>
 
 <div class="main-layout">
-    <!-- 왼쪽 패널 -->
+    <!-- 왼쪽 패널: Class A / B 전용 드롭존 독립 구성 -->
     <div class="card left-panel">
-        <h3 style="margin-top: 0; color: var(--c-brand-green); font-size: 15px;">1. 클래스 이름 설정</h3>
-        <div class="class-name-container">
-            <div class="class-input-box">
-                <div class="class-badge a"></div>
-                <input type="text" id="classNameA" class="class-input" value="Class A" oninput="updateClassNames()">
+        
+        <!-- 웹캠 공통 영역 -->
+        <div class="webcam-container">
+            <div style="font-size: 11px; font-weight: bold; color: var(--c-text-muted); margin-bottom: 4px;">📹 실시간 웹캠 미리보기</div>
+            <video id="webcam" autoplay playsinline muted></video>
+        </div>
+
+        <!-- Class A 카드 -->
+        <div class="class-card border-a">
+            <div class="class-header">
+                <div class="class-input-box">
+                    <div class="class-badge a"></div>
+                    <input type="text" id="classNameA" class="class-input" value="Class A" oninput="updateClassNames()">
+                </div>
+                <span style="font-size: 11px; font-weight: bold; color: var(--c-class-a);"><span id="count0">0</span>개 수집됨</span>
             </div>
-            <div class="class-input-box">
-                <div class="class-badge b"></div>
-                <input type="text" id="classNameB" class="class-input" value="Class B" oninput="updateClassNames()">
+
+            <div class="class-action-grid">
+                <div id="dropzoneA" class="dropzone" onclick="document.getElementById('file-input-a').click()">
+                    <div class="dropzone-text">📂 <span class="label-a">Class A</span> 드롭존</div>
+                    <div style="font-size: 9px; color: #888;">사진 드래그 시 자동 수집</div>
+                </div>
+                <input type="file" id="file-input-a" accept="image/*" multiple style="display:none;" onchange="handleFileInput(event, 0)">
+                <button class="action-btn btn-class-a" onclick="addExampleFromSource(0, videoElement)">웹캠 캡처</button>
+            </div>
+
+            <div id="gallery-a" class="preview-gallery">
+                <div style="font-size: 10px; color: #aaa; width: 100%; text-align: center; padding: 12px 0;">사진을 이곳에 드래그해 넣으세요.</div>
             </div>
         </div>
 
-        <h3 style="color: var(--c-brand-green); font-size: 15px; margin-top: 5px;">2. 데이터 수집</h3>
-        <div class="media-grid">
-            <div class="media-card">
-                <div class="media-title">실시간 웹캠</div>
-                <video id="webcam" autoplay playsinline muted></video>
-                <div style="margin-top: 8px; display: flex; gap: 4px;">
-                    <button class="action-btn btn-class-a" style="padding: 6px; font-size: 11px;" onclick="addExampleFromSource(0, videoElement)">웹캠 → <span class="label-a">Class A</span></button>
-                    <button class="action-btn btn-class-b" style="padding: 6px; font-size: 11px;" onclick="addExampleFromSource(1, videoElement)">웹캠 → <span class="label-b">Class B</span></button>
+        <!-- Class B 카드 -->
+        <div class="class-card border-b">
+            <div class="class-header">
+                <div class="class-input-box">
+                    <div class="class-badge b"></div>
+                    <input type="text" id="classNameB" class="class-input" value="Class B" oninput="updateClassNames()">
                 </div>
+                <span style="font-size: 11px; font-weight: bold; color: var(--c-class-b);"><span id="count1">0</span>개 수집됨</span>
             </div>
 
-            <div class="media-card">
-                <div class="media-title">이미지 드래그 앤 드롭</div>
-                <div id="dropzone" class="dropzone" onclick="document.getElementById('file-input').click()">
-                    <div class="dropzone-icon">📁</div>
-                    <div class="dropzone-text">이미지 드래그 또는 클릭</div>
-                    <div class="dropzone-subtext">(PNG, JPG, WEBP, GIF 등 지원)</div>
+            <div class="class-action-grid">
+                <div id="dropzoneB" class="dropzone" onclick="document.getElementById('file-input-b').click()">
+                    <div class="dropzone-text">📂 <span class="label-b">Class B</span> 드롭존</div>
+                    <div style="font-size: 9px; color: #888;">사진 드래그 시 자동 수집</div>
                 </div>
-                <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp, image/svg+xml, image/avif, image/tiff, image/heic, image/heif, image/x-icon, image/vnd.microsoft.icon" multiple style="display: none;">
-                
-                <div style="margin-top: 8px; display: flex; gap: 4px;">
-                    <button class="action-btn btn-class-a" style="padding: 6px; font-size: 11px;" onclick="addUploadedExamples(0)">전체 → <span class="label-a">Class A</span></button>
-                    <button class="action-btn btn-class-b" style="padding: 6px; font-size: 11px;" onclick="addUploadedExamples(1)">전체 → <span class="label-b">Class B</span></button>
-                </div>
+                <input type="file" id="file-input-b" accept="image/*" multiple style="display:none;" onchange="handleFileInput(event, 1)">
+                <button class="action-btn btn-class-b" onclick="addExampleFromSource(1, videoElement)">웹캠 캡처</button>
+            </div>
+
+            <div id="gallery-b" class="preview-gallery">
+                <div style="font-size: 10px; color: #aaa; width: 100%; text-align: center; padding: 12px 0;">사진을 이곳에 드래그해 넣으세요.</div>
             </div>
         </div>
 
-        <!-- 업로드된 이미지 미리보기 섬네일 갤러리 (세로 확대 적용) -->
-        <div style="font-size: 12px; font-weight: bold; color: var(--c-text-muted);">📷 업로드 이미지 목록 (<span id="upload-count">0</span>장)</div>
-        <div id="preview-gallery" class="preview-gallery">
-            <div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 40px 0;">사진 파일을 드래그해서 넣으면 여기에 넓은 상자로 표시됩니다.</div>
-        </div>
-
+        <!-- 학습 버튼 -->
         <button class="run-btn" onclick="trainModelWithLoading()">분류기 재학습 실행 ⚡</button>
 
-        <h3 style="color: var(--c-brand-green); font-size: 15px; margin-bottom: 12px;">3. 추론 결과</h3>
-        <div class="prob-box">
-            <div class="prob-label"><span class="label-a">Class A</span> (<span id="count0">0</span>개 수집): <span id="prob0">0%</span></div>
-            <div class="progress-container"><div id="bar-a" class="progress-bar"></div></div>
+        <!-- 추론 결과 -->
+        <div>
+            <div style="font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 6px;">실시간 추론 결과</div>
+            <div class="prob-box">
+                <div class="prob-label"><span class="label-a">Class A</span><span id="prob0">0%</span></div>
+                <div class="progress-container"><div id="bar-a" class="progress-bar"></div></div>
+            </div>
+            <div class="prob-box">
+                <div class="prob-label"><span class="label-b">Class B</span><span id="prob1">0%</span></div>
+                <div class="progress-container"><div id="bar-b" class="progress-bar"></div></div>
+            </div>
         </div>
-        <div class="prob-box">
-            <div class="prob-label"><span class="label-b">Class B</span> (<span id="count1">0</span>개 수집): <span id="prob1">0%</span></div>
-            <div class="progress-container"><div id="bar-b" class="progress-bar"></div></div>
-        </div>
+
     </div>
 
     <!-- 오른쪽 패널 -->
@@ -570,14 +567,13 @@ let mobilenetModel;
 let customClassifier;
 
 const videoElement = document.getElementById('webcam');
-const fileInput = document.getElementById('file-input');
-const dropzone = document.getElementById('dropzone');
-const galleryContainer = document.getElementById('preview-gallery');
 
-let uploadedImagesData = [];
-const xs = [];
-const ys = [];
-let counts = [0, 0];
+// 각 Class별 수집 데이터 관리 ({ id, featureVector, src })
+const dataset = {
+    0: [], // Class A
+    1: []  // Class B
+};
+
 let isPredicting = false;
 
 function updateClassNames() {
@@ -593,16 +589,51 @@ async function init() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         videoElement.srcObject = stream;
     } catch (err) {
-        console.warn("웹캠을 시작할 수 없습니다.");
+        console.warn("웹캠을 사용할 수 없습니다.");
     }
 
     mobilenetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
+    
+    // 드롭존 이벤트 바인딩
+    setupDropzone('dropzoneA', 0);
+    setupDropzone('dropzoneB', 1);
+
     requestAnimationFrame(processPipeline);
 }
 
-function handleFiles(files) {
+// 드롭존 설정 함수
+function setupDropzone(dropzoneId, classId) {
+    const dz = document.getElementById(dropzoneId);
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dz.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dz.addEventListener(eventName, () => dz.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dz.addEventListener(eventName, () => dz.classList.remove('dragover'), false);
+    });
+
+    dz.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        processFiles(files, classId);
+    });
+}
+
+function handleFileInput(e, classId) {
+    processFiles(e.target.files, classId);
+}
+
+// 파일 수집 처리 및 특징 벡터 바로 추출
+function processFiles(files, classId) {
     const fileList = Array.from(files);
-    if (!fileList.length) return;
+    if (!fileList.length || !mobilenetModel) return;
 
     fileList.forEach(file => {
         if (!file.type.startsWith('image/')) return;
@@ -612,52 +643,64 @@ function handleFiles(files) {
             const img = new Image();
             img.src = f.target.result;
             img.onload = () => {
-                const imgObj = {
-                    id: Date.now() + Math.random(),
-                    imgElement: img,
-                    src: f.target.result
-                };
-                uploadedImagesData.push(imgObj);
-                renderGallery();
+                tf.tidy(() => {
+                    const imgTensor = tf.browser.fromPixels(img);
+                    const featureVector = mobilenetModel.infer(imgTensor, true);
+
+                    dataset[classId].push({
+                        id: Date.now() + Math.random(),
+                        featureVector: featureVector.clone(),
+                        src: f.target.result
+                    });
+
+                    renderClassGallery(classId);
+                });
             };
         };
         reader.readAsDataURL(file);
     });
 }
 
-fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+// 웹캠에서 캡처 수집
+function addExampleFromSource(classId, sourceElement) {
+    if (!mobilenetModel) return;
 
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    }, false);
-});
+    tf.tidy(() => {
+        const imgTensor = tf.browser.fromPixels(sourceElement);
+        const featureVector = mobilenetModel.infer(imgTensor, true);
 
-['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-});
+        // Canvas로 변환해서 이미지 미리보기용 소스 생성
+        const canvas = document.createElement('canvas');
+        canvas.width = sourceElement.videoWidth || 224;
+        canvas.height = sourceElement.videoHeight || 224;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(sourceElement, 0, 0, canvas.width, canvas.height);
 
-['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-});
+        dataset[classId].push({
+            id: Date.now() + Math.random(),
+            featureVector: featureVector.clone(),
+            src: canvas.toDataURL()
+        });
 
-dropzone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-});
+        renderClassGallery(classId);
+    });
+}
 
-function renderGallery() {
-    document.getElementById('upload-count').innerText = uploadedImagesData.length;
-    
-    if (uploadedImagesData.length === 0) {
-        galleryContainer.innerHTML = `<div style="font-size: 11px; color: #aaa; width: 100%; text-align: center; padding: 40px 0;">사진 파일을 드래그해서 넣으면 여기에 넓은 상자로 표시됩니다.</div>`;
+// 갤러리 렌더링 및 개별 항목 삭제(X)
+function renderClassGallery(classId) {
+    const container = document.getElementById(classId === 0 ? 'gallery-a' : 'gallery-b');
+    const countEl = document.getElementById(`count${classId}`);
+    const items = dataset[classId];
+
+    countEl.innerText = items.length;
+
+    if (items.length === 0) {
+        container.innerHTML = `<div style="font-size: 10px; color: #aaa; width: 100%; text-align: center; padding: 12px 0;">사진을 이곳에 드래그해 넣으세요.</div>`;
         return;
     }
 
-    galleryContainer.innerHTML = '';
-    uploadedImagesData.forEach((item) => {
+    container.innerHTML = '';
+    items.forEach(item => {
         const thumbBox = document.createElement('div');
         thumbBox.className = 'thumb-box';
 
@@ -667,23 +710,29 @@ function renderGallery() {
         const delBtn = document.createElement('div');
         delBtn.className = 'thumb-delete-btn';
         delBtn.innerHTML = '×';
-        delBtn.title = '이 사진 삭제';
+        delBtn.title = '이 데이터 삭제';
         delBtn.onclick = (e) => {
             e.stopPropagation();
-            removeUploadedImage(item.id);
+            removeDatasetItem(classId, item.id);
         };
 
         thumbBox.appendChild(imgEl);
         thumbBox.appendChild(delBtn);
-        galleryContainer.appendChild(thumbBox);
+        container.appendChild(thumbBox);
     });
 }
 
-function removeUploadedImage(id) {
-    uploadedImagesData = uploadedImagesData.filter(item => item.id !== id);
-    renderGallery();
+// 항목 삭제 시 특징 벡터 메모리 해제 및 배열에서 제거
+function removeDatasetItem(classId, itemId) {
+    const index = dataset[classId].findIndex(item => item.id === itemId);
+    if (index !== -1) {
+        dataset[classId][index].featureVector.dispose(); // TensorFlow 메모리 해제
+        dataset[classId].splice(index, 1);
+        renderClassGallery(classId);
+    }
 }
 
+// 파이프라인 실시간 루프
 async function processPipeline() {
     if (mobilenetModel) {
         tf.tidy(() => {
@@ -698,7 +747,7 @@ async function processPipeline() {
                 const featureVector = mobilenetModel.infer(imgTensor, true);
                 const vectorData = featureVector.dataSync();
 
-                document.getElementById('step2').innerText = `Depthwise Separable Conv2D 및 Global Average Pooling 완료`;
+                document.getElementById('step2').innerText = `Depthwise Separable Conv2D 연산 완료`;
                 document.getElementById('step3').innerText = 
                     `특징 벡터 크기: [${featureVector.shape.join(', ')}]\n` +
                     `1024개 특징 샘플:\n[${vectorData.slice(0, 10).map(n => n.toFixed(4)).join(', ')}, ...]`;
@@ -723,34 +772,11 @@ async function processPipeline() {
     requestAnimationFrame(processPipeline);
 }
 
-function addExampleFromSource(classId, sourceElement) {
-    if (!mobilenetModel) return;
-
-    tf.tidy(() => {
-        const imgTensor = tf.browser.fromPixels(sourceElement);
-        const featureVector = mobilenetModel.infer(imgTensor, true);
-
-        xs.push(featureVector.clone());
-        ys.push(classId);
-
-        counts[classId]++;
-        document.getElementById(`count${classId}`).innerText = counts[classId];
-    });
-}
-
-function addUploadedExamples(classId) {
-    if (uploadedImagesData.length === 0) {
-        alert("먼저 사진 파일을 드래그해 넣거나 업로드해 주세요!");
-        return;
-    }
-    uploadedImagesData.forEach(item => {
-        addExampleFromSource(classId, item.imgElement);
-    });
-}
-
+// 분류기 재학습 실행
 async function trainModelWithLoading() {
-    if (xs.length === 0) {
-        alert("학습할 데이터를 먼저 수집해 주세요!");
+    const totalCount = dataset[0].length + dataset[1].length;
+    if (dataset[0].length === 0 || dataset[1].length === 0) {
+        alert("Class A와 Class B 각각에 데이터를 최소 1개 이상 수집해 주세요!");
         return;
     }
 
@@ -758,8 +784,20 @@ async function trainModelWithLoading() {
     overlay.classList.add("active");
 
     try {
-        const xDataset = tf.concat(xs, 0);
-        const yDataset = tf.oneHot(tf.tensor1d(ys, 'int32'), 2);
+        const featureVectors = [];
+        const labels = [];
+
+        dataset[0].forEach(item => {
+            featureVectors.push(item.featureVector);
+            labels.push(0);
+        });
+        dataset[1].forEach(item => {
+            featureVectors.push(item.featureVector);
+            labels.push(1);
+        });
+
+        const xDataset = tf.concat(featureVectors, 0);
+        const yDataset = tf.oneHot(tf.tensor1d(labels, 'int32'), 2);
 
         customClassifier = tf.sequential();
         customClassifier.add(tf.layers.dense({
@@ -794,6 +832,7 @@ function updateUI(probs) {
     document.getElementById('bar-b').style.width = p1 + "%";
 }
 
+// 배경 애니메이션
 const bgCanvas = document.getElementById('neural-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 let particles = [];
