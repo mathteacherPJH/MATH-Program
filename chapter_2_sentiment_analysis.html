@@ -248,6 +248,25 @@ function switchTab(tabId) {
     }
 }
 
+// 단어에 해당하는 감성 점수를 찾는 헬퍼 함수
+function getWordScore(targetWord) {
+    if (!targetWord) return '0';
+
+    // 1차: 완전 일치 매칭
+    if (DEFAULT_SENTIMENT_DICT[targetWord]) {
+        return DEFAULT_SENTIMENT_DICT[targetWord];
+    }
+
+    // 2차: 부분 문자열/어근 매칭 (사전 키 중 길이가 2자 이상인 어근 포함 여부 검색)
+    for (const dictKey in DEFAULT_SENTIMENT_DICT) {
+        if (dictKey.length >= 2 && targetWord.includes(dictKey)) {
+            return DEFAULT_SENTIMENT_DICT[dictKey];
+        }
+    }
+
+    return '0';
+}
+
 async function processSentimentWithLoading() {
     const text = document.getElementById("sentenceInput").value.trim();
     if (!text) {
@@ -259,41 +278,50 @@ async function processSentimentWithLoading() {
     overlay.classList.add("active");
 
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sentences: [text],
-                custom_vocab: []
-            })
-        });
-
         let rawWords = [];
-        if (response.ok) {
-            const data = await response.json();
-            const corpusStr = (data.processed_corpus && data.processed_corpus[0]) || "";
-            rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
-        } else {
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sentences: [text],
+                    custom_vocab: []
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const corpusStr = (data.processed_corpus && data.processed_corpus[0]) || "";
+                rawWords = corpusStr.trim().split(/\s+/).filter(w => w.length > 0);
+            } else {
+                rawWords = text.split(/\s+/);
+            }
+        } catch (netErr) {
+            console.warn("API 서버 통신 실패, 자체 토큰화 분석으로 전환합니다.", netErr);
             rawWords = text.split(/\s+/);
         }
 
-        // 사전 매핑
+        // [핵심 수정] 정규식 범위 수정 (\uAC00-\uD7A3 완성형 한글 포함) 및 어근 매칭
         extractedWords = rawWords.map(w => {
-            const cleanWord = w.replace(/[^\w\u3131-\uD79D]/g, '');
-            const score = DEFAULT_SENTIMENT_DICT[cleanWord] || DEFAULT_SENTIMENT_DICT[w] || '0';
-            return { word: cleanWord || w, score: score };
+            const cleanWord = w.replace(/[^a-zA-Z0-9\u3131-\u318E\uAC00-\uD7A3]/g, '');
+            const target = cleanWord || w;
+            const score = getWordScore(target);
+
+            return { word: target, score: score };
         }).filter(item => item.word.length > 0);
 
         renderVocabTags();
         renderSentimentResults();
 
     } catch (e) {
-        console.error(e);
+        console.error("분석 로직 처리 중 오류:", e);
         const rawWords = text.split(/\s+/);
-        extractedWords = rawWords.map(w => ({
-            word: w,
-            score: DEFAULT_SENTIMENT_DICT[w] || '0'
-        }));
+        extractedWords = rawWords.map(w => {
+            const cleanWord = w.replace(/[^a-zA-Z0-9\u3131-\u318E\uAC00-\uD7A3]/g, '');
+            const target = cleanWord || w;
+            return { word: target, score: getWordScore(target) };
+        });
         renderVocabTags();
         renderSentimentResults();
     } finally {
@@ -306,7 +334,7 @@ function addCustomWord() {
     const word = input.value.trim();
     if (!word) return;
 
-    const score = DEFAULT_SENTIMENT_DICT[word] || '0';
+    const score = getWordScore(word);
     extractedWords.push({ word, score });
     input.value = "";
     renderVocabTags();
@@ -315,7 +343,9 @@ function addCustomWord() {
 
 function updateWordText(index, newText) {
     if (newText.trim()) {
-        extractedWords[index].word = newText.trim();
+        const cleanWord = newText.trim();
+        extractedWords[index].word = cleanWord;
+        extractedWords[index].score = getWordScore(cleanWord);
     } else {
         extractedWords.splice(index, 1);
     }
