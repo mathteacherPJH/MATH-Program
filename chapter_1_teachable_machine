@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티처블 머신 인터랙티브 시각화</title>
+    <!-- TensorFlow.js 및 MobileNet 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <style>
+        :root {
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-brand-green: #1B4332;
+            --c-tag-bg: #E8F5E9;
+            --c-tag-text: #2E7D32;
+            --c-removed-bg: #FFEBEE;
+            --c-removed-text: #C62828;
+            --c-clean-bg: #FFF9C4;
+            --c-clean-text: #F57F17;
+            --c-tab-bg: #F4F1EA;
+            --c-class-a: #3498db;
+            --c-class-b: #e67e22;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 24px;
+            padding-top: 85px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: 0.03em;
+            position: relative;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--c-border);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--c-brand-green);
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.8;
+        }
+
+        .navbar-brand-text {
+            font-size: 13px; 
+            font-weight: bold; 
+            color: var(--c-brand-green); 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase;
+        }
+
+        .main-layout {
+            display: flex;
+            width: 100%; 
+            height: calc(100vh - 110px); 
+            gap: 20px;
+            position: relative;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-panel {
+            flex: 1.1; 
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .media-grid {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .media-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .media-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            margin-bottom: 8px;
+        }
+
+        video, img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--c-border);
+        }
+        video { transform: scaleX(-1); }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .btn-class-a { background-color: var(--c-class-a); }
+        .btn-class-b { background-color: var(--c-class-b); }
+        .btn-class-a:hover { opacity: 0.9; }
+        .btn-class-b:hover { opacity: 0.9; }
+
+        .run-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background-color: var(--c-brand-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15);
+            margin-top: 8px;
+            margin-bottom: 20px;
+        }
+        .run-btn:hover { opacity: 0.9; }
+
+        /* 추론 결과 프로그래스 바 */
+        .prob-box {
+            margin-bottom: 12px;
+        }
+        .prob-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .progress-container {
+            background: rgba(44, 42, 41, 0.05);
+            height: 18px;
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid var(--c-border);
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.15s ease-out;
+        }
+        #bar-a { background-color: var(--c-class-a); }
+        #bar-b { background-color: var(--c-class-b); }
+
+        .right-panel {
+            flex: 1.8;
+            height: 100%;
+            overflow: hidden;
+            gap: 14px;
+            position: relative;
+        }
+
+        .nav-group {
+            display: flex;
+            gap: 4px;
+            background: var(--c-tab-bg); 
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid rgba(44, 42, 41, 0.05);
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .nav-btn.active {
+            background: #FFFFFF;
+            color: var(--c-brand-green); 
+            box-shadow: 0 2px 6px rgba(44,42,41,0.08);
+        }
+
+        .right-panel-content {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding-right: 6px; 
+            box-sizing: border-box;
+        }
+
+        .result-section {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .result-section.hidden {
+            display: none !important;
+        }
+        
+        .result-section h3 {
+            margin: 0 0 8px 4px;
+            font-size: 14px;
+            color: var(--c-brand-green);
+            font-weight: bold;
+        }
+
+        .result-box { 
+            background-color: rgba(244, 241, 234, 0.6); 
+            padding: 14px; 
+            border-radius: 8px; 
+            min-height: 52px; 
+            display: flex; 
+            flex-direction: column;
+            gap: 6px; 
+            border: 1px solid var(--c-border);
+            box-sizing: border-box;
+            width: 100%; 
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: var(--c-text-main);
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .right-panel-content::-webkit-scrollbar { width: 6px; }
+        .right-panel-content::-webkit-scrollbar-track { background: transparent; }
+        .right-panel-content::-webkit-scrollbar-thumb {
+            background: rgba(44, 42, 41, 0.15);
+            border-radius: 3px;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(27, 67, 50, 0.1);
+            border-left-color: var(--c-brand-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        .loading-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="neural-canvas"></canvas>
+
+<!-- 상단 네비게이션 바 -->
+<nav class="top-navbar">
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
+        ← BACK
+    </button>
+    <div class="navbar-brand-text">
+        TEACHABLE MACHINE
+    </div>
+</nav>
+
+<div class="main-layout">
+    <!-- 왼쪽 패널: 데이터 수집 및 학습 실행 -->
+    <div class="card left-panel">
+        <h3 style="margin-top: 0; color: var(--c-brand-green); font-size: 16px;">1. 데이터 입력 소스</h3>
+        
+        <div class="media-grid">
+            <div class="media-card">
+                <div class="media-title">실시간 웹캠</div>
+                <video id="webcam" autoplay playsinline muted></video>
+            </div>
+            <div class="media-card">
+                <div class="media-title">이미지 파일 업로드</div>
+                <img id="uploaded-image" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><text x='20' y='55' fill='%23aaa'>No Image</text></svg>">
+                <input type="file" id="file-input" accept="image/*" style="margin-top: 6px; font-size: 11px; width: 100%;">
+            </div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: bold; color: var(--c-text-muted); margin-bottom: 6px;">📹 웹캠 데이터 수집</div>
+        <div class="btn-group">
+            <button class="action-btn btn-class-a" onclick="addExampleFromSource(0, videoElement)">Class A 수집 (<span id="count0">0</span>개)</button>
+            <button class="action-btn btn-class-b" onclick="addExampleFromSource(1, videoElement)">Class B 수집 (<span id="count1">0</span>개)</button>
+        </div>
+
+        <div style="font-size: 12px; font-weight: bold; color: var(--c-text-muted); margin-bottom: 6px; margin-top: 8px;">🖼️ 업로드 사진 데이터 수집</div>
+        <div class="btn-group">
+            <button class="action-btn btn-class-a" style="font-size: 11px;" onclick="addExampleFromUploadedImage(0)">이 사진을 Class A로 수집</button>
+            <button class="action-btn btn-class-b" style="font-size: 11px;" onclick="addExampleFromUploadedImage(1)">이 사진을 Class B로 수집</button>
+        </div>
+
+        <button class="run-btn" onclick="trainModelWithLoading()">분류기 재학습 실행 ⚡</button>
+
+        <h3 style="color: var(--c-brand-green); font-size: 15px; margin-bottom: 12px;">4. 실시간 추론 결과</h3>
+        
+        <div class="prob-box">
+            <div class="prob-label"><span>Class A</span><span id="prob0">0%</span></div>
+            <div class="progress-container"><div id="bar-a" class="progress-bar"></div></div>
+        </div>
+        <div class="prob-box">
+            <div class="prob-label"><span>Class B</span><span id="prob1">0%</span></div>
+            <div class="progress-container"><div id="bar-b" class="progress-bar"></div></div>
+        </div>
+    </div>
+
+    <!-- 오른쪽 패널: 내부 데이터 연산 파이프라인 시각화 -->
+    <div class="card right-panel">
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <div id="loadingText" class="loading-text">MobileNet 1024차원 가중치 재학습 중...</div>
+        </div>
+
+        <div class="nav-group">
+            <button id="tab_all" class="nav-btn active" onclick="switchTab('all')">전체보기</button>
+            <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 픽셀 텐서</button>
+            <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 특징 추출</button>
+            <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 특징 벡터</button>
+            <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. Softmax 연산</button>
+        </div>
+
+        <div class="right-panel-content">
+            <div id="sec_1" class="result-section">
+                <h3>1. 입력 이미지 텐서 (RGB 픽셀 행렬)</h3>
+                <div id="step1" class="result-box">데이터 준비 중...</div>
+            </div>
+
+            <div id="sec_2" class="result-section">
+                <h3>2. MobileNet 커널 연산 (특징 추출기)</h3>
+                <div id="step2" class="result-box">Conv2D 및 Depthwise Separable 연산 통과 중...</div>
+            </div>
+
+            <div id="sec_3" class="result-section">
+                <h3>3. 1024차원 특징 벡터 (Feature Vector)</h3>
+                <div id="step3" class="result-box">대기 중...</div>
+            </div>
+
+            <div id="sec_4" class="result-section">
+                <h3>4. 가중치 연산($Y = W \cdot X + B$) & Softmax 변환</h3>
+                <div id="step4" class="result-box">학습 실행 후 연산 과정이 표시됩니다.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 탭 전환 로직
+function switchTab(tabId) {
+    const tabs = ['all', '1', '2', '3', '4'];
+    tabs.forEach(t => {
+        document.getElementById(`tab_${t}`).classList.remove('active');
+        if(t !== 'all') document.getElementById(`sec_${t}`).classList.add('hidden');
+    });
+    document.getElementById(`tab_${tabId}`).classList.add('active');
+    if (tabId === 'all') {
+        tabs.forEach(t => { if(t !== 'all') document.getElementById(`sec_${t}`).classList.remove('hidden'); });
+    } else {
+        document.getElementById(`sec_${tabId}`).classList.remove('hidden');
+    }
+}
+
+// 티처블 머신 연산 변수
+let mobilenetModel;
+let customClassifier;
+
+const videoElement = document.getElementById('webcam');
+const uploadedImage = document.getElementById('uploaded-image');
+const fileInput = document.getElementById('file-input');
+
+const xs = [];
+const ys = [];
+let counts = [0, 0];
+let isPredicting = false;
+let activeSource = 'webcam';
+
+// 1. 모델 및 웹캠 초기화
+async function init() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        videoElement.srcObject = stream;
+    } catch (err) {
+        console.warn("웹캠을 시작할 수 없어 파일 업로드 전용으로 동작합니다.");
+    }
+
+    document.getElementById('step1').innerText = "입력 준비 완료: [Height, Width, 3] 텐서 변환 대기 중";
+
+    mobilenetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
+    document.getElementById('step2').innerText = "MobileNet(v2) 로드 완료. 수십 개의 합성곱 커널 연산 준비 완료.";
+
+    requestAnimationFrame(processPipeline);
+}
+
+// 파일 업로드 처리
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (f) => {
+        uploadedImage.src = f.target.result;
+        activeSource = 'upload';
+    };
+    reader.readAsDataURL(file);
+});
+
+// 2. 파이프라인 연산 시각화 루프
+async function processPipeline() {
+    if (mobilenetModel) {
+        tf.tidy(() => {
+            let inputElement = (activeSource === 'upload' && uploadedImage.complete && uploadedImage.naturalWidth !== 0) 
+                ? uploadedImage 
+                : videoElement;
+
+            if (inputElement.readyState === 4 || activeSource === 'upload') {
+                // [단계 1] 이미지 -> 텐서
+                const imgTensor = tf.browser.fromPixels(inputElement);
+                const rawPixels = imgTensor.dataSync();
+
+                document.getElementById('step1').innerText = 
+                    `입력 출처: [${activeSource === 'upload' ? '사진 파일' : '실시간 웹캠'}]\n` +
+                    `Shape: [${imgTensor.shape.join(', ')}] | Type: ${imgTensor.dtype}\n` +
+                    `RGB 픽셀 샘플: [${rawPixels.slice(0, 12).join(', ')}...]`;
+
+                // [단계 2 & 3] MobileNet 1024차원 특징 벡터 추출
+                const featureVector = mobilenetModel.infer(imgTensor, true);
+                const vectorData = featureVector.dataSync();
+
+                document.getElementById('step3').innerText = 
+                    `특징 벡터 크기: [${featureVector.shape.join(', ')}]\n` +
+                    `추출된 1024개 특징 샘플:\n[${vectorData.slice(0, 10).map(n => n.toFixed(4)).join(', ')}, ...]`;
+
+                // [단계 4] 분류기 연산 및 Softmax
+                if (customClassifier && isPredicting) {
+                    const prediction = customClassifier.predict(featureVector);
+                    const probs = prediction.dataSync();
+                    const weights = customClassifier.layers[0].getWeights()[0].dataSync();
+
+                    document.getElementById('step4').innerText = 
+                        `[행렬 연산] 입력 1024차원 × 가중치 W[1024, 2] + B\n` +
+                        `가중치(W) 샘플: [${weights.slice(0, 6).map(n => n.toFixed(4)).join(', ')}...]\n\n` +
+                        `[Softmax 결과]\nClass A: ${(probs[0]*100).toFixed(2)}% | Class B: ${(probs[1]*100).toFixed(2)}%`;
+
+                    updateUI(probs);
+                }
+            }
+        });
+    }
+    requestAnimationFrame(processPipeline);
+}
+
+// 3. 데이터 수집
+function addExampleFromSource(classId, sourceElement) {
+    if (!mobilenetModel) return;
+
+    tf.tidy(() => {
+        const imgTensor = tf.browser.fromPixels(sourceElement);
+        const featureVector = mobilenetModel.infer(imgTensor, true);
+
+        xs.push(featureVector.clone());
+        ys.push(classId);
+
+        counts[classId]++;
+        document.getElementById(`count${classId}`).innerText = counts[classId];
+    });
+}
+
+function addExampleFromUploadedImage(classId) {
+    if (!uploadedImage.src || uploadedImage.naturalWidth === 0) {
+        alert("먼저 이미지를 업로드해 주세요!");
+        return;
+    }
+    addExampleFromSource(classId, uploadedImage);
+}
+
+// 4. 재학습 실행
+async function trainModelWithLoading() {
+    if (xs.length === 0) {
+        alert("학습할 데이터를 먼저 수집해 주세요!");
+        return;
+    }
+
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.classList.add("active");
+
+    try {
+        const xDataset = tf.concat(xs, 0);
+        const yDataset = tf.oneHot(tf.tensor1d(ys, 'int32'), 2);
+
+        customClassifier = tf.sequential();
+        customClassifier.add(tf.layers.dense({
+            inputShape: [1024],
+            units: 2,
+            activation: 'softmax'
+        }));
+
+        customClassifier.compile({
+            optimizer: tf.train.adam(0.0001),
+            loss: 'categoricalCrossentropy'
+        });
+
+        await customClassifier.fit(xDataset, yDataset, {
+            epochs: 20
+        });
+
+        isPredicting = true;
+    } catch(e) {
+        console.error(e);
+        alert("학습 도중 오류가 발생했습니다.");
+    } finally {
+        overlay.classList.remove("active");
+    }
+}
+
+// UI 업데이트
+function updateUI(probs) {
+    const p0 = (probs[0] * 100).toFixed(1);
+    const p1 = (probs[1] * 100).toFixed(1);
+
+    document.getElementById('prob0').innerText = p0 + "%";
+    document.getElementById('prob1').innerText = p1 + "%";
+
+    document.getElementById('bar-a').style.width = p0 + "%";
+    document.getElementById('bar-b').style.width = p1 + "%";
+}
+
+// 5. 신경망 애니메이션 배경 (Neural Canvas)
+const bgCanvas = document.getElementById('neural-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+let particles = [];
+const mouse = { x: null, y: null, radius: 150 };
+
+function resizeBgCanvas() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    initParticles();
+}
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * bgCanvas.width;
+        this.y = Math.random() * bgCanvas.height;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = (Math.random() - 0.5) * 0.35;
+        this.radius = Math.random() * 2 + 1.5; 
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+        let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
+        }
+    }
+    draw() {
+        bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
+    }
+}
+
+function initParticles() {
+    particles = [];
+    const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+}
+
+function animateBg() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update(); particles[i].draw();
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 110) {
+                bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
+                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animateBg);
+}
+
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+window.addEventListener('resize', resizeBgCanvas);
+window.addEventListener('DOMContentLoaded', () => { 
+    resizeBgCanvas(); 
+    animateBg(); 
+    init();
+});
+</script>
+</body>
+</html>
