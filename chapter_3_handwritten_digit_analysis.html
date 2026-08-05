@@ -137,7 +137,7 @@
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            독립 실행형 딥러닝 신경망 모델로 네트워크 파일 연결 없이 즉시 동작합니다.
+            학습된 MNIST 딥러닝 신경망 모델로 실시간 손글씨 추론을 수행합니다.
         </div>
     </div>
 
@@ -170,7 +170,7 @@
 
     <div class="card right-panel">
         <div class="panel-box">
-            <div id="model-status">상태: MNIST AI 초기화 중...</div>
+            <div id="model-status">상태: MNIST AI 모델 로드 중...</div>
             <h4>🔍 AI 시각화 (전처리 변환 과정)</h4>
             <div class="pipeline-viewer">
                 <div class="preview-item">
@@ -198,7 +198,6 @@
 </div>
 
 <script>
-    // 배경 신경망 애니메이션
     const bgCanvas = document.getElementById('neural-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -247,7 +246,6 @@
     window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
     window.addEventListener('resize', resizeBgCanvas);
 
-    // 캔버스 요소를 로드
     const inputCanvas = document.getElementById('inputCanvas');
     const ctx = inputCanvas.getContext('2d');
     const cropCanvas = document.getElementById('cropCanvas');
@@ -290,32 +288,29 @@
         probBarsContainer.appendChild(row);
     }
 
-    // 네트워크 파일(fetch) 없이 100% 인라인 모델을 직접 구성하는 로더
+    // 학습 완료된 가중치를 정확하게 불러오는 로더
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: ⏳ 내장 MNIST 신경망 구성 중...";
+        statusEl.innerText = "상태: ⏳ 학습된 MNIST 가중치 로드 중...";
 
-        try {
-            // 외부 파일 요청 없이 브라우저 메모리에 즉시 CNN 모델 생성
-            const cnnModel = tf.sequential();
-            cnnModel.add(tf.layers.conv2d({ inputShape: [28, 28, 1], filters: 32, kernelSize: 3, activation: 'relu' }));
-            cnnModel.add(tf.layers.maxPooling2d({ poolSize: [2, 2] }));
-            cnnModel.add(tf.layers.conv2d({ filters: 64, kernelSize: 3, activation: 'relu' }));
-            cnnModel.add(tf.layers.maxPooling2d({ poolSize: [2, 2] }));
-            cnnModel.add(tf.layers.flatten());
-            cnnModel.add(tf.layers.dense({ units: 64, activation: 'relu' }));
-            cnnModel.add(tf.layers.dense({ units: 10, activation: 'softmax' }));
+        const cacheBuster = '?v=' + new Date().getTime();
+        const urls = [
+            './model.json' + cacheBuster,
+            'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json' + cacheBuster
+        ];
 
-            // 초기 더미 가중치로 컴파일
-            cnnModel.compile({ optimizer: 'adam', loss: 'categoricalCrossentropy', metrics: ['accuracy'] });
-            
-            model = cnnModel;
-            statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
-            document.getElementById('predicted-digit').innerText = "-";
-        } catch (err) {
-            console.error("모델 생성 오류:", err);
-            statusEl.innerText = "상태: ⚠️ 초기화 실패";
+        for (let url of urls) {
+            try {
+                model = await tf.loadLayersModel(url);
+                statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
+                document.getElementById('predicted-digit').innerText = "-";
+                return;
+            } catch (e) {
+                console.warn("로드 시도 실패:", url, e);
+            }
         }
+
+        statusEl.innerText = "상태: ⚠️ model.json 파일을 로드하지 못했습니다.";
     }
 
     function clearCanvas() {
@@ -431,7 +426,17 @@
                 .toFloat()
                 .div(tf.scalar(255.0));
 
-            let predictions = model.predict(baseTensor.expandDims(0));
+            let predictions;
+            try {
+                predictions = model.predict(baseTensor.expandDims(0));
+            } catch (err1) {
+                try {
+                    predictions = model.predict(baseTensor.reshape([1, 784]));
+                } catch (err2) {
+                    console.error("추론 실패:", err1, err2);
+                    return;
+                }
+            }
 
             const probabilities = predictions.dataSync();
             const predictedDigit = predictions.argMax(1).dataSync()[0];
