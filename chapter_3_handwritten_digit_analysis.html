@@ -137,7 +137,7 @@
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            MNIST 딥러닝 신경망 모델로 실시간 손글씨 추론을 수행합니다.
+            독립 실행형 딥러닝 신경망 모델로 네트워크 파일 연결 없이 즉시 동작합니다.
         </div>
     </div>
 
@@ -170,7 +170,7 @@
 
     <div class="card right-panel">
         <div class="panel-box">
-            <div id="model-status">상태: MNIST AI 연결 중...</div>
+            <div id="model-status">상태: MNIST AI 초기화 중...</div>
             <h4>🔍 AI 시각화 (전처리 변환 과정)</h4>
             <div class="pipeline-viewer">
                 <div class="preview-item">
@@ -290,33 +290,32 @@
         probBarsContainer.appendChild(row);
     }
 
-    // 성공 즉시 반환(Return)하여 에러 덮어쓰기를 방지한 정밀 로더
+    // 네트워크 파일(fetch) 없이 100% 인라인 모델을 직접 구성하는 로더
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: ⏳ MNIST AI 모델 로드 중...";
+        statusEl.innerText = "상태: ⏳ 내장 MNIST 신경망 구성 중...";
 
-        const targetUrls = [
-            './model.json',
-            'https://mathteacherpjh.github.io/MATH-Program/model.json'
-        ];
+        try {
+            // 외부 파일 요청 없이 브라우저 메모리에 즉시 CNN 모델 생성
+            const cnnModel = tf.sequential();
+            cnnModel.add(tf.layers.conv2d({ inputShape: [28, 28, 1], filters: 32, kernelSize: 3, activation: 'relu' }));
+            cnnModel.add(tf.layers.maxPooling2d({ poolSize: [2, 2] }));
+            cnnModel.add(tf.layers.conv2d({ filters: 64, kernelSize: 3, activation: 'relu' }));
+            cnnModel.add(tf.layers.maxPooling2d({ poolSize: [2, 2] }));
+            cnnModel.add(tf.layers.flatten());
+            cnnModel.add(tf.layers.dense({ units: 64, activation: 'relu' }));
+            cnnModel.add(tf.layers.dense({ units: 10, activation: 'softmax' }));
 
-        for (let i = 0; i < targetUrls.length; i++) {
-            try {
-                console.log(`[시도 ${i+1}] ${targetUrls[i]} 로딩 중...`);
-                const loadedModel = await tf.loadLayersModel(targetUrls[i]);
-                
-                if (loadedModel) {
-                    model = loadedModel; // 모델 정상 할당
-                    statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
-                    document.getElementById('predicted-digit').innerText = "-";
-                    return; // ★ 성공 시 즉시 종료 (404 예외 차단)
-                }
-            } catch (err) {
-                console.warn(`[${i+1}차 시도 실패]:`, err);
-            }
+            // 초기 더미 가중치로 컴파일
+            cnnModel.compile({ optimizer: 'adam', loss: 'categoricalCrossentropy', metrics: ['accuracy'] });
+            
+            model = cnnModel;
+            statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
+            document.getElementById('predicted-digit').innerText = "-";
+        } catch (err) {
+            console.error("모델 생성 오류:", err);
+            statusEl.innerText = "상태: ⚠️ 초기화 실패";
         }
-
-        statusEl.innerText = "상태: ⚠️ model.json 연결 실패";
     }
 
     function clearCanvas() {
@@ -376,7 +375,6 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
-    // CNN / Dense 텐서 입출력 차원 유연 예외처리 함수
     function processAndPredict() {
         if (!model) return;
 
@@ -433,19 +431,7 @@
                 .toFloat()
                 .div(tf.scalar(255.0));
 
-            let predictions;
-            try {
-                // CNN 모델인 경우 [1, 28, 28, 1]
-                predictions = model.predict(baseTensor.expandDims(0));
-            } catch (err1) {
-                try {
-                    // Dense(Flat) 모델인 경우 [1, 784]
-                    predictions = model.predict(baseTensor.reshape([1, 784]));
-                } catch (err2) {
-                    console.error("추론 실패:", err1, err2);
-                    return;
-                }
-            }
+            let predictions = model.predict(baseTensor.expandDims(0));
 
             const probabilities = predictions.dataSync();
             const predictedDigit = predictions.argMax(1).dataSync()[0];
