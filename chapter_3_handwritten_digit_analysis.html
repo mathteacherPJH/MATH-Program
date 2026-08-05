@@ -291,29 +291,32 @@
         probBarsContainer.appendChild(row);
     }
 
-    // Colab에서 직접 올려둔 model.json 로더 (경로 보정 및 캐시 방지)
+    // GitHub Pages absolute 경로 최우선 로더 (CORS 및 캐시 방지)
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
         statusEl.innerText = "상태: ⏳ Colab 생성 MNIST 모델 로드 중...";
 
         const cacheBuster = '?v=' + new Date().getTime();
-        const LOCAL_URL = 'model.json' + cacheBuster;
+        const GITHUB_PAGES_URL = 'https://mathteacherpjh.github.io/MATH-Program/model.json' + cacheBuster;
         const RELATIVE_URL = './model.json' + cacheBuster;
         const RAW_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json' + cacheBuster;
 
         try {
-            model = await tf.loadLayersModel(LOCAL_URL);
-            statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 성공!";
+            // 1순위: GitHub Pages 절대 경로
+            model = await tf.loadLayersModel(GITHUB_PAGES_URL);
+            statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 완료!";
             document.getElementById('predicted-digit').innerText = "-";
         } catch (e1) {
             try {
+                // 2순위: 상대 경로
                 model = await tf.loadLayersModel(RELATIVE_URL);
-                statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 성공!";
+                statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 완료!";
                 document.getElementById('predicted-digit').innerText = "-";
             } catch (e2) {
                 try {
+                    // 3순위: Raw 원본 URL
                     model = await tf.loadLayersModel(RAW_URL);
-                    statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 성공!";
+                    statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 완료!";
                     document.getElementById('predicted-digit').innerText = "-";
                 } catch (e3) {
                     console.error("모델 로드 에러 상세:", e1, e2, e3);
