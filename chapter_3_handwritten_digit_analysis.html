@@ -85,8 +85,6 @@
         .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
 
         #canvas-wrapper { position: relative; display: flex; justify-content: center; align-items: center; margin: auto 0; }
-        
-        /* 캔버스 배경을 검은색(#000000)으로 설정 */
         canvas#inputCanvas { border: 3px solid var(--c-brand-green); background: #000000; border-radius: 12px; cursor: crosshair; touch-action: none; }
 
         .right-panel { flex: 1.5; min-width: 300px; height: 100%; display: flex; flex-direction: column; gap: 14px; }
@@ -201,7 +199,7 @@
 </div>
 
 <script>
-    // 신경망 배경 애니메이션
+    // 배경 애니메이션
     const bgCanvas = document.getElementById('neural-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -316,7 +314,6 @@
         }
     }
 
-    // 캔버스 초기화 (검은 배경으로 초기화)
     function clearCanvas() {
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
@@ -355,8 +352,6 @@
         ctx.lineWidth = currentBrushSize;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        
-        // 펜: 흰색(#ffffff), 지우개: 검은색(#000000)
         ctx.strokeStyle = (currentTool === 'pen') ? '#ffffff' : '#000000';
 
         ctx.lineTo(x, y);
@@ -376,7 +371,7 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
-    // 검은 배경 + 흰 글씨 전처리 및 AI 추론 함수
+    // 다중 Tensor Shape 자동 호환 추론 함수 (Flatten / Conv2D 모두 대처)
     function processAndPredict() {
         if (!model) return;
 
@@ -386,12 +381,11 @@
         let minX = inputCanvas.width, minY = inputCanvas.height, maxX = 0, maxY = 0;
         let hasPixels = false;
 
-        // 그려진 흰색 획(밝은 픽셀) 감지
         for (let y = 0; y < inputCanvas.height; y++) {
             for (let x = 0; x < inputCanvas.width; x++) {
                 const index = (y * inputCanvas.width + x) * 4;
                 const r = data[index];
-                if (r > 50) { // 밝기가 있는 픽셀
+                if (r > 50) {
                     hasPixels = true;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;
@@ -401,9 +395,7 @@
             }
         }
 
-        if (!hasPixels) {
-            return;
-        }
+        if (!hasPixels) return;
 
         let cropWidth = maxX - minX + 1;
         let cropHeight = maxY - minY + 1;
@@ -412,7 +404,7 @@
         const centerX = minX + cropWidth / 2;
         const centerY = minY + cropHeight / 2;
 
-        const squareSize = maxDim * 1.35; // 정중앙 여백 확보
+        const squareSize = maxDim * 1.35;
         let srcX = centerX - squareSize / 2;
         let srcY = centerY - squareSize / 2;
 
@@ -423,29 +415,46 @@
         cropCtx.fillRect(0, 0, squareSize, squareSize);
         cropCtx.drawImage(inputCanvas, srcX, srcY, squareSize, squareSize, 0, 0, squareSize, squareSize);
 
-        // 28x28 패딩 크롭 (중앙 20x20에 배치하여 테두리 4px 여백 형성)
         mnistCtx.fillStyle = "#000000";
         mnistCtx.fillRect(0, 0, 28, 28);
         mnistCtx.drawImage(cropCanvas, 0, 0, squareSize, squareSize, 4, 4, 20, 20);
 
-        // TensorFlow.js 모델 추론
         tf.tidy(() => {
             const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
-            let tensor = tf.browser.fromPixels(mnistImgData, 1)
+            
+            // 기본 [1, 28, 28, 1] CNN 텐서
+            let tensor4D = tf.browser.fromPixels(mnistImgData, 1)
                 .toFloat()
                 .div(tf.scalar(255.0))
                 .expandDims(0);
 
-            const predictions = model.predict(tensor);
-            const probabilities = predictions.dataSync();
-            const predictedDigit = predictions.argMax(1).dataSync()[0];
+            let predictions;
+            try {
+                // 1차 시도: 4D CNN 형태 [1, 28, 28, 1]
+                predictions = model.predict(tensor4D);
+            } catch (err1) {
+                try {
+                    // 2차 시도: 2D Dense 형태 [1, 784]
+                    let tensor2D = tensor4D.reshape([1, 784]);
+                    predictions = model.predict(tensor2D);
+                } catch (err2) {
+                    // 3차 시도: 3D 형태 [1, 28, 28]
+                    let tensor3D = tensor4D.reshape([1, 28, 28]);
+                    predictions = model.predict(tensor3D);
+                }
+            }
 
-            document.getElementById('predicted-digit').innerText = predictedDigit;
+            if (predictions) {
+                const probabilities = predictions.dataSync();
+                const predictedDigit = predictions.argMax(1).dataSync()[0];
 
-            for (let i = 0; i <= 9; i++) {
-                const probPercent = (probabilities[i] * 100).toFixed(1);
-                document.getElementById(`bar-${i}`).style.width = `${probPercent}%`;
-                document.getElementById(`val-${i}`).innerText = `${probPercent}%`;
+                document.getElementById('predicted-digit').innerText = predictedDigit;
+
+                for (let i = 0; i <= 9; i++) {
+                    const probPercent = (probabilities[i] * 100).toFixed(1);
+                    document.getElementById(`bar-${i}`).style.width = `${probPercent}%`;
+                    document.getElementById(`val-${i}`).innerText = `${probPercent}%`;
+                }
             }
         });
     }
