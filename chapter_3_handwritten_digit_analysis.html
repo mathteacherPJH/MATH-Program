@@ -290,30 +290,33 @@
         probBarsContainer.appendChild(row);
     }
 
-    // GitHub Pages & CORS 완벽 대응 다중 백업 로더
+    // 성공 즉시 반환(Return)하여 에러 덮어쓰기를 방지한 정밀 로더
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: ⏳ MNIST AI 모델 연결 중...";
+        statusEl.innerText = "상태: ⏳ MNIST AI 모델 로드 중...";
 
         const targetUrls = [
             './model.json',
-            'https://mathteacherpjh.github.io/MATH-Program/model.json',
-            'https://cdn.jsdelivr.net/gh/tensorflow/tfjs-models@master/mnist/model.json'
+            'https://mathteacherpjh.github.io/MATH-Program/model.json'
         ];
 
         for (let i = 0; i < targetUrls.length; i++) {
             try {
-                console.log(`[${i+1}차 시도] 모델 불러오는 중: ${targetUrls[i]}`);
-                model = await tf.loadLayersModel(targetUrls[i]);
-                statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
-                document.getElementById('predicted-digit').innerText = "-";
-                return;
+                console.log(`[시도 ${i+1}] ${targetUrls[i]} 로딩 중...`);
+                const loadedModel = await tf.loadLayersModel(targetUrls[i]);
+                
+                if (loadedModel) {
+                    model = loadedModel; // 모델 정상 할당
+                    statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
+                    document.getElementById('predicted-digit').innerText = "-";
+                    return; // ★ 성공 시 즉시 종료 (404 예외 차단)
+                }
             } catch (err) {
-                console.warn(`[${i+1}차 시도 실패] 주소: ${targetUrls[i]}`, err);
+                console.warn(`[${i+1}차 시도 실패]:`, err);
             }
         }
 
-        statusEl.innerText = "상태: ⚠️ model.json 연결 실패 (F12 콘솔의 network 에러를 확인해주세요)";
+        statusEl.innerText = "상태: ⚠️ model.json 연결 실패";
     }
 
     function clearCanvas() {
