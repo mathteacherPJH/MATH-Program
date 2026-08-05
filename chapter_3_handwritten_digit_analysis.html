@@ -175,10 +175,17 @@
         #toolbar {
             width: 100%;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--c-border);
+        }
+
+        .tool-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
 
         .tool-group {
@@ -187,8 +194,37 @@
             align-items: center;
         }
 
+        /* 펜/지우개 크기 콘트롤 박스 */
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--c-border);
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+        }
+
+        .size-control input[type="range"] {
+            width: 100px;
+            cursor: pointer;
+        }
+
+        .size-control input[type="number"] {
+            width: 45px;
+            padding: 2px 4px;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 12px;
+        }
+
         .btn {
-            padding: 8px 14px;
+            padding: 8px 12px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
@@ -196,6 +232,16 @@
             cursor: pointer;
             transition: all 0.2s;
             letter-spacing: 0.03em;
+        }
+        .btn-mode {
+            background: var(--c-tab-bg);
+            color: var(--c-text-main);
+            border: 1px solid var(--c-border);
+        }
+        .btn-mode.active {
+            background: var(--c-brand-green);
+            color: white;
+            border-color: var(--c-brand-green);
         }
         .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
         .btn-danger:hover { background: #ffcdd2; }
@@ -208,12 +254,13 @@
             margin: auto 0;
         }
 
+        /* 흰색 바탕 캔버스 */
         canvas#inputCanvas {
             border: 3px solid var(--c-brand-green);
-            background: #000000;
+            background: #ffffff;
             border-radius: 12px;
             cursor: crosshair;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
             touch-action: none;
         }
 
@@ -265,7 +312,7 @@
 
         .preview-item canvas {
             border: 1px solid #333;
-            background: #000;
+            background: #000; /* AI 분석용 캔버스는 검은 배경에 흰 숫자로 자동 반전됨 */
             image-rendering: pixelated;
         }
 
@@ -356,33 +403,46 @@
         
         <div class="step-box">
             <strong>1단계. Bounding Box 감지</strong>
-            400x400 캔버스에서 사용자가 그리기를 마친 숫자의 상하좌우 최소/최대 여백을 감지하여 잘라냅니다(Crop).
+            400x400 흰색 캔버스에서 검은 글씨가 그려진 최소/최대 영역을 자동으로 찾아 자릅니다(Crop).
         </div>
 
         <div class="step-box">
-            <strong>2단계. 비율 유지 리사이즈</strong>
-            잘라낸 숫자의 가로세로 비율을 유지하면서 20x20 크기 상자 안에 쏙 들어가도록 축소합니다.
+            <strong>2단계. 비율 유지 & 색상 반전</strong>
+            20x20 비율로 맞추면서 AI 학습 규격에 맞게 <b>검은 배경에 흰 글씨</b>로 색상을 자동 반전시킵니다.
         </div>
 
         <div class="step-box">
             <strong>3단계. 28x28 중앙 정렬</strong>
-            MNIST 표준 규격인 28x28 도트 중앙에 20x20 숫자를 배치하여 4픽셀의 테두리 여백(Padding)을 확보합니다.
+            MNIST 표준 규격인 28x28 도트 정중앙에 배치하고 4픽셀 테두리 여백을 확보합니다.
         </div>
 
         <div class="info-box">
-            💡 <strong>교육 포인트</strong><br>
-            위 파이프라인 과정을 거치면 캔버스 어디에 조그맣게 그려도 AI가 높은 정확도로 숫자를 인식할 수 있습니다!
+            💡 <b>팁</b><br>
+            선이 너무 얇으면 숫자가 잘 인식되지 않을 수 있습니다. 펜 크기를 25~35px 정도로 두껍게 설정하면 인식률이 향상됩니다!
         </div>
     </div>
 
     <!-- 2. 중앙 메인 패널 -->
     <div class="card center-panel">
         <div id="toolbar">
-            <div class="tool-group">
-                <span style="font-weight: bold; font-size: 13px; color: var(--c-brand-green);">✍️ 숫자 그리기 (400 × 400)</span>
+            <div class="tool-row">
+                <div class="tool-group">
+                    <button id="penBtn" class="btn btn-mode active" onclick="setToolMode('pen')">✏️ 펜</button>
+                    <button id="eraserBtn" class="btn btn-mode" onclick="setToolMode('eraser')">🧽 지우개</button>
+                </div>
+                <div class="tool-group">
+                    <button class="btn btn-danger" onclick="clearCanvas()">🗑️ 전체 지우기</button>
+                </div>
             </div>
-            <div class="tool-group">
-                <button class="btn btn-danger" onclick="clearCanvas()">🗑️ 캔버스 지우기</button>
+
+            <div class="tool-row">
+                <!-- 펜/지우개 크기 연동 슬라이더 & 숫자 입력창 -->
+                <div class="size-control">
+                    <span>두께 조절:</span>
+                    <input type="range" id="sizeRange" min="5" max="60" value="28" oninput="syncSizeInputs('range')">
+                    <input type="number" id="sizeNumber" min="5" max="60" value="28" oninput="syncSizeInputs('number')">
+                    <span>px</span>
+                </div>
             </div>
         </div>
 
@@ -394,11 +454,11 @@
     <!-- 3. 우측 패널 -->
     <div class="card right-panel">
         <div class="panel-box">
-            <h4>🔍 AI 시각화 (전처리 단계별 파이프라인)</h4>
+            <h4>🔍 AI 시각화 (색상 반전 & 전처리 단계)</h4>
             <div class="pipeline-viewer">
                 <div class="preview-item">
                     <canvas id="cropCanvas" width="50" height="50" style="width: 60px; height: 60px;"></canvas>
-                    <span>1. 잘라내기</span>
+                    <span>1. 자르기 & 반전</span>
                 </div>
                 <span style="color: var(--c-brand-green); font-weight: bold;">➔</span>
                 <div class="preview-item">
@@ -493,6 +553,41 @@
 
     let isDrawing = false;
     let model = null;
+    let currentTool = 'pen'; // 'pen' 또는 'eraser'
+    let currentBrushSize = 28;
+
+    // 슬라이더 ↔ 숫자 입력창 동기화
+    function syncSizeInputs(source) {
+        const rangeEl = document.getElementById('sizeRange');
+        const numberEl = document.getElementById('sizeNumber');
+
+        if (source === 'range') {
+            numberEl.value = rangeEl.value;
+        } else {
+            let val = parseInt(numberEl.value, 10);
+            if (isNaN(val)) val = 5;
+            if (val < 5) val = 5;
+            if (val > 60) val = 60;
+            numberEl.value = val;
+            rangeEl.value = val;
+        }
+        currentBrushSize = parseInt(rangeEl.value, 10);
+    }
+
+    // 도구 모동 전환 (펜 / 지우개)
+    function setToolMode(mode) {
+        currentTool = mode;
+        const penBtn = document.getElementById('penBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+
+        if (mode === 'pen') {
+            penBtn.classList.add('active');
+            eraserBtn.classList.remove('active');
+        } else {
+            eraserBtn.classList.add('active');
+            penBtn.classList.remove('active');
+        }
+    }
 
     const probBarsContainer = document.getElementById('probBars');
     for (let i = 0; i <= 9; i++) {
@@ -523,8 +618,9 @@
         }
     }
 
+    // 캔버스 초기화 (흰색 바탕)
     function clearCanvas() {
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
         ctx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
         
         cropCtx.fillStyle = "black";
@@ -558,10 +654,12 @@
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
-        ctx.lineWidth = 26;
+        ctx.lineWidth = currentBrushSize;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.strokeStyle = 'white';
+        
+        // 펜은 검은색, 지우개는 흰색 바탕색
+        ctx.strokeStyle = (currentTool === 'pen') ? 'black' : 'white';
 
         ctx.lineTo(x, y);
         ctx.stroke();
@@ -580,19 +678,24 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
+    // -------------------------------------------------------------
+    // 전처리 및 AI 인식 로직 (색상 반전 포함)
+    // -------------------------------------------------------------
     function processAndPredict() {
         if (!model) return;
 
         const imgData = ctx.getImageData(0, 0, inputCanvas.width, inputCanvas.height);
         const data = imgData.data;
 
+        // 1단계: Bounding Box 찾기 (흰색 배경 중 검은색 글씨 영역 찾기)
         let minX = inputCanvas.width, minY = inputCanvas.height, maxX = 0, maxY = 0;
         let hasPixels = false;
 
         for (let y = 0; y < inputCanvas.height; y++) {
             for (let x = 0; x < inputCanvas.width; x++) {
-                const alpha = data[(y * inputCanvas.width + x) * 4];
-                if (alpha > 20) {
+                const r = data[(y * inputCanvas.width + x) * 4];
+                // 검은 글씨 영역 감지 (RGB 값이 낮을수록 검은색)
+                if (r < 230) { 
                     hasPixels = true;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;
@@ -602,15 +705,33 @@
             }
         }
 
-        if (!hasPixels) return;
+        if (!hasPixels) {
+            clearCanvas();
+            return;
+        }
 
         const cropWidth = maxX - minX + 1;
         const cropHeight = maxY - minY + 1;
 
+        // 2단계: Crop 영역을 가져와서 '색상 반전(Invert)' 수행 (검은 배경 + 흰 글씨)
         cropCanvas.width = cropWidth;
         cropCanvas.height = cropHeight;
+        
+        // 원본 이미지 잘라내기
         cropCtx.drawImage(inputCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        
+        // 색상 반전 처리
+        const cropImgData = cropCtx.getImageData(0, 0, cropWidth, cropHeight);
+        const cropData = cropImgData.data;
+        for (let i = 0; i < cropData.length; i += 4) {
+            // R, G, B를 각각 반전 (255 - 값)
+            cropData[i]     = 255 - cropData[i];     // Red
+            cropData[i + 1] = 255 - cropData[i + 1]; // Green
+            cropData[i + 2] = 255 - cropData[i + 2]; // Blue
+        }
+        cropCtx.putImageData(cropImgData, 0, 0);
 
+        // 3단계: 28x28 중앙 배치 (4px 테두리 여백 포함)
         mnistCtx.fillStyle = "black";
         mnistCtx.fillRect(0, 0, 28, 28);
 
@@ -623,6 +744,7 @@
 
         mnistCtx.drawImage(cropCanvas, 0, 0, cropWidth, cropHeight, offsetX, offsetY, targetW, targetH);
 
+        // 4단계: 모델 추론
         tf.tidy(() => {
             const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
             let tensor = tf.browser.fromPixels(mnistImgData, 1)
