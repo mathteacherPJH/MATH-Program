@@ -288,25 +288,30 @@
         probBarsContainer.appendChild(row);
     }
 
-    // 학습 완료된 가중치를 정확하게 불러오는 로더
+    // 현재 접속 주소를 기준으로 model.json의 절대 경로를 자동 정밀 생성하는 로더
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
         statusEl.innerText = "상태: ⏳ 학습된 MNIST 가중치 로드 중...";
 
-        const cacheBuster = '?v=' + new Date().getTime();
+        // 현재 실행 중인 HTML의 절대 디렉토리 경로 추출
+        const currentBaseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+        const cacheBuster = '?t=' + new Date().getTime();
+
         const urls = [
+            currentBaseUrl + 'model.json' + cacheBuster,
             './model.json' + cacheBuster,
             'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json' + cacheBuster
         ];
 
         for (let url of urls) {
             try {
+                console.log("모델 로딩 시도:", url);
                 model = await tf.loadLayersModel(url);
                 statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
                 document.getElementById('predicted-digit').innerText = "-";
-                return;
+                return; // 성공 시 종료
             } catch (e) {
-                console.warn("로드 시도 실패:", url, e);
+                console.warn("로드 실패 URL:", url, e);
             }
         }
 
