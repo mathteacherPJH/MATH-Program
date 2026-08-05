@@ -6,7 +6,6 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         :root {
-            /* 배경색을 요청하신 #FBF9F4로 변경 */
             --c-bg-main: #FBF9F4;
             --c-bg-card: #FDFDFB;
             --c-text-main: #1A3D2F;
@@ -36,7 +35,6 @@
             overflow: hidden;
         }
 
-        /* 1. 배경 도트무늬 패턴 제거 (기존 패턴 코드를 비워둠) */
         body::before {
             content: "";
             position: absolute;
@@ -45,7 +43,6 @@
             pointer-events: none;
         }
 
-        /* 2. 인터랙티브 신경망 애니메이션용 캔버스 고정 */
         #bgCanvas {
             position: absolute;
             top: 0;
@@ -56,7 +53,6 @@
             pointer-events: none;
         }
 
-        /* 상단 대시보드 헤더 영역 - 하단 구분선(border-bottom) 추가 */
         .header-container {
             display: flex;
             justify-content: space-between;
@@ -92,7 +88,6 @@
             letter-spacing: 2px;
         }
 
-        /* 3분할 메인 레이아웃 비율 고정 및 안정화 */
         .main-container {
             display: flex;
             flex: 1;
@@ -114,19 +109,16 @@
             box-shadow: 0 2px 8px rgba(26, 61, 47, 0.02);
         }
 
-        /* 왼쪽 패널: 이미지 A, B 위아래 배치 */
         .panel-left {
             flex: 1;
             min-width: 180px;
             max-width: 280px;
             gap: 10px;
         }
-        /* 중앙 패널: 합성 결과 배치 */
         .panel-center {
             flex: 2;
             min-width: 300px;
         }
-        /* 오른쪽 패널: 행렬 P 시각화 배치 */
         .panel-right {
             flex: 1;
             min-width: 200px;
@@ -143,7 +135,6 @@
             align-items: center;
         }
 
-        /* 드롭존 및 뷰어 공통 */
         .drop-zone {
             flex: 1;
             border: 2px dashed var(--c-border);
@@ -191,7 +182,6 @@
             left: 0;
         }
 
-        /* 행렬 P 전용 스크롤박스 컨테이너 */
         .matrix-scroll-container {
             flex: 1;
             border: 1px solid var(--c-border);
@@ -239,7 +229,6 @@
         .btn-reset { background-color: var(--c-reset-bg); padding: 4px 0; font-size: 11px; white-space: nowrap; text-align: center; width: 100%;}
         .btn-reset:hover { background-color: var(--c-reset-hover); }
 
-        /* 하단 제어판 전체 컨테이너 보정 */
         .bottom-panel {
             display: flex;
             gap: 15px;
@@ -262,7 +251,6 @@
             box-shadow: 0 2px 8px rgba(26, 61, 47, 0.02);
         }
 
-        /* 1구역: 합성 방식 선택 영역 폭 고정 */
         .area-mode-control {
             width: 140px;
             min-width: 140px;
@@ -306,7 +294,6 @@
             flex-shrink: 0;
         }
 
-        /* 2구역: 슬라이더 조작 영역 유연성 및 최소폭 강제 */
         .area-sliders {
             flex: 2; 
             display: flex;
@@ -354,7 +341,6 @@
             min-width: 50px;
         }
 
-        /* 원리 2 마스크 제어 영역 패널 내부 정돈 */
         .mask-control-grid {
             display: flex;
             width: 100%;
@@ -399,7 +385,6 @@
             border-color: var(--c-text-main);
         }
 
-        /* 3구역: 우측 수식 영역 한계 설정 */
         .area-formulas {
             flex: 1;
             display: flex;
@@ -461,8 +446,9 @@
             </div>
             <div id="resLabelB" class="resolution-bar">B: ---</div>
             
-            <input type="file" id="fileInputA" accept="image/*" onchange="handleFileSelect(event, 'A')">
-            <input type="file" id="fileInputB" accept="image/*" onchange="handleFileSelect(event, 'B')">
+            <!-- 14가지 확장자 적용 -->
+            <input type="file" id="fileInputA" accept=".jpg,.jpeg,.png,.bmp,.webp,.gif,.svg,.tiff,.tif,.ico,.avif,.heic,.heif,.jfif,image/*" onchange="handleFileSelect(event, 'A')">
+            <input type="file" id="fileInputB" accept=".jpg,.jpeg,.png,.bmp,.webp,.gif,.svg,.tiff,.tif,.ico,.avif,.heic,.heif,.jfif,image/*" onchange="handleFileSelect(event, 'B')">
         </div>
 
         <div class="card panel-center">
@@ -533,7 +519,6 @@
     </div>
 
 <script>
-    // --- 딥 그린 톤 조율 인터랙티브 배경 엔진 ---
     const bgCanvas = document.getElementById('bgCanvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -626,8 +611,6 @@
     resizeBgCanvas();
     animateParticles();
 
-
-    // --- 기존 비즈니스 코드 로직 유지 보존 ---
     let imgA = null, imgB = null;
     let offscreenCanvas = null, offscreenCtx = null;
     let maskMatrix = null; 
