@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>한국 교육용 MNIST 손글씨 인식 분석실</title>
+    <!-- TensorFlow.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <style>
         :root {
@@ -38,6 +39,7 @@
             padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;
         }
 
+        /* BACK 버튼 스타일 */
         .back-btn {
             background: transparent;
             border: none;
@@ -136,7 +138,7 @@
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            `mathteacherPJH/MATH-Program` 깃허브의 원본 MNIST CNN 딥러닝 신경망으로 동동합니다.
+            `mathteacherPJH/MATH-Program` 깃허브의 원본 MNIST CNN 딥러닝 신경망으로 작동합니다.
         </div>
     </div>
 
@@ -155,8 +157,8 @@
             <div class="tool-row">
                 <div class="size-control">
                     <span>두께 조절:</span>
-                    <input type="range" id="sizeRange" min="6" max="40" value="22" oninput="syncSizeInputs('range')">
-                    <input type="number" id="sizeNumber" min="6" max="40" value="22" oninput="syncSizeInputs('number')">
+                    <input type="range" id="sizeRange" min="6" max="40" value="24" oninput="syncSizeInputs('range')">
+                    <input type="number" id="sizeNumber" min="6" max="40" value="24" oninput="syncSizeInputs('number')">
                     <span>px</span>
                 </div>
             </div>
@@ -257,7 +259,7 @@
     let isDrawing = false;
     let model = null;
     let currentTool = 'pen'; 
-    let currentBrushSize = 22;
+    let currentBrushSize = 24;
 
     function syncSizeInputs(source) {
         const rangeEl = document.getElementById('sizeRange');
@@ -289,7 +291,7 @@
         probBarsContainer.appendChild(row);
     }
 
-    // 진짜 깃허브 MNIST 딥러닝 신경망 모델 로딩
+    // 깃허브 MNIST 딥러닝 신경망 모델 로딩
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
         statusEl.innerText = "상태: ⏳ MNIST 딥러닝 모델 로드 중...";
@@ -370,7 +372,7 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
-    // 진짜 MNIST 신경망(Softmax) 추론 함수
+    // MNIST 전처리 정밀 보정 및 추론 함수
     function processAndPredict() {
         if (!model) return;
 
@@ -401,11 +403,12 @@
         let cropWidth = maxX - minX + 1;
         let cropHeight = maxY - minY + 1;
 
+        // 여백 배율 1.5배 보정 (2 -> 6 오인식 방지 정밀 보정)
         const maxDim = Math.max(cropWidth, cropHeight);
         const centerX = minX + cropWidth / 2;
         const centerY = minY + cropHeight / 2;
 
-        const squareSize = maxDim * 1.35;
+        const squareSize = maxDim * 1.5;
         let srcX = centerX - squareSize / 2;
         let srcY = centerY - squareSize / 2;
 
@@ -416,15 +419,15 @@
         cropCtx.fillRect(0, 0, squareSize, squareSize);
         cropCtx.drawImage(inputCanvas, srcX, srcY, squareSize, squareSize, 0, 0, squareSize, squareSize);
 
+        // 28x28 상자 내 정중앙 20x20 크기 배치 (4px 외곽 여백 형성)
         mnistCtx.fillStyle = "#000000";
         mnistCtx.fillRect(0, 0, 28, 28);
         mnistCtx.drawImage(cropCanvas, 0, 0, squareSize, squareSize, 4, 4, 20, 20);
 
-        // TensorFlow.js 텐서 전처리 및 신경망 추론
+        // TensorFlow.js 텐서 변환 및 추론
         tf.tidy(() => {
             const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
             
-            // 4D CNN 형태 [1, 28, 28, 1] 텐서
             let tensor = tf.browser.fromPixels(mnistImgData, 1)
                 .toFloat()
                 .div(tf.scalar(255.0))
@@ -434,7 +437,6 @@
             try {
                 predictions = model.predict(tensor);
             } catch (err) {
-                // 2D Dense 형태 호환 예외처리 [1, 784]
                 predictions = model.predict(tensor.reshape([1, 784]));
             }
 
