@@ -290,32 +290,30 @@
         probBarsContainer.appendChild(row);
     }
 
-    // CORS 및 404 완벽 보정 다중 로더
+    // GitHub Pages & CORS 완벽 대응 다중 백업 로더
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: ⏳ MNIST AI 모델 로드 중...";
+        statusEl.innerText = "상태: ⏳ MNIST AI 모델 연결 중...";
 
-        const cacheBuster = '?v=' + new Date().getTime();
-        
-        // 1순위: 내 깃허브 상대경로 -> 2순위: 깃허브 절대경로 -> 3순위: 정식 글로벌 CDN (CORS 완벽 해제)
         const targetUrls = [
-            './model.json' + cacheBuster,
-            'https://mathteacherpjh.github.io/MATH-Program/model.json' + cacheBuster,
-            'https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json'
+            './model.json',
+            'https://mathteacherpjh.github.io/MATH-Program/model.json',
+            'https://cdn.jsdelivr.net/gh/tensorflow/tfjs-models@master/mnist/model.json'
         ];
 
         for (let i = 0; i < targetUrls.length; i++) {
             try {
+                console.log(`[${i+1}차 시도] 모델 불러오는 중: ${targetUrls[i]}`);
                 model = await tf.loadLayersModel(targetUrls[i]);
                 statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
                 document.getElementById('predicted-digit').innerText = "-";
                 return;
             } catch (err) {
-                console.warn(`[${i+1}차 로딩 시도 실패] URL: ${targetUrls[i]}`, err);
+                console.warn(`[${i+1}차 시도 실패] 주소: ${targetUrls[i]}`, err);
             }
         }
 
-        statusEl.innerText = "상태: ⚠️ model.json 연결 실패 (서버 연결을 확인해주세요)";
+        statusEl.innerText = "상태: ⚠️ model.json 연결 실패 (F12 콘솔의 network 에러를 확인해주세요)";
     }
 
     function clearCanvas() {
@@ -428,7 +426,6 @@
         tf.tidy(() => {
             const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
             
-            // 기본 2D/4D 텐서 유연 대응
             let baseTensor = tf.browser.fromPixels(mnistImgData, 1)
                 .toFloat()
                 .div(tf.scalar(255.0));
