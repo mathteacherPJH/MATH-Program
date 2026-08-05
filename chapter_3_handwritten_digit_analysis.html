@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>한국 교육용 MNIST 손글씨 인식 분석실</title>
-    <!-- TensorFlow.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <style>
         :root {
@@ -39,7 +38,6 @@
             padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;
         }
 
-        /* BACK 버튼 스타일 */
         .back-btn {
             background: transparent;
             border: none;
@@ -138,7 +136,7 @@
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            `mathteacherPJH/MATH-Program` 깃허브 레포지토리의 원본 MNIST 모델을 연동하여 동작합니다.
+            `mathteacherPJH/MATH-Program` 깃허브의 원본 MNIST CNN 딥러닝 신경망으로 동동합니다.
         </div>
     </div>
 
@@ -157,8 +155,8 @@
             <div class="tool-row">
                 <div class="size-control">
                     <span>두께 조절:</span>
-                    <input type="range" id="sizeRange" min="6" max="40" value="20" oninput="syncSizeInputs('range')">
-                    <input type="number" id="sizeNumber" min="6" max="40" value="20" oninput="syncSizeInputs('number')">
+                    <input type="range" id="sizeRange" min="6" max="40" value="22" oninput="syncSizeInputs('range')">
+                    <input type="number" id="sizeNumber" min="6" max="40" value="22" oninput="syncSizeInputs('number')">
                     <span>px</span>
                 </div>
             </div>
@@ -171,7 +169,7 @@
 
     <div class="card right-panel">
         <div class="panel-box">
-            <div id="model-status">상태: 깃허브 AI 모델 로드 대기 중...</div>
+            <div id="model-status">상태: MNIST AI 모델 연결 중...</div>
             <h4>🔍 AI 시각화 (전처리 변환 과정)</h4>
             <div class="pipeline-viewer">
                 <div class="preview-item">
@@ -248,7 +246,7 @@
     window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
     window.addEventListener('resize', resizeBgCanvas);
 
-    // 캔버스 & 모델 로직
+    // 캔버스 요소
     const inputCanvas = document.getElementById('inputCanvas');
     const ctx = inputCanvas.getContext('2d');
     const cropCanvas = document.getElementById('cropCanvas');
@@ -259,7 +257,7 @@
     let isDrawing = false;
     let model = null;
     let currentTool = 'pen'; 
-    let currentBrushSize = 20;
+    let currentBrushSize = 22;
 
     function syncSizeInputs(source) {
         const rangeEl = document.getElementById('sizeRange');
@@ -291,25 +289,26 @@
         probBarsContainer.appendChild(row);
     }
 
-    async function loadGithubModel() {
+    // 진짜 깃허브 MNIST 딥러닝 신경망 모델 로딩
+    async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: ⏳ 깃허브 AI 모델 로드 중...";
+        statusEl.innerText = "상태: ⏳ MNIST 딥러닝 모델 로드 중...";
 
-        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json';
+        const RAW_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json';
         const RELATIVE_URL = './model.json';
 
         try {
-            model = await tf.loadLayersModel(GITHUB_RAW_URL);
-            statusEl.innerText = "상태: ✅ GitHub Raw MNIST 모델 로드 완료!";
+            model = await tf.loadLayersModel(RAW_URL);
+            statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
             document.getElementById('predicted-digit').innerText = "-";
         } catch (e1) {
             try {
                 model = await tf.loadLayersModel(RELATIVE_URL);
-                statusEl.innerText = "상태: ✅ 상대경로 MNIST 모델 로드 완료!";
+                statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
                 document.getElementById('predicted-digit').innerText = "-";
             } catch (e2) {
                 console.error("모델 로드 실패:", e1, e2);
-                statusEl.innerText = "상태: ⚠️ 모델 로드 실패";
+                statusEl.innerText = "상태: ⚠️ model.json 파일 연결 실패";
             }
         }
     }
@@ -371,7 +370,7 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
-    // 다중 Tensor Shape 자동 호환 추론 함수 (Flatten / Conv2D 모두 대처)
+    // 진짜 MNIST 신경망(Softmax) 추론 함수
     function processAndPredict() {
         if (!model) return;
 
@@ -384,8 +383,7 @@
         for (let y = 0; y < inputCanvas.height; y++) {
             for (let x = 0; x < inputCanvas.width; x++) {
                 const index = (y * inputCanvas.width + x) * 4;
-                const r = data[index];
-                if (r > 50) {
+                if (data[index] > 50) {
                     hasPixels = true;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;
@@ -395,7 +393,10 @@
             }
         }
 
-        if (!hasPixels) return;
+        if (!hasPixels) {
+            clearCanvas();
+            return;
+        }
 
         let cropWidth = maxX - minX + 1;
         let cropHeight = maxY - minY + 1;
@@ -419,42 +420,33 @@
         mnistCtx.fillRect(0, 0, 28, 28);
         mnistCtx.drawImage(cropCanvas, 0, 0, squareSize, squareSize, 4, 4, 20, 20);
 
+        // TensorFlow.js 텐서 전처리 및 신경망 추론
         tf.tidy(() => {
             const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
             
-            // 기본 [1, 28, 28, 1] CNN 텐서
-            let tensor4D = tf.browser.fromPixels(mnistImgData, 1)
+            // 4D CNN 형태 [1, 28, 28, 1] 텐서
+            let tensor = tf.browser.fromPixels(mnistImgData, 1)
                 .toFloat()
                 .div(tf.scalar(255.0))
                 .expandDims(0);
 
             let predictions;
             try {
-                // 1차 시도: 4D CNN 형태 [1, 28, 28, 1]
-                predictions = model.predict(tensor4D);
-            } catch (err1) {
-                try {
-                    // 2차 시도: 2D Dense 형태 [1, 784]
-                    let tensor2D = tensor4D.reshape([1, 784]);
-                    predictions = model.predict(tensor2D);
-                } catch (err2) {
-                    // 3차 시도: 3D 형태 [1, 28, 28]
-                    let tensor3D = tensor4D.reshape([1, 28, 28]);
-                    predictions = model.predict(tensor3D);
-                }
+                predictions = model.predict(tensor);
+            } catch (err) {
+                // 2D Dense 형태 호환 예외처리 [1, 784]
+                predictions = model.predict(tensor.reshape([1, 784]));
             }
 
-            if (predictions) {
-                const probabilities = predictions.dataSync();
-                const predictedDigit = predictions.argMax(1).dataSync()[0];
+            const probabilities = predictions.dataSync();
+            const predictedDigit = predictions.argMax(1).dataSync()[0];
 
-                document.getElementById('predicted-digit').innerText = predictedDigit;
+            document.getElementById('predicted-digit').innerText = predictedDigit;
 
-                for (let i = 0; i <= 9; i++) {
-                    const probPercent = (probabilities[i] * 100).toFixed(1);
-                    document.getElementById(`bar-${i}`).style.width = `${probPercent}%`;
-                    document.getElementById(`val-${i}`).innerText = `${probPercent}%`;
-                }
+            for (let i = 0; i <= 9; i++) {
+                const probPercent = (probabilities[i] * 100).toFixed(1);
+                document.getElementById(`bar-${i}`).style.width = `${probPercent}%`;
+                document.getElementById(`val-${i}`).innerText = `${probPercent}%`;
             }
         });
     }
@@ -463,7 +455,7 @@
         resizeBgCanvas();
         animateBg();
         clearCanvas();
-        loadGithubModel();
+        loadGithubMnistModel();
     });
 </script>
 </body>
