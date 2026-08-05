@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대용량 문장 감성 분석 및 유사도 네트워크 분석기</title>
+    <!-- SheetJS CDN (엑셀 파일 읽기용) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-brand-green: #1B4332;
+            --c-brand-green-hover: #123024;
+            --c-tab-bg: #F4F1EA;
+            --c-clear-btn: #7D7569;
+            --c-clear-btn-hover: #5A534A;
+
+            --c-pos-2-bg: #E8F5E9; --c-pos-2-text: #1B5E20; --c-pos-2-border: #A5D6A7;
+            --c-pos-1-bg: #F1F8E9; --c-pos-1-text: #33691E; --c-pos-1-border: #C5E1A5;
+            --c-neu-bg: #F5F5F5;   --c-neu-text: #424242;   --c-neu-border: #E0E0E0;
+            --c-neg-1-bg: #FFF3E0; --c-neg-1-text: #E65100; --c-neg-1-border: #FFCC80;
+            --c-neg-2-bg: #FFEBEE; --c-neg-2-text: #B71C1C; --c-neg-2-border: #FFCDD2;
+        }
+
+        body { 
+            font-family: 'Malgun Gothic', -apple-system, sans-serif; 
+            background-color: var(--c-bg-main); 
+            color: var(--c-text-main); 
+            margin: 0; 
+            padding: 24px; 
+            padding-top: 85px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            letter-spacing: 0.03em; 
+            position: relative; 
+            height: 100vh; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+        }
+
+        /* 배경 신경망 애니메이션 Canvas */
+        #neural-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: 1; 
+            pointer-events: none; 
+        }
+
+        /* 상단 네비게이션 바 */
+        .top-navbar { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            background-color: rgba(251, 249, 244, 0.85); 
+            backdrop-filter: blur(16px); 
+            border-bottom: 1px solid var(--c-border); 
+            z-index: 1000; 
+            padding: 14px 24px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-sizing: border-box; 
+        }
+
+        .back-btn { 
+            background: transparent; 
+            border: none; 
+            color: var(--c-brand-green); 
+            font-family: "Consolas", monospace; 
+            font-size: 13px; 
+            font-weight: 900; 
+            letter-spacing: 0.15em; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            padding: 4px 8px; 
+            transition: all 0.2s ease; 
+        }
+        .back-btn:hover { 
+            transform: translateX(-3px); 
+            opacity: 0.8; 
+        }
+
+        .navbar-brand-text { 
+            font-size: 13px; 
+            font-weight: bold; 
+            color: var(--c-brand-green); 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase; 
+        }
+
+        /* 메인 레이아웃 */
+        .main-layout { 
+            display: flex; 
+            width: 100%; 
+            height: calc(100vh - 110px); 
+            gap: 20px; 
+            position: relative; 
+            z-index: 10; 
+            box-sizing: border-box; 
+        }
+
+        .card { 
+            background-color: var(--c-bg-card); 
+            border: 1px solid var(--c-border); 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-sizing: border-box; 
+            backdrop-filter: blur(6px); 
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .left-panel { flex: 0.9; height: 100%; gap: 14px; }
+        .panel-title { margin: 0; font-size: 16px; color: var(--c-brand-green); font-weight: bold; }
+
+        .drop-zone {
+            border: 2px dashed var(--c-brand-green);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .drop-zone.dragover { background: rgba(27, 67, 50, 0.08); border-color: var(--c-brand-green-hover); }
+        .drop-zone-text { font-size: 13px; color: var(--c-text-muted); }
+        .drop-zone-btn { background: var(--c-accent); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        .file-info { font-size: 12px; color: var(--c-brand-green); font-weight: bold; background: white; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--c-border); display: flex; justify-content: space-between; align-items: center; }
+
+        .action-container { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: auto; }
+        .action-btn-group { display: flex; gap: 8px; width: 100%; }
+        .run-btn { flex: 3; padding: 14px 20px; background-color: var(--c-brand-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: background-color 0.2s; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); }
+        .run-btn:hover { background-color: var(--c-brand-green-hover); }
+        .clear-btn { flex: 1; padding: 14px 12px; background-color: var(--c-clear-btn); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.2s; white-space: nowrap; }
+        .clear-btn:hover { background-color: var(--c-clear-btn-hover); }
+
+        .attribution-text { font-size: 11px; color: var(--c-text-muted); text-align: center; margin: 0; line-height: 1.4; }
+
+        .right-panel { flex: 1.6; height: 100%; overflow: hidden; gap: 14px; }
+        .nav-group { display: flex; gap: 4px; background: var(--c-tab-bg); padding: 4px; border-radius: 8px; border: 1px solid rgba(44, 42, 41, 0.05); flex-shrink: 0; }
+        .nav-btn { flex: 1; border: none; background: transparent; padding: 8px 4px; font-size: 12px; font-weight: bold; color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; text-align: center; }
+        .nav-btn.active { background: #FFFFFF; color: var(--c-brand-green); box-shadow: 0 2px 6px rgba(44,42,41,0.08); }
+
+        .right-panel-content { width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 6px; box-sizing: border-box; }
+        
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid var(--c-border); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th { background: var(--c-tab-bg); color: var(--c-brand-green); padding: 10px; font-weight: bold; border-bottom: 1px solid var(--c-border); position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid var(--c-border); vertical-align: top; }
+        tr:hover { background-color: rgba(244, 241, 234, 0.3); }
+
+        .sentiment-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+        .badge-pos { background: var(--c-pos-2-bg); color: var(--c-pos-2-text); }
+        .badge-neg { background: var(--c-neg-2-bg); color: var(--c-neg-2-text); }
+        .badge-neu { background: var(--c-neu-bg); color: var(--c-neu-text); }
+
+        .sim-card { background: white; border: 1px solid var(--c-border); border-radius: 8px; padding: 12px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .sim-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--c-brand-green); }
+        .sim-metrics { display: flex; gap: 12px; color: var(--c-text-muted); font-size: 11px; background: var(--c-tab-bg); padding: 6px 10px; border-radius: 4px; }
+
+        .download-btn { background: var(--c-brand-green); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; }
+        .download-btn:hover { background: var(--c-brand-green-hover); }
+
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(251, 249, 244, 0.75); backdrop-filter: blur(8px); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .loading-overlay.active { opacity: 1; pointer-events: auto; }
+        .spinner { width: 48px; height: 48px; border: 4px solid rgba(27, 67, 50, 0.1); border-left-color: var(--c-brand-green); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+        .loading-text { font-size: 15px; font-weight: bold; color: var(--c-brand-green); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<canvas id="neural-canvas"></canvas>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">데이터 분석 중...</div>
+</div>
+
+<!-- 상단 네비게이션 바 -->
+<nav class="top-navbar">
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
+        ← BACK
+    </button>
+    <div class="navbar-brand-text">
+        SIMILARITY MEASUREMENT
+    </div>
+</nav>
+
+<div class="main-layout">
+    <!-- Left Panel -->
+    <div class="card left-panel">
+        <div class="panel-title">엑셀 파일 업로드 (A2:A1000)</div>
+        
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            📁
+            <div class="drop-zone-text">엑셀 (.xlsx, .xls) 파일을 드래그해 놓거나<br>클릭하여 탐색기/폴더에서 선택하세요.</div>
+            <button class="drop-zone-btn" type="button">파일 찾기</button>
+            <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none" onchange="handleFileSelect(event)">
+        </div>
+
+        <div id="fileInfo" class="file-info" style="display:none;">
+            <span id="fileName">파일명.xlsx</span>
+            <span id="rowCount" style="color:var(--c-accent);">0개 문장 읽음</span>
+        </div>
+
+        <div class="action-container">
+            <div class="action-btn-group">
+                <button class="run-btn" onclick="runAnalysis()">분석 및 연결 실행 ⚡</button>
+                <button class="clear-btn" onclick="clearAll()">초기화 🗑️</button>
+            </div>
+            <p class="attribution-text" id="dictStatusText">사전 데이터 로딩 확인 중...</p>
+        </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="card right-panel">
+        <div class="nav-group">
+            <button id="tab_sentiment" class="nav-btn active" onclick="switchTab('sentiment')">문장별 감성 분석 결과</button>
+            <button id="tab_similarity" class="nav-btn" onclick="switchTab('similarity')">유사 문장 연결 분석</button>
+        </div>
+
+        <div class="right-panel-content">
+            <!-- 감성 분석 결과 Tab -->
+            <div id="sec_sentiment" class="result-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: bold; color: var(--c-brand-green);">분석 결과 목록</span>
+                    <button class="download-btn" onclick="downloadExcelResult()">📊 결과 엑셀 다운로드</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 8%;">행 번호</th>
+                                <th>문장 (A열)</th>
+                                <th style="width: 30%;">감성 단어 내역</th>
+                                <th style="width: 12%;">합계 점수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sentimentTableBody">
+                            <tr><td colspan="4" style="text-align: center; color: var(--c-text-muted);">파일을 업로드하고 분석을 실행해주세요.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 유사도 분석 결과 Tab -->
+            <div id="sec_similarity" class="result-section" style="display:none;">
+                <div id="similarityContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="text-align: center; color: var(--c-text-muted); padding: 20px;">분석을 실행하면 가장 유사한 문장쌍과 3가지 유사도(Jaccard, Cosine, Euclidean)가 표시됩니다.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 사전 URL 백업 목록
+const DICT_URLS = [
+    'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/SentiWord_info.json',
+    'https://raw.githubusercontent.com/park1200656/knu_senti_dict/master/SentiWord_info.json'
+];
+
+// 기본 보완용 핵심 감성 어휘
+const CORE_FALLBACK_DICT = {
+    "바삭": 2, "바삭하다": 2, "맛있다": 2, "달콤": 2, "달콤하다": 2, "최고": 2, "친절": 2, "만족": 2,
+    "고소": 2, "고소하다": 2, "신선": 2, "푸짐": 2, "좋다": 2, "깔끔": 2, "부드럽다": 2, "훌륭": 2,
+    "감동": 2, "깨끗": 2, "가성비": 2, "감사": 2, "추천": 2, "중독": 1, "괜찮다": 1, "보통": 0,
+    "탄": -2, "잡내": -2, "느끼": -2, "느끼하다": -2, "짜다": -2, "불쾌": -2, "실망": -2, "비싸다": -1,
+    "뻑뻑": -2, "이상하다": -2, "난장판": -2, "속았다": -2, "아쉽다": -1, "싱겁다": -1, "아프다": -2
+};
+
+let SENTIMENT_DICT = { ...CORE_FALLBACK_DICT };
+let excelSentences = []; 
+let globalProcessedResults = [];
+let globalSimPairs = [];
+
+// 1. KNU 감성사전 로드
+async function loadSentimentDictionary() {
+    const statusElem = document.getElementById('dictStatusText');
+    let loaded = false;
+
+    for (let url of DICT_URLS) {
+        try {
+            let response = await fetch(url);
+            if (response.ok) {
+                let data = await response.json();
+                data.forEach(item => {
+                    let pol = parseInt(item.polarity, 10);
+                    if (!isNaN(pol)) {
+                        let word = item.word ? item.word.trim() : "";
+                        let wordRoot = item.word_root ? item.word_root.trim() : "";
+                        if (word) SENTIMENT_DICT[word] = pol;
+                        if (wordRoot) SENTIMENT_DICT[wordRoot] = pol;
+                        
+                        if (word && word.length > 1) {
+                            let cleanStem = word.replace(/(하다|되다|스럽다|이다|있다|없다)$/, '');
+                            if (cleanStem.length > 0) SENTIMENT_DICT[cleanStem] = pol;
+                        }
+                    }
+                });
+                loaded = true;
+                console.log(`✅ KNU 감성사전 연동 완료: ${Object.keys(SENTIMENT_DICT).length}개 어휘`);
+                statusElem.innerText = `KNU 한국어 감성사전 연동 완료 (${Object.keys(SENTIMENT_DICT).length} 어휘 탑재)`;
+                break;
+            }
+        } catch (e) {
+            console.warn(`사전 경로 접근 실패 (${url}):`, e);
+        }
+    }
+
+    if (!loaded) {
+        statusElem.innerText = `KNU 한국어 감성사전 기본 모드로 연동됨`;
+    }
+}
+
+// Drag & Drop & 파일 처리
+const dropZone = document.getElementById('dropZone');
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+});
+function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+['dragenter', 'dragover'].forEach(eName => dropZone.classList.add('dragover'));
+['dragleave', 'drop'].forEach(eName => dropZone.classList.remove('dragover'));
+
+dropZone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files.length) processExcelFile(files[0]);
+});
+
+function handleFileSelect(e) {
+    if (e.target.files.length) processExcelFile(e.target.files[0]);
+}
+
+function processExcelFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        excelSentences = [];
+        for (let r = 2; r <= 1000; r++) {
+            const cellAddress = `A${r}`;
+            const cell = worksheet[cellAddress];
+            if (cell && cell.v !== undefined && cell.v !== null) {
+                const text = String(cell.v).trim();
+                if (text.length > 0) {
+                    excelSentences.push({ row: r, text: text });
+                }
+            }
+        }
+
+        document.getElementById('fileName').innerText = file.name;
+        document.getElementById('rowCount').innerText = `${excelSentences.length}개 문장 읽음`;
+        document.getElementById('fileInfo').style.display = 'flex';
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// 한국어 토큰화
+function tokenize(text) {
+    return text.replace(/[^a-zA-Z0-9가-힣\s]/g, '')
+               .split(/\s+/)
+               .filter(w => w.length > 0);
+}
+
+// 한국어 단어 및 어근 매칭 함수
+function getWordScore(targetWord) {
+    if (!targetWord) return 0;
+    
+    if (SENTIMENT_DICT[targetWord] !== undefined) {
+        return SENTIMENT_DICT[targetWord];
+    }
+
+    for (let key in SENTIMENT_DICT) {
+        if (key.length >= 2 && targetWord.startsWith(key)) {
+            return SENTIMENT_DICT[key];
+        }
+    }
+
+    for (let key in SENTIMENT_DICT) {
+        if (key.length >= 2 && targetWord.includes(key)) {
+            return SENTIMENT_DICT[key];
+        }
+    }
+
+    return 0;
+}
+
+// 2. 단어별 점수 부여 및 문장 감성 분석
+function analyzeSentenceSentiment(text) {
+    const words = tokenize(text);
+    let totalScore = 0;
+    let wordDetails = [];
+
+    words.forEach(w => {
+        let score = getWordScore(w);
+
+        if (score !== 0) {
+            totalScore += score;
+            const sign = score > 0 ? `+${score}` : `${score}`;
+            wordDetails.push(`${w}(${sign})`);
+        }
+    });
+
+    return { totalScore, wordDetails: wordDetails.join(', ') || '-' };
+}
+
+// 3. 유사도 계산 로직 (Jaccard, Cosine, Euclidean)
+function calculateSimilarities(s1, s2) {
+    const tokens1 = tokenize(s1);
+    const tokens2 = tokenize(s2);
+
+    const set1 = new Set(tokens1);
+    const set2 = new Set(tokens2);
+
+    const intersection = new Set([...set1].filter(x => set2.has(x)));
+    const union = new Set([...set1, ...set2]);
+    const jaccard = union.size === 0 ? 0 : intersection.size / union.size;
+
+    const vocab = Array.from(union);
+    const vec1 = vocab.map(w => tokens1.filter(x => x === w).length);
+    const vec2 = vocab.map(w => tokens2.filter(x => x === w).length);
+
+    let dotProduct = 0, mag1 = 0, mag2 = 0;
+    for (let i = 0; i < vocab.length; i++) {
+        dotProduct += vec1[i] * vec2[i];
+        mag1 += vec1[i] * vec1[i];
+        mag2 += vec2[i] * vec2[i];
+    }
+    const cosine = (mag1 === 0 || mag2 === 0) ? 0 : dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
+
+    let sqDistSum = 0;
+    for (let i = 0; i < vocab.length; i++) {
+        sqDistSum += Math.pow(vec1[i] - vec2[i], 2);
+    }
+    const euclideanDist = Math.sqrt(sqDistSum);
+    const euclideanSim = 1 / (1 + euclideanDist);
+
+    return { jaccard, cosine, euclideanSim };
+}
+
+// 전체 분석 실행
+function runAnalysis() {
+    if (excelSentences.length === 0) {
+        alert("분석할 엑셀 파일이 업로드되지 않았거나 A2:A1000 셀에 데이터가 없습니다.");
+        return;
+    }
+
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.classList.add("active");
+
+    setTimeout(() => {
+        const sentimentTableBody = document.getElementById("sentimentTableBody");
+        sentimentTableBody.innerHTML = "";
+
+        globalProcessedResults = [];
+
+        excelSentences.forEach(item => {
+            const { totalScore, wordDetails } = analyzeSentenceSentiment(item.text);
+            globalProcessedResults.push({ ...item, totalScore, wordDetails });
+
+            let badgeClass = 'badge-neu';
+            if (totalScore > 0) badgeClass = 'badge-pos';
+            else if (totalScore < 0) badgeClass = 'badge-neg';
+
+            const formattedScore = totalScore > 0 ? `+${totalScore}` : totalScore;
+
+            sentimentTableBody.innerHTML += `
+                <tr>
+                    <td>A${item.row}</td>
+                    <td>${item.text}</td>
+                    <td style="font-size:11px; color:var(--c-brand-green); font-weight:bold;">${wordDetails}</td>
+                    <td><span class="sentiment-badge ${badgeClass}">${formattedScore}점</span></td>
+                </tr>
+            `;
+        });
+
+        globalSimPairs = [];
+        for (let i = 0; i < globalProcessedResults.length; i++) {
+            let maxSim = -1;
+            let bestMatchIndex = -1;
+            let bestMetrics = null;
+
+            for (let j = 0; j < globalProcessedResults.length; j++) {
+                if (i === j) continue;
+                const metrics = calculateSimilarities(globalProcessedResults[i].text, globalProcessedResults[j].text);
+                if (metrics.cosine > maxSim) {
+                    maxSim = metrics.cosine;
+                    bestMatchIndex = j;
+                    bestMetrics = metrics;
+                }
+            }
+
+            if (bestMatchIndex !== -1) {
+                globalSimPairs.push({
+                    target: globalProcessedResults[i],
+                    matched: globalProcessedResults[bestMatchIndex],
+                    metrics: bestMetrics
+                });
+            }
+        }
+
+        const similarityContainer = document.getElementById("similarityContainer");
+        similarityContainer.innerHTML = "";
+
+        globalSimPairs.forEach(pair => {
+            similarityContainer.innerHTML += `
+                <div class="sim-card">
+                    <div class="sim-header">
+                        <span>🔗 [A${pair.target.row}] ↔ [A${pair.matched.row}] 연결</span>
+                    </div>
+                    <div><b>[원문 A${pair.target.row}]:</b> ${pair.target.text}</div>
+                    <div style="color:var(--c-brand-green);"><b>[유사 문장 A${pair.matched.row}]:</b> ${pair.matched.text}</div>
+                    <div class="sim-metrics">
+                        <span>자카드 유사도: <b>${(pair.metrics.jaccard * 100).toFixed(1)}%</b></span>
+                        <span>코사인 유사도: <b>${(pair.metrics.cosine * 100).toFixed(1)}%</b></span>
+                        <span>유클리드 유사 지수: <b>${(pair.metrics.euclideanSim * 100).toFixed(1)}%</b></span>
+                    </div>
+                </div>
+            `;
+        });
+
+        overlay.classList.remove("active");
+    }, 150);
+}
+
+// 결과 엑셀 다운로드 기능
+function downloadExcelResult() {
+    if (globalProcessedResults.length === 0) {
+        alert("다운로드할 분석 결과가 없습니다. 먼저 분석을 실행해주세요.");
+        return;
+    }
+
+    const exportData = globalProcessedResults.map(item => {
+        const matchedPair = globalSimPairs.find(p => p.target.row === item.row);
+        return {
+            "행 번호": `A${item.row}`,
+            "문장 내용": item.text,
+            "감성 단어 내역": item.wordDetails,
+            "감성 총점": item.totalScore,
+            "가장 유사한 문장 행": matchedPair ? `A${matchedPair.matched.row}` : "-",
+            "가장 유사한 문장": matchedPair ? matchedPair.matched.text : "-",
+            "자카드 유사도(%)": matchedPair ? (matchedPair.metrics.jaccard * 100).toFixed(1) : "-",
+            "코사인 유사도(%)": matchedPair ? (matchedPair.metrics.cosine * 100).toFixed(1) : "-",
+            "유클리드 유사 지수(%)": matchedPair ? (matchedPair.metrics.euclideanSim * 100).toFixed(1) : "-"
+        };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "분석 결과");
+    XLSX.writeFile(workbook, "Sentiment_Similarity_Analysis_Result.xlsx");
+}
+
+function switchTab(tab) {
+    document.getElementById('tab_sentiment').classList.remove('active');
+    document.getElementById('tab_similarity').classList.remove('active');
+    document.getElementById('sec_sentiment').style.display = 'none';
+    document.getElementById('sec_similarity').style.display = 'none';
+
+    if (tab === 'sentiment') {
+        document.getElementById('tab_sentiment').classList.add('active');
+        document.getElementById('sec_sentiment').style.display = 'block';
+    } else {
+        document.getElementById('tab_similarity').classList.add('active');
+        document.getElementById('sec_similarity').style.display = 'block';
+    }
+}
+
+function clearAll() {
+    excelSentences = [];
+    globalProcessedResults = [];
+    globalSimPairs = [];
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('sentimentTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--c-text-muted);">파일을 업로드하고 분석을 실행해주세요.</td></tr>';
+    document.getElementById('similarityContainer').innerHTML = '<div style="text-align: center; color: var(--c-text-muted); padding: 20px;">분석을 실행하면 가장 유사한 문장쌍이 표시됩니다.</div>';
+}
+
+/* 신경망 인터랙티브 배경 스크립트 */
+const bgCanvas = document.getElementById('neural-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+let particles = [];
+const mouse = { x: null, y: null, radius: 150 };
+
+function resizeBgCanvas() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    initParticles();
+}
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * bgCanvas.width;
+        this.y = Math.random() * bgCanvas.height;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = (Math.random() - 0.5) * 0.35;
+        this.radius = Math.random() * 2 + 1.5; 
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+        let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius;
+            this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
+        }
+    }
+    draw() {
+        bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
+    }
+}
+
+function initParticles() {
+    particles = [];
+    const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+}
+
+function animateBg() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update(); particles[i].draw();
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 110) {
+                bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
+                bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animateBg);
+}
+
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+window.addEventListener('resize', resizeBgCanvas);
+window.addEventListener('DOMContentLoaded', () => { 
+    resizeBgCanvas(); 
+    animateBg(); 
+    loadSentimentDictionary();
+});
+</script>
+</body>
+</html>
