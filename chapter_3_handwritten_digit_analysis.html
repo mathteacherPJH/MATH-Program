@@ -39,7 +39,7 @@
             padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;
         }
 
-        /* 💡 순서도 에디터 참고: BACK 버튼 스타일 업데이트 */
+        /* BACK 버튼 스타일 */
         .back-btn {
             background: transparent;
             border: none;
@@ -85,7 +85,9 @@
         .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
 
         #canvas-wrapper { position: relative; display: flex; justify-content: center; align-items: center; margin: auto 0; }
-        canvas#inputCanvas { border: 3px solid var(--c-brand-green); background: #ffffff; border-radius: 12px; cursor: crosshair; touch-action: none; }
+        
+        /* 캔버스 배경을 검은색(#000000)으로 설정 */
+        canvas#inputCanvas { border: 3px solid var(--c-brand-green); background: #000000; border-radius: 12px; cursor: crosshair; touch-action: none; }
 
         .right-panel { flex: 1.5; min-width: 300px; height: 100%; display: flex; flex-direction: column; gap: 14px; }
         .panel-box { display: flex; flex-direction: column; background: rgba(244, 241, 234, 0.5); border: 1px solid var(--c-border); border-radius: 8px; padding: 12px; }
@@ -129,8 +131,8 @@
             비율이 깨지지 않도록 정중앙 기준 정사각형 영역으로 자릅니다.
         </div>
         <div class="step-box">
-            <strong>2단계. 색상 반전 (Invert)</strong>
-            검은 글씨를 MNIST 표준인 <b>흰 글씨</b>로 자동 변환합니다.
+            <strong>2단계. MNIST 입력 표준</strong>
+            검은 배경에 <b>흰 글씨</b>로 작성되어 전처리 오차를 제거합니다.
         </div>
         <div class="step-box">
             <strong>3단계. 28x28 패딩 정렬</strong>
@@ -157,8 +159,8 @@
             <div class="tool-row">
                 <div class="size-control">
                     <span>두께 조절:</span>
-                    <input type="range" id="sizeRange" min="6" max="40" value="18" oninput="syncSizeInputs('range')">
-                    <input type="number" id="sizeNumber" min="6" max="40" value="18" oninput="syncSizeInputs('number')">
+                    <input type="range" id="sizeRange" min="6" max="40" value="20" oninput="syncSizeInputs('range')">
+                    <input type="number" id="sizeNumber" min="6" max="40" value="20" oninput="syncSizeInputs('number')">
                     <span>px</span>
                 </div>
             </div>
@@ -176,7 +178,7 @@
             <div class="pipeline-viewer">
                 <div class="preview-item">
                     <canvas id="cropCanvas" width="50" height="50" style="width: 60px; height: 60px;"></canvas>
-                    <span>1. 자르기 & 반전</span>
+                    <span>1. 자르기 영역</span>
                 </div>
                 <span style="color: var(--c-brand-green); font-weight: bold;">➔</span>
                 <div class="preview-item">
@@ -259,7 +261,7 @@
     let isDrawing = false;
     let model = null;
     let currentTool = 'pen'; 
-    let currentBrushSize = 18;
+    let currentBrushSize = 20;
 
     function syncSizeInputs(source) {
         const rangeEl = document.getElementById('sizeRange');
@@ -314,14 +316,15 @@
         }
     }
 
+    // 캔버스 초기화 (검은 배경으로 초기화)
     function clearCanvas() {
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
         
-        cropCtx.fillStyle = "black";
+        cropCtx.fillStyle = "#000000";
         cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
 
-        mnistCtx.fillStyle = "black";
+        mnistCtx.fillStyle = "#000000";
         mnistCtx.fillRect(0, 0, mnistCanvas.width, mnistCanvas.height);
 
         document.getElementById('predicted-digit').innerText = "-";
@@ -352,7 +355,9 @@
         ctx.lineWidth = currentBrushSize;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.strokeStyle = (currentTool === 'pen') ? 'black' : 'white';
+        
+        // 펜: 흰색(#ffffff), 지우개: 검은색(#000000)
+        ctx.strokeStyle = (currentTool === 'pen') ? '#ffffff' : '#000000';
 
         ctx.lineTo(x, y);
         ctx.stroke();
@@ -371,6 +376,7 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
+    // 검은 배경 + 흰 글씨 전처리 및 AI 추론 함수
     function processAndPredict() {
         if (!model) return;
 
@@ -380,10 +386,12 @@
         let minX = inputCanvas.width, minY = inputCanvas.height, maxX = 0, maxY = 0;
         let hasPixels = false;
 
+        // 그려진 흰색 획(밝은 픽셀) 감지
         for (let y = 0; y < inputCanvas.height; y++) {
             for (let x = 0; x < inputCanvas.width; x++) {
-                const r = data[(y * inputCanvas.width + x) * 4];
-                if (r < 230) { 
+                const index = (y * inputCanvas.width + x) * 4;
+                const r = data[index];
+                if (r > 50) { // 밝기가 있는 픽셀
                     hasPixels = true;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;
@@ -394,7 +402,6 @@
         }
 
         if (!hasPixels) {
-            clearCanvas();
             return;
         }
 
@@ -405,33 +412,23 @@
         const centerX = minX + cropWidth / 2;
         const centerY = minY + cropHeight / 2;
 
-        const squareSize = maxDim * 1.25; 
+        const squareSize = maxDim * 1.35; // 정중앙 여백 확보
         let srcX = centerX - squareSize / 2;
         let srcY = centerY - squareSize / 2;
 
-        if (srcX < 0) srcX = 0;
-        if (srcY < 0) srcY = 0;
-        
         cropCanvas.width = squareSize;
         cropCanvas.height = squareSize;
         
-        cropCtx.fillStyle = "white";
+        cropCtx.fillStyle = "#000000";
         cropCtx.fillRect(0, 0, squareSize, squareSize);
         cropCtx.drawImage(inputCanvas, srcX, srcY, squareSize, squareSize, 0, 0, squareSize, squareSize);
-        
-        const cropImgData = cropCtx.getImageData(0, 0, squareSize, squareSize);
-        const cropData = cropImgData.data;
-        for (let i = 0; i < cropData.length; i += 4) {
-            cropData[i]     = 255 - cropData[i];     
-            cropData[i + 1] = 255 - cropData[i + 1]; 
-            cropData[i + 2] = 255 - cropData[i + 2]; 
-        }
-        cropCtx.putImageData(cropImgData, 0, 0);
 
-        mnistCtx.fillStyle = "black";
+        // 28x28 패딩 크롭 (중앙 20x20에 배치하여 테두리 4px 여백 형성)
+        mnistCtx.fillStyle = "#000000";
         mnistCtx.fillRect(0, 0, 28, 28);
         mnistCtx.drawImage(cropCanvas, 0, 0, squareSize, squareSize, 4, 4, 20, 20);
 
+        // TensorFlow.js 모델 추론
         tf.tidy(() => {
             const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
             let tensor = tf.browser.fromPixels(mnistImgData, 1)
