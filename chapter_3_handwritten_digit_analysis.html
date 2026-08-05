@@ -114,7 +114,7 @@
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            `mathteacherPJH/MATH-Program` 깃허브의 official MNIST 모델을 연동하여 최고의 정확도를 제공합니다.
+            `mathteacherPJH/MATH-Program` 깃허브 레포지토리의 MNIST 정밀 모델을 연동하여 최고의 정확도를 보장합니다.
         </div>
     </div>
 
@@ -267,26 +267,29 @@
         probBarsContainer.appendChild(row);
     }
 
-    // 깃허브 레포지토리 모델 로드
+    // 깃허브 모델 자동 연동 (CDN 및 상대 경로 폴백)
     async function loadGithubModel() {
         const statusEl = document.getElementById('model-status');
         statusEl.innerText = "상태: ⏳ 깃허브 AI 모델 로드 중...";
 
-        // 깃허브 jsDelivr CDN 경로 (같은 레포지토리 안의 index.html에서 실행할 경우 './model.json' 상대경로도 지원)
-        const GITHUB_MODEL_URL = 'https://cdn.jsdelivr.net/gh/mathteacherPJH/MATH-Program@main/model.json';
+        const CDN_URL = 'https://cdn.jsdelivr.net/gh/mathteacherPJH/MATH-Program@main/model.json';
+        const RELATIVE_URL = './model.json';
 
         try {
-            // CDN 경로 시도 후 실패 시 상대 경로 시도
-            try {
-                model = await tf.loadLayersModel(GITHUB_MODEL_URL);
-            } catch (e) {
-                model = await tf.loadLayersModel('./model.json');
-            }
+            // 1차: jsDelivr CDN 시도
+            model = await tf.loadLayersModel(CDN_URL);
             statusEl.innerText = "상태: ✅ 깃허브 MNIST 모델 로드 완료!";
             document.getElementById('predicted-digit').innerText = "-";
-        } catch (err) {
-            console.error("깃허브 모델 로드 실패:", err);
-            statusEl.innerText = "상태: ⚠️ 모델 파일 로드 오류 (깃허브 접근 확인 필요)";
+        } catch (e1) {
+            try {
+                // 2차: 로컬/동일 경로 시도
+                model = await tf.loadLayersModel(RELATIVE_URL);
+                statusEl.innerText = "상태: ✅ MNIST 모델 로드 완료!";
+                document.getElementById('predicted-digit').innerText = "-";
+            } catch (e2) {
+                console.error("모델 로드 실패:", e1, e2);
+                statusEl.innerText = "상태: ⚠️ 모델 로드 실패 (파일 업로드 상태 확인 필요)";
+            }
         }
     }
 
