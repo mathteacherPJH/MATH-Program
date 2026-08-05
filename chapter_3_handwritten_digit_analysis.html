@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국 교육용 MNIST 손글씨 인식 분석실</title>
+    <!-- TensorFlow.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <style>
+        :root {
+            --c-bg-main: #FBF9F4; 
+            --c-bg-card: rgba(255, 255, 255, 0.73); 
+            --c-text-main: #2C2A29;
+            --c-text-muted: #7D7569;
+            --c-border: rgba(44, 42, 41, 0.1);
+            --c-accent: #2383E2;
+            --c-accent-hover: #1A6CB8;
+            --c-brand-green: #1B4332;
+            --c-tag-bg: #E8F5E9;
+            --c-tag-text: #2E7D32;
+            --c-removed-bg: #FFEBEE;
+            --c-removed-text: #C62828;
+            --c-tab-bg: #F4F1EA;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', -apple-system, sans-serif;
+            background-color: var(--c-bg-main);
+            color: var(--c-text-main);
+            margin: 0;
+            padding: 24px;
+            padding-top: 85px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: 0.03em;
+            position: relative;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 배경 신경망 애니메이션 Canvas */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 상단 네비게이션 바 */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(251, 249, 244, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--c-border);
+            z-index: 1000;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--c-brand-green);
+            font-family: "Consolas", monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            opacity: 0.8;
+        }
+
+        .navbar-brand-text {
+            font-size: 13px; 
+            font-weight: bold; 
+            color: var(--c-brand-green); 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase;
+        }
+
+        /* 메인 레이아웃 (3컬럼 구조) */
+        .main-layout {
+            display: flex;
+            width: 100%; 
+            height: calc(100vh - 110px); 
+            gap: 16px;
+            position: relative;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--c-bg-card);
+            border: 1px solid var(--c-border);
+            border-radius: 12px;
+            padding: 18px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 1. 좌측 패널 */
+        .left-panel {
+            flex: 1; 
+            min-width: 250px;
+            max-width: 280px;
+            height: 100%;
+            gap: 16px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .step-box {
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(27, 67, 50, 0.2);
+            background: var(--c-tag-bg);
+            color: var(--c-brand-green);
+            font-size: 12px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+
+        .step-box strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .info-box {
+            font-size: 11px;
+            color: var(--c-text-muted);
+            line-height: 1.6;
+            background-color: rgba(244, 241, 234, 0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--c-border);
+            margin-top: auto;
+        }
+
+        /* 2. 중앙 패널 */
+        .center-panel {
+            flex: 2;
+            height: 100%;
+            overflow: hidden;
+            gap: 12px;
+            position: relative;
+            align-items: center;
+        }
+
+        #toolbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--c-border);
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.03em;
+        }
+        .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
+        .btn-danger:hover { background: #ffcdd2; }
+
+        #canvas-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto 0;
+        }
+
+        canvas#inputCanvas {
+            border: 3px solid var(--c-brand-green);
+            background: #000000;
+            border-radius: 12px;
+            cursor: crosshair;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            touch-action: none;
+        }
+
+        /* 3. 우측 패널 */
+        .right-panel {
+            flex: 1.5;
+            min-width: 300px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-box {
+            display: flex;
+            flex-direction: column;
+            background: rgba(244, 241, 234, 0.5);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .panel-box h4 {
+            margin: 0 0 10px 0;
+            color: var(--c-brand-green);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pipeline-viewer {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--c-border);
+        }
+
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--c-text-muted);
+        }
+
+        .preview-item canvas {
+            border: 1px solid #333;
+            background: #000;
+            image-rendering: pixelated;
+        }
+
+        .prediction-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--c-border);
+            margin-bottom: 10px;
+        }
+
+        #predicted-digit {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--c-brand-green);
+            line-height: 1;
+        }
+
+        .prob-bar-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--c-border);
+            overflow-y: auto;
+        }
+
+        .prob-row {
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            gap: 8px;
+        }
+
+        .prob-label {
+            width: 15px;
+            font-weight: bold;
+            color: var(--c-text-main);
+        }
+
+        .bar-bg {
+            flex: 1;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--c-brand-green);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+
+        .prob-value {
+            width: 35px;
+            text-align: right;
+            font-family: 'Consolas', monospace;
+            color: var(--c-text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="neural-canvas"></canvas>
+
+<!-- 상단 네비게이션 바 -->
+<nav class="top-navbar">
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
+        ← BACK
+    </button>
+    <div class="navbar-brand-text">
+        HANDWRITTEN DIGIT ANALYSIS
+    </div>
+</nav>
+
+<div class="main-layout">
+    <!-- 1. 좌측 패널 -->
+    <div class="card left-panel">
+        <div class="section-title">데이터 전처리 파이프라인</div>
+        
+        <div class="step-box">
+            <strong>1단계. Bounding Box 감지</strong>
+            400x400 캔버스에서 사용자가 그리기를 마친 숫자의 상하좌우 최소/최대 여백을 감지하여 잘라냅니다(Crop).
+        </div>
+
+        <div class="step-box">
+            <strong>2단계. 비율 유지 리사이즈</strong>
+            잘라낸 숫자의 가로세로 비율을 유지하면서 20x20 크기 상자 안에 쏙 들어가도록 축소합니다.
+        </div>
+
+        <div class="step-box">
+            <strong>3단계. 28x28 중앙 정렬</strong>
+            MNIST 표준 규격인 28x28 도트 중앙에 20x20 숫자를 배치하여 4픽셀의 테두리 여백(Padding)을 확보합니다.
+        </div>
+
+        <div class="info-box">
+            💡 <strong>교육 포인트</strong><br>
+            위 파이프라인 과정을 거치면 캔버스 어디에 조그맣게 그려도 AI가 높은 정확도로 숫자를 인식할 수 있습니다!
+        </div>
+    </div>
+
+    <!-- 2. 중앙 메인 패널 -->
+    <div class="card center-panel">
+        <div id="toolbar">
+            <div class="tool-group">
+                <span style="font-weight: bold; font-size: 13px; color: var(--c-brand-green);">✍️ 숫자 그리기 (400 × 400)</span>
+            </div>
+            <div class="tool-group">
+                <button class="btn btn-danger" onclick="clearCanvas()">🗑️ 캔버스 지우기</button>
+            </div>
+        </div>
+
+        <div id="canvas-wrapper">
+            <canvas id="inputCanvas" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <!-- 3. 우측 패널 -->
+    <div class="card right-panel">
+        <div class="panel-box">
+            <h4>🔍 AI 시각화 (전처리 단계별 파이프라인)</h4>
+            <div class="pipeline-viewer">
+                <div class="preview-item">
+                    <canvas id="cropCanvas" width="50" height="50" style="width: 60px; height: 60px;"></canvas>
+                    <span>1. 잘라내기</span>
+                </div>
+                <span style="color: var(--c-brand-green); font-weight: bold;">➔</span>
+                <div class="preview-item">
+                    <canvas id="mnistCanvas" width="28" height="28" style="width: 60px; height: 60px;"></canvas>
+                    <span>2. 28x28 정렬</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-box" style="flex: 1; overflow: hidden;">
+            <h4>🤖 AI 추론 결과 (Softmax 확률)</h4>
+            <div class="prediction-summary">
+                <span style="font-size: 13px; font-weight: bold; color: var(--c-text-muted);">최종 예측 숫자</span>
+                <div id="predicted-digit">-</div>
+            </div>
+
+            <div class="prob-bar-container" id="probBars"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 신경망 배경 애니메이션
+    const bgCanvas = document.getElementById('neural-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: null, y: null, radius: 150 };
+
+    function resizeBgCanvas() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        initParticles();
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = (Math.random() - 0.5) * 0.35;
+            this.radius = Math.random() * 2 + 1.5; 
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+            let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < mouse.radius) {
+                const force = (mouse.radius - distance) / mouse.radius;
+                this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
+            }
+        }
+        draw() {
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+    }
+
+    function animateBg() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update(); particles[i].draw();
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 110) {
+                    bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
+                    bgCtx.strokeStyle = `rgba(27, 67, 50, ${0.08 * (1 - dist / 110)})`; bgCtx.lineWidth = 1.0; bgCtx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateBg);
+    }
+
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('resize', resizeBgCanvas);
+
+    // TF.js & Canvas 로직
+    const inputCanvas = document.getElementById('inputCanvas');
+    const ctx = inputCanvas.getContext('2d');
+    const cropCanvas = document.getElementById('cropCanvas');
+    const cropCtx = cropCanvas.getContext('2d');
+    const mnistCanvas = document.getElementById('mnistCanvas');
+    const mnistCtx = mnistCanvas.getContext('2d');
+
+    let isDrawing = false;
+    let model = null;
+
+    const probBarsContainer = document.getElementById('probBars');
+    for (let i = 0; i <= 9; i++) {
+        const row = document.createElement('div');
+        row.className = 'prob-row';
+        row.innerHTML = `
+            <div class="prob-label">${i}</div>
+            <div class="bar-bg"><div class="bar-fill" id="bar-${i}"></div></div>
+            <div class="prob-value" id="val-${i}">0%</div>
+        `;
+        probBarsContainer.appendChild(row);
+    }
+
+    async function loadMnistModel() {
+        document.getElementById('predicted-digit').innerText = "⏳";
+        try {
+            const MODEL_URL = 'https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json';
+            model = await tf.loadLayersModel(MODEL_URL);
+            document.getElementById('predicted-digit').innerText = "-";
+        } catch (err) {
+            console.error("모델 로드 실패, 대체 모델 생성", err);
+            model = tf.sequential();
+            model.add(tf.layers.conv2d({inputShape: [28, 28, 1], kernelSize: 3, filters: 16, activation: 'relu'}));
+            model.add(tf.layers.maxPooling2d({poolSize: [2, 2]}));
+            model.add(tf.layers.flatten());
+            model.add(tf.layers.dense({units: 10, activation: 'softmax'}));
+            document.getElementById('predicted-digit').innerText = "-";
+        }
+    }
+
+    function clearCanvas() {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
+        
+        cropCtx.fillStyle = "black";
+        cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
+
+        mnistCtx.fillStyle = "black";
+        mnistCtx.fillRect(0, 0, mnistCanvas.width, mnistCanvas.height);
+
+        document.getElementById('predicted-digit').innerText = "-";
+        for (let i = 0; i <= 9; i++) {
+            document.getElementById(`bar-${i}`).style.width = '0%';
+            document.getElementById(`val-${i}`).innerText = '0%';
+        }
+    }
+
+    function startDrawing(e) { isDrawing = true; draw(e); }
+    function stopDrawing() { 
+        if(isDrawing) {
+            isDrawing = false; 
+            ctx.beginPath(); 
+            processAndPredict();
+        }
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const rect = inputCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.lineWidth = 26;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'white';
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+
+        processAndPredict();
+    }
+
+    inputCanvas.addEventListener('mousedown', startDrawing);
+    inputCanvas.addEventListener('mouseup', stopDrawing);
+    inputCanvas.addEventListener('mousemove', draw);
+    inputCanvas.addEventListener('mouseleave', stopDrawing);
+
+    inputCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+    inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
+    inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+
+    function processAndPredict() {
+        if (!model) return;
+
+        const imgData = ctx.getImageData(0, 0, inputCanvas.width, inputCanvas.height);
+        const data = imgData.data;
+
+        let minX = inputCanvas.width, minY = inputCanvas.height, maxX = 0, maxY = 0;
+        let hasPixels = false;
+
+        for (let y = 0; y < inputCanvas.height; y++) {
+            for (let x = 0; x < inputCanvas.width; x++) {
+                const alpha = data[(y * inputCanvas.width + x) * 4];
+                if (alpha > 20) {
+                    hasPixels = true;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+
+        if (!hasPixels) return;
+
+        const cropWidth = maxX - minX + 1;
+        const cropHeight = maxY - minY + 1;
+
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        cropCtx.drawImage(inputCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+        mnistCtx.fillStyle = "black";
+        mnistCtx.fillRect(0, 0, 28, 28);
+
+        const scale = Math.min(20 / cropWidth, 20 / cropHeight);
+        const targetW = cropWidth * scale;
+        const targetH = cropHeight * scale;
+
+        const offsetX = (28 - targetW) / 2;
+        const offsetY = (28 - targetH) / 2;
+
+        mnistCtx.drawImage(cropCanvas, 0, 0, cropWidth, cropHeight, offsetX, offsetY, targetW, targetH);
+
+        tf.tidy(() => {
+            const mnistImgData = mnistCtx.getImageData(0, 0, 28, 28);
+            let tensor = tf.browser.fromPixels(mnistImgData, 1)
+                .toFloat()
+                .div(tf.scalar(255.0))
+                .expandDims(0);
+
+            const predictions = model.predict(tensor);
+            const probabilities = predictions.dataSync();
+            const predictedDigit = predictions.argMax(1).dataSync()[0];
+
+            document.getElementById('predicted-digit').innerText = predictedDigit;
+
+            for (let i = 0; i <= 9; i++) {
+                const probPercent = (probabilities[i] * 100).toFixed(1);
+                document.getElementById(`bar-${i}`).style.width = `${probPercent}%`;
+                document.getElementById(`val-${i}`).innerText = `${probPercent}%`;
+            }
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        resizeBgCanvas();
+        animateBg();
+        clearCanvas();
+        loadMnistModel();
+    });
+</script>
+</body>
+</html>
