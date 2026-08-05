@@ -138,7 +138,7 @@
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            `mathteacherPJH/MATH-Program` 깃허브의 원본 MNIST CNN 딥러닝 신경망으로 작동합니다.
+            Colab에서 직접 학습하여 업로드한 순수 원본 MNIST CNN 딥러닝 신경망 모델로 동작합니다.
         </div>
     </div>
 
@@ -171,7 +171,7 @@
 
     <div class="card right-panel">
         <div class="panel-box">
-            <div id="model-status">상태: MNIST AI 모델 연결 중...</div>
+            <div id="model-status">상태: Colab MNIST AI 연결 중...</div>
             <h4>🔍 AI 시각화 (전처리 변환 과정)</h4>
             <div class="pipeline-viewer">
                 <div class="preview-item">
@@ -199,7 +199,7 @@
 </div>
 
 <script>
-    // 배경 애니메이션
+    // 배경 신경망 애니메이션
     const bgCanvas = document.getElementById('neural-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -248,7 +248,7 @@
     window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
     window.addEventListener('resize', resizeBgCanvas);
 
-    // 캔버스 요소
+    // 캔버스 요소를 로드
     const inputCanvas = document.getElementById('inputCanvas');
     const ctx = inputCanvas.getContext('2d');
     const cropCanvas = document.getElementById('cropCanvas');
@@ -291,26 +291,34 @@
         probBarsContainer.appendChild(row);
     }
 
-    // 깃허브 MNIST 딥러닝 신경망 모델 로딩
+    // Colab에서 직접 올려둔 model.json 로더 (경로 보정 및 캐시 방지)
     async function loadGithubMnistModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: ⏳ MNIST 딥러닝 모델 로드 중...";
+        statusEl.innerText = "상태: ⏳ Colab 생성 MNIST 모델 로드 중...";
 
-        const RAW_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json';
-        const RELATIVE_URL = './model.json';
+        const cacheBuster = '?v=' + new Date().getTime();
+        const LOCAL_URL = 'model.json' + cacheBuster;
+        const RELATIVE_URL = './model.json' + cacheBuster;
+        const RAW_URL = 'https://raw.githubusercontent.com/mathteacherPJH/MATH-Program/main/model.json' + cacheBuster;
 
         try {
-            model = await tf.loadLayersModel(RAW_URL);
-            statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
+            model = await tf.loadLayersModel(LOCAL_URL);
+            statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 성공!";
             document.getElementById('predicted-digit').innerText = "-";
         } catch (e1) {
             try {
                 model = await tf.loadLayersModel(RELATIVE_URL);
-                statusEl.innerText = "상태: ✅ 진짜 MNIST 딥러닝 AI 로드 완료!";
+                statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 성공!";
                 document.getElementById('predicted-digit').innerText = "-";
             } catch (e2) {
-                console.error("모델 로드 실패:", e1, e2);
-                statusEl.innerText = "상태: ⚠️ model.json 파일 연결 실패";
+                try {
+                    model = await tf.loadLayersModel(RAW_URL);
+                    statusEl.innerText = "상태: ✅ 진짜 Colab MNIST AI 로드 성공!";
+                    document.getElementById('predicted-digit').innerText = "-";
+                } catch (e3) {
+                    console.error("모델 로드 에러 상세:", e1, e2, e3);
+                    statusEl.innerText = "상태: ⚠️ model.json 연결 실패 (1분 후 새로고침 해보세요)";
+                }
             }
         }
     }
@@ -372,7 +380,7 @@
     inputCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
     inputCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
-    // MNIST 전처리 정밀 보정 및 추론 함수
+    // MNIST 28x28 전처리 정밀 보정 및 추론 함수
     function processAndPredict() {
         if (!model) return;
 
@@ -403,7 +411,7 @@
         let cropWidth = maxX - minX + 1;
         let cropHeight = maxY - minY + 1;
 
-        // 여백 배율 1.5배 보정 (2 -> 6 오인식 방지 정밀 보정)
+        // 여백 비율 1.5배 보정 (2 -> 6 오인식 방지 패딩 확보)
         const maxDim = Math.max(cropWidth, cropHeight);
         const centerX = minX + cropWidth / 2;
         const centerY = minY + cropHeight / 2;
@@ -419,7 +427,7 @@
         cropCtx.fillRect(0, 0, squareSize, squareSize);
         cropCtx.drawImage(inputCanvas, srcX, srcY, squareSize, squareSize, 0, 0, squareSize, squareSize);
 
-        // 28x28 상자 내 정중앙 20x20 크기 배치 (4px 외곽 여백 형성)
+        // 28x28 크기 내 정중앙 20x20 크기 배치 (4px 테두리 패딩 생성)
         mnistCtx.fillStyle = "#000000";
         mnistCtx.fillRect(0, 0, 28, 28);
         mnistCtx.drawImage(cropCanvas, 0, 0, squareSize, squareSize, 4, 4, 20, 20);
