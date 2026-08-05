@@ -24,69 +24,26 @@
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
-            margin: 0;
-            padding: 24px;
-            padding-top: 85px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            letter-spacing: 0.03em;
-            position: relative;
-            height: 100vh;
-            box-sizing: border-box;
-            overflow: hidden;
+            margin: 0; padding: 24px; padding-top: 85px; 
+            display: flex; flex-direction: column; align-items: center;
+            letter-spacing: 0.03em; position: relative; height: 100vh;
+            box-sizing: border-box; overflow: hidden;
         }
 
-        #neural-canvas {
-            position: fixed;
-            top: 0; left: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
+        #neural-canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
 
         .top-navbar {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            background-color: rgba(251, 249, 244, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--c-border);
-            z-index: 1000;
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-sizing: border-box;
+            position: fixed; top: 0; left: 0; width: 100%;
+            background-color: rgba(251, 249, 244, 0.85); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--c-border); z-index: 1000;
+            padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;
         }
 
-        .back-btn {
-            background: transparent; border: none;
-            color: var(--c-brand-green);
-            font-family: "Consolas", monospace;
-            font-size: 13px; font-weight: 900;
-            cursor: pointer; display: flex; align-items: center; gap: 6px;
-        }
+        .back-btn { background: transparent; border: none; color: var(--c-brand-green); font-family: "Consolas", monospace; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .navbar-brand-text { font-size: 13px; font-weight: bold; color: var(--c-brand-green); letter-spacing: 0.15em; }
 
-        .navbar-brand-text {
-            font-size: 13px; font-weight: bold; 
-            color: var(--c-brand-green); letter-spacing: 0.15em; 
-        }
-
-        .main-layout {
-            display: flex; width: 100%; 
-            height: calc(100vh - 110px); 
-            gap: 16px; position: relative; z-index: 10;
-            box-sizing: border-box;
-        }
-
-        .card {
-            background-color: var(--c-bg-card);
-            border: 1px solid var(--c-border);
-            border-radius: 12px; padding: 18px;
-            box-sizing: border-box;
-            backdrop-filter: blur(6px);
-            display: flex; flex-direction: column;
-        }
+        .main-layout { display: flex; width: 100%; height: calc(100vh - 110px); gap: 16px; position: relative; z-index: 10; box-sizing: border-box; }
+        .card { background-color: var(--c-bg-card); border: 1px solid var(--c-border); border-radius: 12px; padding: 18px; box-sizing: border-box; backdrop-filter: blur(6px); display: flex; flex-direction: column; }
 
         .left-panel { flex: 1; min-width: 250px; max-width: 280px; height: 100%; gap: 16px; }
         .section-title { font-size: 13px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 12px; }
@@ -98,13 +55,7 @@
         .tool-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .tool-group { display: flex; gap: 8px; align-items: center; }
 
-        .size-control {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 6px 12px; border-radius: 6px;
-            border: 1px solid var(--c-border);
-            font-size: 12px; font-weight: bold; color: var(--c-brand-green);
-        }
+        .size-control { display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.8); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--c-border); font-size: 12px; font-weight: bold; color: var(--c-brand-green); }
         .size-control input[type="range"] { width: 100px; cursor: pointer; }
         .size-control input[type="number"] { width: 45px; padding: 2px; border: 1px solid var(--c-border); text-align: center; }
 
@@ -134,12 +85,7 @@
         .bar-fill { height: 100%; background: var(--c-brand-green); width: 0%; transition: width 0.2s ease; }
         .prob-value { width: 35px; text-align: right; font-family: 'Consolas', monospace; color: var(--c-text-muted); }
 
-        #model-status {
-            font-size: 11px;
-            font-weight: bold;
-            color: var(--c-brand-green);
-            margin-bottom: 6px;
-        }
+        #model-status { font-size: 11px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -147,9 +93,7 @@
 <canvas id="neural-canvas"></canvas>
 
 <nav class="top-navbar">
-    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">
-        ← BACK
-    </button>
+    <button onclick="if(document.referrer) { history.back(); } else { location.href='./index.html'; }" class="back-btn">← BACK</button>
     <div class="navbar-brand-text">HANDWRITTEN DIGIT ANALYSIS</div>
 </nav>
 
@@ -158,19 +102,19 @@
         <div class="section-title">데이터 전처리 파이프라인</div>
         <div class="step-box">
             <strong>1단계. Bounding Box 정렬</strong>
-            숫자의 가로/세로 비율이 일그러지지 않도록 중심점을 맞추고 정사각형 비율로 자릅니다.
+            비율이 깨지지 않도록 정중앙 기준 정사각형 영역으로 자릅니다.
         </div>
         <div class="step-box">
-            <strong>2단계. 색상 반전 & 노이즈 제거</strong>
-            검은 글씨를 AI 표준 형태인 <b>흰 글씨</b>로 바꾸고 명암을 선명하게 다듬습니다.
+            <strong>2단계. 색상 반전 (Invert)</strong>
+            검은 글씨를 MNIST 표준인 <b>흰 글씨</b>로 자동 변환합니다.
         </div>
         <div class="step-box">
-            <strong>3단계. 28x28 중앙 배치</strong>
-            20x20 크기 중심으로 숫자를 축소 후 28x28 캔버스 한가운데에 정렬합니다.
+            <strong>3단계. 28x28 패딩 정렬</strong>
+            20x20 크기 중심 배치 후 4픽셀 테두리 여백을 확보합니다.
         </div>
         <div class="info-box">
             💡 <b>알림</b><br>
-            초기 로딩 시 인공지능 신경망이 브라우저에서 직접 가중치를 학습/준비합니다. (상단 상태 확인)
+            `mathteacherPJH/MATH-Program` 깃허브의 official MNIST 모델을 연동하여 최고의 정확도를 제공합니다.
         </div>
     </div>
 
@@ -203,7 +147,7 @@
 
     <div class="card right-panel">
         <div class="panel-box">
-            <div id="model-status">상태: AI 모델 준비 중...</div>
+            <div id="model-status">상태: 깃허브 AI 모델 로드 대기 중...</div>
             <h4>🔍 AI 시각화 (전처리 변환 과정)</h4>
             <div class="pipeline-viewer">
                 <div class="preview-item">
@@ -237,18 +181,11 @@
     let particles = [];
     const mouse = { x: null, y: null, radius: 150 };
 
-    function resizeBgCanvas() {
-        bgCanvas.width = window.innerWidth;
-        bgCanvas.height = window.innerHeight;
-        initParticles();
-    }
-
+    function resizeBgCanvas() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; initParticles(); }
     class Particle {
         constructor() {
-            this.x = Math.random() * bgCanvas.width;
-            this.y = Math.random() * bgCanvas.height;
-            this.vx = (Math.random() - 0.5) * 0.35;
-            this.vy = (Math.random() - 0.5) * 0.35;
+            this.x = Math.random() * bgCanvas.width; this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.35; this.vy = (Math.random() - 0.5) * 0.35;
             this.radius = Math.random() * 2 + 1.5; 
         }
         update() {
@@ -262,18 +199,13 @@
                 this.x -= dx * force * 0.03; this.y -= dy * force * 0.03;
             }
         }
-        draw() {
-            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill();
-        }
+        draw() { bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); bgCtx.fillStyle = 'rgba(27, 67, 50, 0.15)'; bgCtx.fill(); }
     }
-
     function initParticles() {
         particles = [];
         const particleCount = Math.floor((bgCanvas.width * bgCanvas.height) / 9000);
         for (let i = 0; i < particleCount; i++) particles.push(new Particle());
     }
-
     function animateBg() {
         bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
         for (let i = 0; i < particles.length; i++) {
@@ -289,11 +221,10 @@
         }
         requestAnimationFrame(animateBg);
     }
-
     window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
     window.addEventListener('resize', resizeBgCanvas);
 
-    // 캔버스 및 모델 변수
+    // 캔버스 & 모델 로직
     const inputCanvas = document.getElementById('inputCanvas');
     const ctx = inputCanvas.getContext('2d');
     const cropCanvas = document.getElementById('cropCanvas');
@@ -336,81 +267,27 @@
         probBarsContainer.appendChild(row);
     }
 
-    // AI 모델 생성 및 확실한 훈련 데이터 빌드
-    async function initAIModel() {
+    // 깃허브 레포지토리 모델 로드
+    async function loadGithubModel() {
         const statusEl = document.getElementById('model-status');
-        statusEl.innerText = "상태: AI 신경망 구조 구축 중...";
+        statusEl.innerText = "상태: ⏳ 깃허브 AI 모델 로드 중...";
 
-        // CNN 모델 설계
-        model = tf.sequential();
-        model.add(tf.layers.conv2d({inputShape: [28, 28, 1], kernelSize: 3, filters: 16, activation: 'relu'}));
-        model.add(tf.layers.maxPooling2d({poolSize: [2, 2]}));
-        model.add(tf.layers.conv2d({kernelSize: 3, filters: 32, activation: 'relu'}));
-        model.add(tf.layers.maxPooling2d({poolSize: [2, 2]}));
-        model.add(tf.layers.flatten());
-        model.add(tf.layers.dense({units: 64, activation: 'relu'}));
-        model.add(tf.layers.dense({units: 10, activation: 'softmax'}));
+        // 깃허브 jsDelivr CDN 경로 (같은 레포지토리 안의 index.html에서 실행할 경우 './model.json' 상대경로도 지원)
+        const GITHUB_MODEL_URL = 'https://cdn.jsdelivr.net/gh/mathteacherPJH/MATH-Program@main/model.json';
 
-        model.compile({
-            optimizer: tf.train.adam(0.01),
-            loss: 'categoricalCrossentropy',
-            metrics: ['accuracy']
-        });
-
-        statusEl.innerText = "상태: 브라우저 고속 가중치 학습 중 (약 2초)...";
-
-        // 합성 인공 패턴 데이터 생성하여 확실한 숫자 가중치 학습
-        const numSamples = 300;
-        const xs = [];
-        const ys = [];
-
-        for (let i = 0; i < numSamples; i++) {
-            const digit = i % 10;
-            const img = new Float32Array(28 * 28);
-
-            // 패턴 생성 (1은 수직선, 0은 원형, 8은 8자 형태 등)
-            if (digit === 1) {
-                for (let r = 4; r < 24; r++) { img[r * 28 + 14] = 1.0; img[r * 28 + 13] = 0.8; }
-            } else if (digit === 0) {
-                for (let a = 0; a < 360; a += 10) {
-                    let rad = a * Math.PI / 180;
-                    let r = Math.floor(14 + 8 * Math.sin(rad));
-                    let c = Math.floor(14 + 8 * Math.cos(rad));
-                    img[r * 28 + c] = 1.0;
-                }
-            } else if (digit === 8) {
-                for (let a = 0; a < 360; a += 10) {
-                    let rad = a * Math.PI / 180;
-                    let r1 = Math.floor(9 + 4 * Math.sin(rad));
-                    let c1 = Math.floor(14 + 4 * Math.cos(rad));
-                    let r2 = Math.floor(19 + 4 * Math.sin(rad));
-                    let c2 = Math.floor(14 + 4 * Math.cos(rad));
-                    img[r1 * 28 + c1] = 1.0; img[r2 * 28 + c2] = 1.0;
-                }
-            } else {
-                // 기타 숫자는 기본 대각선/수평선 조합
-                for (let r = 6; r < 22; r++) { img[r * 28 + (digit + 8)] = 0.9; }
+        try {
+            // CDN 경로 시도 후 실패 시 상대 경로 시도
+            try {
+                model = await tf.loadLayersModel(GITHUB_MODEL_URL);
+            } catch (e) {
+                model = await tf.loadLayersModel('./model.json');
             }
-
-            xs.push(img);
-            const label = new Float32Array(10);
-            label[digit] = 1.0;
-            ys.push(label);
+            statusEl.innerText = "상태: ✅ 깃허브 MNIST 모델 로드 완료!";
+            document.getElementById('predicted-digit').innerText = "-";
+        } catch (err) {
+            console.error("깃허브 모델 로드 실패:", err);
+            statusEl.innerText = "상태: ⚠️ 모델 파일 로드 오류 (깃허브 접근 확인 필요)";
         }
-
-        const xTensor = tf.tensor4d(new Float32Array(xs.flat()), [numSamples, 28, 28, 1]);
-        const yTensor = tf.tensor2d(new Float32Array(ys.flat()), [numSamples, 10]);
-
-        await model.fit(xTensor, yTensor, {
-            epochs: 12,
-            batchSize: 32
-        });
-
-        xTensor.dispose();
-        yTensor.dispose();
-
-        statusEl.innerText = "상태: ✅ AI 학습 완료! 숫자를 그려보세요.";
-        document.getElementById('predicted-digit').innerText = "-";
     }
 
     function clearCanvas() {
@@ -556,7 +433,7 @@
         resizeBgCanvas();
         animateBg();
         clearCanvas();
-        initAIModel(); // 브라우저 가중치 기동
+        loadGithubModel();
     });
 </script>
 </body>
