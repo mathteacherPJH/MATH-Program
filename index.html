@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,9 @@
     <!-- Tailwind CSS 최신 CDN 매칭 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
+        /* 💡 부드러운 스크롤 이동 애니메이션 강제 적용 */
+        html { scroll-behavior: smooth !important; }
+
         /* 글로벌 모던 자간 및 가독성 최적화 */
         .premium-text { tracking: 0.03em; font-feature-settings: "ss01", "ss02"; }
         .smooth-motion { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
@@ -274,7 +277,7 @@
                     <a href="chapter_3_blur_and_sharpening.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
-                <!-- 💡 [신규 추가] 3단원 손글씨 숫자 데이터 분석 (chapter_3_handwritten_digit_analysis.html 연동 / 블러 및 샤프닝 필터 바로 밑에 배치) -->
+                <!-- 3단원 링크 6 (인디고 / 바이올렛) -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -474,14 +477,19 @@
         animate();
 
 
-        /* 🗂️ 2. 페이지 스크롤 워프 함수 */
+        /* 🗂️ 2. 부드러운 스크롤 이동 연산 커널 스크립트 */
         function scrollToSection(sectionId) {
             const element = document.getElementById(sectionId);
             if (element) {
                 const offset = 70;
                 const elementPosition = element.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - offset;
-                window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                
+                // 크로스 브라우징 지원 부드러운 스크롤 워프
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
             }
         }
 
