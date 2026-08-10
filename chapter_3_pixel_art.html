@@ -123,6 +123,7 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
+            height: 20px; /* 제목 높이 정밀 상단 맞춤 고정 */
         }
 
         /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
@@ -209,10 +210,18 @@
             accent-color: var(--c-brand-green);
         }
 
-        .slider-row .val-display {
-            width: 28px;
-            text-align: right;
+        /* 연동되는 숫자 입력 칸 스타일 */
+        .val-input {
+            width: 42px;
+            height: 22px;
+            text-align: center;
             font-family: 'Consolas', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: var(--c-text-main);
         }
 
         .pos-indicator {
@@ -247,7 +256,7 @@
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -255,13 +264,26 @@
             height: 100%;
             box-sizing: border-box;
             overflow: hidden;
+            position: relative; /* 제목 절대 위치 조정을 위한 상위 기준 설정 */
         }
 
+        /* 1행 수평 위치를 캔버스와 정밀하게 조절 */
         .channel-card h4 {
-            margin: 0 0 8px 0;
+            margin: 0;
+            padding-bottom: 6px;
             font-size: 13px;
             color: var(--c-brand-green);
             flex-shrink: 0;
+            text-align: center;
+        }
+
+        .channel-grid-wrapper {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
         .channel-grid {
@@ -404,18 +426,18 @@
             
             <div class="slider-row" style="color: #C62828;">
                 <label>R</label>
-                <input type="range" id="slider-r" min="0" max="255" value="255" oninput="updatePixelColor()">
-                <span id="val-r" class="val-display">255</span>
+                <input type="range" id="slider-r" min="0" max="255" value="255" oninput="syncColorInput('r', this.value)">
+                <input type="number" id="num-r" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('r', this.value)">
             </div>
             <div class="slider-row" style="color: #2E7D32;">
                 <label>G</label>
-                <input type="range" id="slider-g" min="0" max="255" value="255" oninput="updatePixelColor()">
-                <span id="val-g" class="val-display">255</span>
+                <input type="range" id="slider-g" min="0" max="255" value="255" oninput="syncColorInput('g', this.value)">
+                <input type="number" id="num-g" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('g', this.value)">
             </div>
             <div class="slider-row" style="color: #1565C0;">
                 <label>B</label>
-                <input type="range" id="slider-b" min="0" max="255" value="255" oninput="updatePixelColor()">
-                <span id="val-b" class="val-display">255</span>
+                <input type="range" id="slider-b" min="0" max="255" value="255" oninput="syncColorInput('b', this.value)">
+                <input type="number" id="num-b" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('b', this.value)">
             </div>
         </div>
     </div>
@@ -429,15 +451,21 @@
         <div class="channels-container">
             <div class="channel-card">
                 <h4>Red 채널</h4>
-                <div id="channel-r" class="channel-grid"></div>
+                <div class="channel-grid-wrapper">
+                    <div id="channel-r" class="channel-grid"></div>
+                </div>
             </div>
             <div class="channel-card">
                 <h4>Green 채널</h4>
-                <div id="channel-g" class="channel-grid"></div>
+                <div class="channel-grid-wrapper">
+                    <div id="channel-g" class="channel-grid"></div>
+                </div>
             </div>
             <div class="channel-card">
                 <h4>Blue 채널</h4>
-                <div id="channel-b" class="channel-grid"></div>
+                <div class="channel-grid-wrapper">
+                    <div id="channel-b" class="channel-grid"></div>
+                </div>
             </div>
         </div>
 
@@ -520,23 +548,37 @@
         document.getElementById('pos-display').innerText = `선택: ${r}행, ${c}열`;
 
         const [rgbR, rgbG, rgbB] = pixelData[r][c];
-        document.getElementById('slider-r').value = rgbR;
-        document.getElementById('slider-g').value = rgbG;
-        document.getElementById('slider-b').value = rgbB;
 
-        document.getElementById('val-r').innerText = rgbR;
-        document.getElementById('val-g').innerText = rgbG;
-        document.getElementById('val-b').innerText = rgbB;
+        // 슬라이더 및 수치 입력창 둘 다 동기화
+        document.getElementById('slider-r').value = rgbR;
+        document.getElementById('num-r').value = rgbR;
+
+        document.getElementById('slider-g').value = rgbG;
+        document.getElementById('num-g').value = rgbG;
+
+        document.getElementById('slider-b').value = rgbB;
+        document.getElementById('num-b').value = rgbB;
     }
 
-    function updatePixelColor() {
+    // 슬라이더 조작 시 숫자 입력 칸으로 동기화
+    function syncColorInput(channel, value) {
+        let val = Math.max(0, Math.min(255, parseInt(value) || 0));
+        document.getElementById(`num-${channel}`).value = val;
+        applyColorUpdate();
+    }
+
+    // 숫자 입력 칸 수정 시 슬라이더로 동기화
+    function syncColorSlider(channel, value) {
+        let val = Math.max(0, Math.min(255, parseInt(value) || 0));
+        document.getElementById(`slider-${channel}`).value = val;
+        applyColorUpdate();
+    }
+
+    // 색상 데이터 반영
+    function applyColorUpdate() {
         const rVal = parseInt(document.getElementById('slider-r').value);
         const gVal = parseInt(document.getElementById('slider-g').value);
         const bVal = parseInt(document.getElementById('slider-b').value);
-
-        document.getElementById('val-r').innerText = rVal;
-        document.getElementById('val-g').innerText = gVal;
-        document.getElementById('val-b').innerText = bVal;
 
         pixelData[selectedRow][selectedCol] = [rVal, gVal, bVal];
         originalPixelData[selectedRow][selectedCol] = [rVal, gVal, bVal];
@@ -610,8 +652,7 @@
         renderAll();
     }
 
-    // 수정된 PNG 내보내기 함수
-    function downloadImage() {
+    async function downloadImage() {
         const exportCanvas = document.createElement('canvas');
         const ctx = exportCanvas.getContext('2d');
 
@@ -628,7 +669,6 @@
         const titles = ['Canvas', 'Red Channel', 'Green Channel', 'Blue Channel'];
 
         function drawGridAt(startX, startY, getRgbFn, getValueFn, title) {
-            // 상단 제목 렌더링 (왼쪽 정렬 보장)
             ctx.fillStyle = '#1B4332';
             ctx.font = 'bold 15px sans-serif';
             ctx.textAlign = 'left';
@@ -657,16 +697,39 @@
 
         const topY = padding + 25;
 
-        // X좌표 오프셋 정밀 적용
         drawGridAt(padding, topY, (r, c) => pixelData[r][c], null, titles[0]);
         drawGridAt(padding * 2 + channelWidth, topY, (r, c) => [pixelData[r][c][0], 0, 0], (r, c) => pixelData[r][c][0], titles[1]);
         drawGridAt(padding * 3 + channelWidth * 2, topY, (r, c) => [0, pixelData[r][c][1], 0], (r, c) => pixelData[r][c][1], titles[2]);
         drawGridAt(padding * 4 + channelWidth * 3, topY, (r, c) => [0, 0, pixelData[r][c][2]], (r, c) => pixelData[r][c][2], titles[3]);
 
-        const link = document.createElement('a');
-        link.download = 'pixel_art_rgb_matrix.png';
-        link.href = exportCanvas.toDataURL('image/png');
-        link.click();
+        exportCanvas.toBlob(async (blob) => {
+            if (!blob) return;
+
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'pixel_art_rgb_matrix.png',
+                        types: [{
+                            description: 'PNG Image',
+                            accept: { 'image/png': ['.png'] },
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'pixel_art_rgb_matrix.png';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
     }
 
     /* 배경 신경망 인터랙티브 효과 */
