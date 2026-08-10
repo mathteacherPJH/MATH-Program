@@ -24,8 +24,8 @@
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 24px;
-            padding-top: 85px; 
+            padding: 16px;
+            padding-top: 75px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -55,7 +55,7 @@
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 14px 24px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -94,8 +94,8 @@
         .main-layout {
             display: flex;
             width: 100%; 
-            height: calc(100vh - 110px); 
-            gap: 16px;
+            height: calc(100vh - 90px); 
+            gap: 14px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
@@ -105,7 +105,7 @@
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 18px;
+            padding: 14px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -117,22 +117,22 @@
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
         .left-panel {
-            flex: 1;
+            flex: 0.85;
             min-width: 320px;
-            max-width: 380px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .grid-container {
@@ -144,19 +144,23 @@
             border-radius: 8px;
             border: 1px solid var(--c-border);
             padding: 10px;
+            overflow: hidden;
         }
 
-        /* 캔버스 크기: 230px x 230px */
+        /* 공간에 따라 최대한 커지는 반응형 정사각형 캔버스 */
         #pixel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
-            gap: 1px;
-            width: 230px;
-            height: 230px;
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+            max-width: 45vh;
+            max-height: 45vh;
+            aspect-ratio: 1;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
         }
 
@@ -169,8 +173,8 @@
             opacity: 0.85;
         }
         .pixel-cell.selected {
-            outline: 2px solid var(--c-accent);
-            outline-offset: -2px;
+            outline: 3px solid var(--c-accent);
+            outline-offset: -3px;
             z-index: 2;
         }
 
@@ -179,10 +183,11 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         .slider-row {
@@ -218,53 +223,59 @@
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (RGB 채널 그리드 & 버튼) */
+        /* 우측 영역 (R, G, B 채널 그리드) */
         .right-panel {
             flex: 2;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .channels-container {
             flex: 1;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            align-items: center;
+            gap: 10px;
+            align-items: stretch;
+            min-height: 0; /* flex 높이 과도 수축 방지 */
         }
 
         .channel-card {
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100%;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .channel-card h4 {
-            margin: 0 0 10px 0;
-            font-size: 12px;
+            margin: 0 0 8px 0;
+            font-size: 13px;
             color: var(--c-brand-green);
+            flex-shrink: 0;
         }
 
-        /* R, G, B 채널 크기: 캔버스와 동일한 230px x 230px */
+        /* 공간에 따라 큼직하게 꽉 차는 정사각형 RGB 채널 그리드 */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
-            gap: 1px;
-            width: 230px;
-            height: 230px;
+            gap: 1.5px;
+            width: 100%;
+            height: 100%;
+            max-width: 45vh;
+            max-height: 45vh;
+            aspect-ratio: 1;
             background-color: #DDD;
             border: 1px solid var(--c-border);
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
         }
 
@@ -272,29 +283,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 9px;
+            font-size: 12px;
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
             overflow: hidden;
         }
 
-        /* 하단 툴바 (우측 정렬 적용) */
+        /* 하단 툴바 (오른쪽 정렬) */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px 14px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
-            justify-content: flex-end; /* 오른쪽으로 배치 */
+            justify-content: flex-end; /* 오른쪽에 붙여 배치 */
             gap: 10px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
-        /* 모든 버튼 동일한 규격 유지 */
+        /* 모든 액션 버튼 동일 규격 유지 */
         .btn-action, .btn-brightness-group {
-            width: 165px;
+            width: 160px;
             height: 38px;
             box-sizing: border-box;
             font-size: 12px;
@@ -375,7 +387,7 @@
 </nav>
 
 <div class="main-layout">
-    <!-- 좌측 패널: 10x10 픽셀 아트 캔버스 및 RGB 팔레트 -->
+    <!-- 좌측 패널: 확대된 10x10 픽셀 아트 캔버스 및 RGB 팔레트 -->
     <div class="card left-panel">
         <div class="section-title">
             <span>🎨 캔버스 (10 × 10)</span>
@@ -408,7 +420,7 @@
         </div>
     </div>
 
-    <!-- 우측 패널: R, G, B 채널 행렬 및 우측 정렬 툴바 -->
+    <!-- 우측 패널: 확대된 R, G, B 채널 행렬 및 우측 정렬 툴바 -->
     <div class="card right-panel">
         <div class="section-title">
             <span>🔍 R, G, B 채널 행렬</span>
@@ -620,7 +632,7 @@
         const exportCanvas = document.createElement('canvas');
         const ctx = exportCanvas.getContext('2d');
 
-        const scale = 23; 
+        const scale = 30; 
         const padding = 20;
         const channelWidth = GRID_SIZE * scale;
         
@@ -648,7 +660,7 @@
                     if (getValueFn) {
                         const val = getValueFn(r, c);
                         ctx.fillStyle = getContrastColor(red, green, blue);
-                        ctx.font = 'bold 9px Consolas, monospace';
+                        ctx.font = 'bold 11px Consolas, monospace';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(val, startX + c * scale + scale / 2, startY + r * scale + scale / 2);
