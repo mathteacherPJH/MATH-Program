@@ -392,6 +392,13 @@
         }
         .btn-secondary:hover { background: #e8e4d9; }
 
+        .btn-danger {
+            background: var(--c-removed-bg);
+            color: var(--c-removed-text);
+            border: 1px solid rgba(198, 40, 40, 0.22);
+        }
+        .btn-danger:hover { background: #FFDDE0; }
+
         .btn-brightness-group {
             flex-direction: column;   /* ★ 라벨/입력칸을 2줄로 -> 폭 절약 */
             background: var(--c-tab-bg);
@@ -682,6 +689,7 @@
             <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
 
             <button class="btn-action btn-secondary" onclick="restoreOriginal()">🔄 원래대로</button>
+            <button class="btn-action btn-danger" onclick="resetCanvas()">🧹 초기화</button>
             <button class="btn-action btn-primary" onclick="downloadImage()">💾 다운로드</button>
         </div>
     </div>
@@ -1350,6 +1358,16 @@
                 ];
             }
         }
+        selectPixel(selectedRow, selectedCol);
+        renderAll();
+    }
+
+    /* ★ 초기화: 모든 셀을 흰색으로 (되돌리기 기준점도 함께 초기화) */
+    function resetCanvas() {
+        pixelData = Array.from({ length: GRID_SIZE }, () =>
+            Array.from({ length: GRID_SIZE }, () => [255, 255, 255])
+        );
+        originalPixelData = JSON.parse(JSON.stringify(pixelData));
         selectPixel(selectedRow, selectedCol);
         renderAll();
     }
