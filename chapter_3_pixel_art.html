@@ -19,6 +19,7 @@
             --c-removed-text: #C62828;
         }
 
+        /* 화면 창 크기가 작아지면 자동으로 가로/세로 스크롤바 생성 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
@@ -31,9 +32,10 @@
             align-items: center;
             letter-spacing: 0.03em;
             position: relative;
-            height: 100vh;
+            min-width: 1400px;
+            min-height: 700px;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: auto;
         }
 
         /* 배경 신경망 Canvas */
@@ -51,6 +53,7 @@
             top: 0;
             left: 0;
             width: 100%;
+            min-width: 1400px;
             background-color: rgba(251, 249, 244, 0.85);
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
@@ -90,15 +93,16 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (2컬럼 구조) */
+        /* 메인 레이아웃 (크기 고정) */
         .main-layout {
             display: flex;
-            width: 100%; 
-            height: calc(100vh - 90px); 
+            width: 1360px; 
+            height: 600px; 
             gap: 14px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         .card {
@@ -111,6 +115,7 @@
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
 
         .section-title {
@@ -126,10 +131,9 @@
             height: 20px;
         }
 
-        /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
+        /* 좌측 영역 (10x10 픽셀 아트 캔버스 고정 크기) */
         .left-panel {
-            flex: 0.85;
-            min-width: 320px;
+            width: 380px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -137,7 +141,8 @@
         }
 
         .grid-container {
-            flex: 1;
+            width: 100%;
+            height: 380px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -145,8 +150,8 @@
             border-radius: 8px;
             border: 1px solid var(--c-border);
             padding: 12px;
-            overflow: hidden;
             box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         #pixel-grid {
@@ -154,15 +159,13 @@
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 2px;
-            width: 100%;
-            height: 100%;
-            max-width: 45vh;
-            max-height: 45vh;
-            aspect-ratio: 1;
+            width: 350px;
+            height: 350px;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .pixel-cell {
@@ -236,7 +239,7 @@
 
         /* 우측 영역 (R, G, B 채널 그리드) */
         .right-panel {
-            flex: 2;
+            width: 966px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -244,12 +247,12 @@
         }
 
         .channels-container {
-            flex: 1;
+            width: 100%;
+            height: 380px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            align-items: stretch;
-            min-height: 0;
+            flex-shrink: 0;
         }
 
         .channel-card {
@@ -263,20 +266,15 @@
             justify-content: center;
             height: 100%;
             box-sizing: border-box;
-            overflow: hidden;
         }
 
-        /* 행렬 박스 바로 위에 소제목이 바짝 정렬되도록 포함하는 랩퍼 */
         .grid-box-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
-            max-width: 45vh;
-            max-height: 45vh;
-            aspect-ratio: 1;
+            width: 280px;
+            height: 350px;
         }
 
         .grid-box-container h4 {
@@ -292,19 +290,20 @@
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 1.5px;
-            width: 100%;
-            height: 100%;
+            width: 280px;
+            height: 280px;
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
@@ -472,7 +471,8 @@
             
             <div class="btn-brightness-group">
                 <button class="btn-brightness-label" onclick="applyBrightness()">☀️ 밝기 조절</button>
-                <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="30" placeholder="-255~255">
+                <!-- 기본값 0으로 수정된 부분 -->
+                <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="0" placeholder="-255~255">
             </div>
 
             <button class="btn-action btn-secondary" onclick="restoreOriginal()">🔄 원래대로</button>
@@ -733,8 +733,8 @@
     const mouse = { x: null, y: null, radius: 150 };
 
     function resizeBgCanvas() {
-        bgCanvas.width = window.innerWidth;
-        bgCanvas.height = window.innerHeight;
+        bgCanvas.width = Math.max(window.innerWidth, 1400);
+        bgCanvas.height = Math.max(window.innerHeight, 700);
         initParticles();
     }
 
