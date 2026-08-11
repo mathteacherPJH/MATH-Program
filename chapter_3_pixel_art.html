@@ -25,16 +25,15 @@
             color: var(--c-text-main);
             margin: 0;
             padding: 16px;
-            padding-top: 75px; 
+            padding-top: 70px; 
             display: flex;
             flex-direction: column;
             align-items: center;
             letter-spacing: 0.03em;
             position: relative;
             height: 100vh;
-            min-width: 1200px;
             box-sizing: border-box;
-            overflow: auto;
+            overflow: hidden; /* 한 화면에 딱 들어오도록 고정 */
         }
 
         /* 배경 신경망 Canvas */
@@ -91,11 +90,11 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (화면 전체 꽉 차게) */
+        /* 메인 레이아웃 (반응형 100% 화면 맞춤) */
         .main-layout {
             display: flex;
             width: 100%; 
-            height: calc(100vh - 95px); 
+            height: calc(100vh - 85px); 
             gap: 14px;
             position: relative;
             z-index: 10;
@@ -130,7 +129,7 @@
         /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
         .left-panel {
             flex: 0.85;
-            min-width: 320px;
+            min-width: 300px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -180,16 +179,16 @@
             z-index: 2;
         }
 
-        /* 좌측 슬라이더 컨트롤 박스 (상하 여백 확보: 높이 140px) */
+        /* 좌측 슬라이더 컨트롤 박스 */
         .control-box {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 14px;
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            height: 140px;
+            height: 125px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -262,10 +261,9 @@
             justify-content: center;
             height: 100%;
             box-sizing: border-box;
-            position: relative;
         }
 
-        /* 제목을 행렬 그리드 바로 상단 내부에 포함시켜 Y축 수평 위치 완벽 일치 */
+        /* 제목을 행렬 박스 바로 위에 포함시켜 세로 높이 완벽 수평 동기화 */
         .grid-box-container {
             display: flex;
             flex-direction: column;
@@ -310,26 +308,26 @@
             overflow: hidden;
         }
 
-        /* 하단 툴바 (높이 140px 완벽 일치) */
+        /* 하단 툴바 (좌측 박스와 세로 높이 125px 통일) */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 14px;
+            padding: 12px 14px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            height: 140px;
+            height: 125px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
 
         .btn-action, .btn-brightness-group {
-            width: 160px;
-            height: 56px;
+            width: 155px;
+            height: 52px;
             box-sizing: border-box;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -365,7 +363,7 @@
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -379,11 +377,11 @@
         }
 
         .num-input-inline {
-            width: 52px;
-            height: 32px;
+            width: 48px;
+            height: 30px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 12px;
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
