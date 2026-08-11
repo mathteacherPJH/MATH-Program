@@ -23,6 +23,8 @@
             --grid-gap: 2px;
             /* ★ 예시 갤러리 미리보기 한 변 (JS가 갱신) */
             --preview-size: 110px;
+            /* ★ 채널 카드의 'Red 채널' 제목 높이만큼 캔버스를 내려 정렬 (JS가 갱신) */
+            --canvas-offset: 25px;
         }
 
         /* 화면 크기에 맞춰 가득 차도록 반응형 바디 설정 */
@@ -172,7 +174,8 @@
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
-            padding: 10px;
+            /* ★ 위쪽 여백 = 기본 10px + 채널 제목 높이 */
+            padding: calc(10px + var(--canvas-offset)) 10px 10px;
             box-sizing: border-box;
             overflow: hidden;
         }
@@ -332,7 +335,7 @@
             align-items: center;
             justify-content: center;
             /* ★ 칸 크기에 비례해 글자 크기 자동 조절 (3자리 숫자 기준) */
-            font-size: clamp(6px, calc(var(--grid-size) / 30), 14px);
+            font-size: clamp(7px, calc(var(--grid-size) / 22), 18px);
             line-height: 1;
             font-weight: bold;
             font-family: 'Consolas', monospace;
@@ -345,22 +348,22 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 14px;              /* ★ 상하 여백을 좌우와 동일하게 */
             display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 12px;
-            min-height: 70px;    /* ★ 버튼(50px) + 여백만큼만 */
+            align-items: stretch;       /* ★ 버튼이 세로를 가득 채움 */
+            justify-content: stretch;
+            gap: 10px;
+            min-height: 120px;          /* ★ RGB 조절 박스와 동일 */    /* ★ 버튼(50px) + 여백만큼만 */
             flex: 1 1 auto;      /* ★ 자투리 공간은 여기서 흡수 */
             box-sizing: border-box;
         }
 
         .btn-action, .btn-brightness-group {
-            flex: 1;
-            max-width: 180px;
-            height: 50px;
+            flex: 1 1 0;         /* ★ 남는 공간 없이 툴바를 가득 채움 */
+            min-width: 0;
+            height: auto;        /* ★ 툴바 높이에 맞춰 세로로 늘어남 */
             box-sizing: border-box;
-            font-size: 13px;
+            font-size: 15px;     /* ★ 버튼이 커진 만큼 글자도 크게 */
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -388,16 +391,18 @@
         .btn-secondary:hover { background: #e8e4d9; }
 
         .btn-brightness-group {
+            flex-grow: 1.3;      /* ★ 입력칸이 있어 조금 더 넓게 */
             background: var(--c-tab-bg);
             border: 1px solid var(--c-border);
             padding: 4px 8px;
-            justify-content: space-between;
+            gap: 10px;
+            justify-content: center;   /* ★ 글자 + 입력칸 가운데 정렬 */
         }
 
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -412,15 +417,75 @@
         }
 
         .num-input-inline {
-            width: 48px;
-            height: 28px;
+            width: 50px;
+            height: 32px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 14px;
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
             color: var(--c-text-main);
+        }
+
+        /* ★ 스포이드 버튼: 라벨 + 커서 아래 색 실시간 표시 */
+        #btn-eyedropper {
+            flex-grow: 1.6;      /* ★ RGB 표시가 들어가므로 더 넓게 */
+            gap: 8px;
+        }
+
+        .ed-label {
+            white-space: nowrap;
+        }
+
+        .ed-readout {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 6px;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            background: #FFFFFF;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--c-text-muted);
+            white-space: nowrap;
+        }
+
+        #btn-eyedropper.picking .ed-readout {
+            color: var(--c-text-main);
+            border-color: transparent;
+        }
+
+        .ed-swatch {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            border: 1px solid var(--c-border);
+            border-radius: 3px;
+            background: #FFFFFF;
+        }
+
+        /* ★ 스포이드 모드 */
+        .btn-action.picking {
+            background: var(--c-brand-green);
+            color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.3);
+        }
+
+        body.picking-color .pixel-cell,
+        body.picking-color .channel-cell,
+        body.picking-color .preset-grid > div {
+            cursor: crosshair;
+        }
+
+        .pick-hint {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--c-accent);
+            letter-spacing: 0;
+            white-space: nowrap;
         }
 
         /* ★ 하단 예시 갤러리 */
@@ -537,6 +602,7 @@
     <div class="card left-panel">
         <div class="section-title">
             <span>🎨 캔버스 (10 × 10)</span>
+            <span id="pick-hint" class="pick-hint"></span>
         </div>
         <div class="grid-container">
             <div id="pixel-grid"></div>
@@ -594,6 +660,13 @@
         </div>
 
         <div class="action-toolbar">
+            <button id="btn-eyedropper" class="btn-action btn-secondary" onclick="toggleEyedropper()">
+                <span class="ed-label">💧 스포이드</span>
+                <span class="ed-readout">
+                    <span id="ed-swatch" class="ed-swatch"></span>
+                    <span id="ed-value">---,---,---</span>
+                </span>
+            </button>
             <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
             
             <div class="btn-brightness-group">
@@ -647,23 +720,29 @@
 
         const px = (v) => parseFloat(v) || 0;
 
-        // --- 가로 가용 폭 ---
+        const root = document.documentElement;
+
+        // --- 채널 제목 높이를 캔버스 위쪽 여백으로 반영 (좌/우 구조를 일치시킴) ---
+        const heading = channelCard.querySelector('h4');
+        const headingH = heading ? heading.offsetHeight + 6 : 0;  // h4 + 아래 여백
+        if (root.style.getPropertyValue('--canvas-offset') !== headingH + 'px') {
+            root.style.setProperty('--canvas-offset', headingH + 'px');
+        }
+
+        // --- 가로 가용 폭 (위 변수 반영 후 측정) ---
         const gcs = getComputedStyle(gridContainer);
         const leftW = gridContainer.clientWidth - px(gcs.paddingLeft) - px(gcs.paddingRight);
 
         const ccs = getComputedStyle(channelCard);
         const rightW = channelCard.clientWidth - px(ccs.paddingLeft) - px(ccs.paddingRight);
 
-        // --- 고정 요소 높이 ---
-        const heading = channelCard.querySelector('h4');
-        const headingH = heading ? heading.offsetHeight + 6 : 0;  // h4 + 아래 여백
-
         const GRID_BORDER   = 4;    // 격자 테두리 2px × 2면
         const TITLE         = 28;   // 섹션 제목 20px + 아래 여백 8px
         const PANEL_GAP     = 20;   // 패널 내부 요소 간격 10px × 2군데
         const CARD_CHROME   = 30;   // 카드 패딩 14×2 + 테두리 2
-        const CONTROL_MIN   = 120;  // RGB 슬라이더 박스 최소 높이
-        const TOOLBAR_MIN   = 70;   // 하단 버튼 바 최소 높이
+        const BOTTOM_MIN    = 120;  // ★ RGB 슬라이더 박스 = 하단 버튼 바 (동일 높이)
+        const CONTROL_MIN   = BOTTOM_MIN;
+        const TOOLBAR_MIN   = BOTTOM_MIN;
 
         const gcChrome = px(gcs.paddingTop) + px(gcs.paddingBottom) + 2;              // 캔버스 컨테이너
         const ccChrome = px(ccs.paddingTop) + px(ccs.paddingBottom) + 2 + headingH;   // 채널 카드
@@ -691,7 +770,6 @@
         let size = Math.min(leftW - GRID_BORDER, rightW - GRID_BORDER, hBudget);
         size = Math.floor(size / 10) * 10;   // 칸이 딱 떨어지도록
         size = Math.max(size, 120);
-        const root = document.documentElement;
         if (root.style.getPropertyValue('--grid-size') !== size + 'px') {
             root.style.setProperty('--grid-size', size + 'px');
         }
@@ -1030,6 +1108,93 @@
         selectPixel(selectedRow, selectedCol);
         renderAll();
     }
+
+
+    /* ★★ 스포이드 ★★
+       1) 캔버스에서 셀을 선택 → 2) 스포이드 버튼 클릭 → 3) 화면의 색을 클릭
+       캔버스 셀 / 채널 행렬 칸 / 예시 갤러리 미리보기의 색을 모두 뽑을 수 있습니다.
+       ESC 또는 버튼 재클릭으로 취소. */
+    const PICKABLE = '.pixel-cell, .channel-cell, .preset-grid > div';
+    let isPicking = false;
+
+    function toggleEyedropper() {
+        isPicking ? stopPicking() : startPicking();
+    }
+
+    function startPicking() {
+        isPicking = true;
+        document.body.classList.add('picking-color');
+        document.getElementById('btn-eyedropper').classList.add('picking');
+        document.getElementById('pick-hint').innerText =
+            `${selectedRow + 1}행 ${selectedCol + 1}열에 넣을 색을 클릭하세요 (ESC 취소)`;
+
+        // 캡처 단계에서 가로채야 셀 선택·예시 불러오기가 대신 실행되지 않음
+        document.addEventListener('click', handlePick, true);
+        document.addEventListener('keydown', handlePickKey);
+    }
+
+    function stopPicking() {
+        isPicking = false;
+        document.body.classList.remove('picking-color');
+        document.getElementById('btn-eyedropper').classList.remove('picking');
+        document.getElementById('pick-hint').innerText = '';
+        document.removeEventListener('click', handlePick, true);
+        document.removeEventListener('keydown', handlePickKey);
+    }
+
+    function handlePickKey(e) {
+        if (e.key === 'Escape') stopPicking();
+    }
+
+    function handlePick(e) {
+        const target = e.target.closest ? e.target.closest(PICKABLE) : null;
+
+        // 스포이드 모드 중에는 원래 클릭 동작(셀 선택 등)을 막는다
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (target) {
+            const rgb = parseRgb(getComputedStyle(target).backgroundColor);
+            if (rgb) {
+                pixelData[selectedRow][selectedCol] = rgb;
+                originalPixelData[selectedRow][selectedCol] = rgb.slice();
+                selectPixel(selectedRow, selectedCol);   // 슬라이더·숫자 동기화
+                renderAll();
+                updateReadout(rgb);
+            }
+        }
+        stopPicking();   // 색을 뽑았거나 빈 곳을 눌렀으면 모드 종료
+    }
+
+    function parseRgb(str) {
+        const nums = str.match(/\d+(\.\d+)?/g);
+        if (!nums || nums.length < 3) return null;
+        return nums.slice(0, 3).map(v => Math.round(parseFloat(v)));
+    }
+
+    /* ★ 커서가 색 위를 지날 때마다 RGB 값을 스포이드 버튼에 표시 */
+    const EMPTY_READOUT = '---,---,---';
+
+    function updateReadout(rgb) {
+        const swatch = document.getElementById('ed-swatch');
+        const value = document.getElementById('ed-value');
+        if (!swatch || !value) return;
+
+        if (rgb) {
+            swatch.style.backgroundColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+            value.innerText = rgb.map(v => String(v).padStart(3, ' ')).join(',');
+        } else {
+            swatch.style.backgroundColor = '#FFFFFF';
+            value.innerText = EMPTY_READOUT;
+        }
+    }
+
+    function handleHoverColor(e) {
+        const target = e.target.closest ? e.target.closest(PICKABLE) : null;
+        updateReadout(target ? parseRgb(getComputedStyle(target).backgroundColor) : null);
+    }
+
+    document.addEventListener('mouseover', handleHoverColor);
 
     function initGrids() {
         const mainGrid = document.getElementById('pixel-grid');
