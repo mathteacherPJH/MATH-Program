@@ -24,8 +24,8 @@
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 16px;
-            padding-top: 70px; 
+            padding: 24px;
+            padding-top: 85px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -33,7 +33,7 @@
             position: relative;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* 한 화면에 딱 들어오도록 고정 */
+            overflow: hidden;
         }
 
         /* 배경 신경망 Canvas */
@@ -45,7 +45,7 @@
             pointer-events: none;
         }
 
-        /* 상단 네비게이션 바 */
+        /* 1~3. 상단 네비게이션 바 */
         .top-navbar {
             position: fixed;
             top: 0;
@@ -55,7 +55,7 @@
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 12px 24px;
+            padding: 14px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -90,12 +90,12 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (반응형 100% 화면 맞춤) */
+        /* 메인 레이아웃 (2컬럼 구조) */
         .main-layout {
             display: flex;
             width: 100%; 
-            height: calc(100vh - 85px); 
-            gap: 14px;
+            height: calc(100vh - 110px); 
+            gap: 16px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
@@ -105,7 +105,7 @@
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 14px;
+            padding: 18px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -117,23 +117,22 @@
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0;
-            height: 20px;
         }
 
-        /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
+        /* 좌측 영역 (확대된 10x10 픽셀 아트 캔버스) */
         .left-panel {
-            flex: 0.85;
-            min-width: 300px;
+            flex: 1.1;
+            min-width: 360px;
+            max-width: 440px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .grid-container {
@@ -144,21 +143,17 @@
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
-            padding: 12px;
-            box-sizing: border-box;
-            overflow: hidden;
+            padding: 10px;
         }
 
+        /* 키운 메인 캔버스 (330px) */
         #pixel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 2px;
-            width: 100%;
-            height: 100%;
-            max-width: 48vh;
-            max-height: 48vh;
-            aspect-ratio: 1;
+            width: 330px;
+            height: 330px;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
@@ -174,23 +169,20 @@
             opacity: 0.85;
         }
         .pixel-cell.selected {
-            outline: 3px solid var(--c-accent);
-            outline-offset: -3px;
+            outline: 2px solid var(--c-accent);
+            outline-offset: -2px;
             z-index: 2;
         }
 
-        /* 좌측 슬라이더 컨트롤 박스 */
+        /* 슬라이더 컨트롤 박스 */
         .control-box {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px 14px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            height: 125px;
-            box-sizing: border-box;
-            flex-shrink: 0;
+            gap: 8px;
         }
 
         .slider-row {
@@ -210,17 +202,10 @@
             accent-color: var(--c-brand-green);
         }
 
-        .val-input {
-            width: 42px;
-            height: 22px;
-            text-align: center;
+        .slider-row .val-display {
+            width: 28px;
+            text-align: right;
             font-family: 'Consolas', monospace;
-            font-size: 11px;
-            font-weight: bold;
-            border: 1px solid var(--c-border);
-            border-radius: 4px;
-            background: #FFFFFF;
-            color: var(--c-text-main);
         }
 
         .pos-indicator {
@@ -233,82 +218,67 @@
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (R, G, B 채널 그리드) */
+        /* 우측 영역 (축소된 RGB 채널 그리드) */
         .right-panel {
             flex: 2;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .channels-container {
             flex: 1;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            min-height: 0;
+            gap: 12px;
+            align-items: center;
         }
 
         .channel-card {
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100%;
-            box-sizing: border-box;
         }
 
-        /* 제목을 행렬 박스 바로 위에 포함시켜 세로 높이 완벽 수평 동기화 */
-        .grid-box-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            max-width: 48vh;
-            max-height: 48vh;
-            aspect-ratio: 1;
-        }
-
-        .grid-box-container h4 {
-            margin: 0 0 6px 0;
-            font-size: 13px;
+        .channel-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
             color: var(--c-brand-green);
-            text-align: center;
-            flex-shrink: 0;
         }
 
+        /* 줄인 RGB 채널 그리드 (170px) */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
-            gap: 1.5px;
-            width: 100%;
-            height: 100%;
+            gap: 1px;
+            width: 170px;
+            height: 170px;
             background-color: #DDD;
             border: 1px solid var(--c-border);
-            border-radius: 6px;
+            border-radius: 4px;
             overflow: hidden;
         }
 
+        /* 채널 셀 내부 0~255 수치 표시 */
         .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 8px;
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
             overflow: hidden;
         }
 
-        /* 하단 툴바 (좌측 박스와 세로 높이 125px 통일) */
+        /* 하단 툴바 및 통합 너비 버튼 디자인 */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
@@ -316,23 +286,22 @@
             padding: 12px 14px;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 12px;
-            height: 125px;
-            box-sizing: border-box;
-            flex-shrink: 0;
+            justify-content: space-around;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
+        /* 모든 액션 버튼/그룹 동일한 가로 길이 지정 */
         .btn-action, .btn-brightness-group {
-            width: 155px;
-            height: 52px;
+            width: 175px;
+            height: 38px;
             box-sizing: border-box;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
@@ -353,17 +322,18 @@
         }
         .btn-secondary:hover { background: #e8e4d9; }
 
+        /* 밝기 조절 통합 버튼 그룹 */
         .btn-brightness-group {
             background: var(--c-tab-bg);
             border: 1px solid var(--c-border);
-            padding: 4px 8px;
+            padding: 2px 8px;
             justify-content: space-between;
         }
 
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -377,11 +347,11 @@
         }
 
         .num-input-inline {
-            width: 48px;
-            height: 30px;
+            width: 52px;
+            height: 24px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
@@ -404,7 +374,7 @@
 </nav>
 
 <div class="main-layout">
-    <!-- 좌측 패널: 10x10 픽셀 아트 캔버스 및 RGB 팔레트 -->
+    <!-- 좌측 패널: 확대된 10x10 픽셀 아트 캔버스 및 RGB 팔레트 -->
     <div class="card left-panel">
         <div class="section-title">
             <span>🎨 캔버스 (10 × 10)</span>
@@ -416,60 +386,55 @@
         <div class="control-box">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 11px; font-weight: bold; color: var(--c-brand-green);">RGB 색상 조절</span>
-                <span id="pos-display" class="pos-indicator">선택: 1행, 1열</span>
+                <span id="pos-display" class="pos-indicator">선택: 0행, 0열</span>
             </div>
             
             <div class="slider-row" style="color: #C62828;">
                 <label>R</label>
-                <input type="range" id="slider-r" min="0" max="255" value="255" oninput="syncColorInput('r', this.value)">
-                <input type="number" id="num-r" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('r', this.value)">
+                <input type="range" id="slider-r" min="0" max="255" value="255" oninput="updatePixelColor()">
+                <span id="val-r" class="val-display">255</span>
             </div>
             <div class="slider-row" style="color: #2E7D32;">
                 <label>G</label>
-                <input type="range" id="slider-g" min="0" max="255" value="255" oninput="syncColorInput('g', this.value)">
-                <input type="number" id="num-g" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('g', this.value)">
+                <input type="range" id="slider-g" min="0" max="255" value="255" oninput="updatePixelColor()">
+                <span id="val-g" class="val-display">255</span>
             </div>
             <div class="slider-row" style="color: #1565C0;">
                 <label>B</label>
-                <input type="range" id="slider-b" min="0" max="255" value="255" oninput="syncColorInput('b', this.value)">
-                <input type="number" id="num-b" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('b', this.value)">
+                <input type="range" id="slider-b" min="0" max="255" value="255" oninput="updatePixelColor()">
+                <span id="val-b" class="val-display">255</span>
             </div>
         </div>
     </div>
 
-    <!-- 우측 패널: R, G, B 채널 행렬 및 툴바 -->
+    <!-- 우측 패널: 축소된 RGB 채널 그리드 및 제어 툴바 -->
     <div class="card right-panel">
         <div class="section-title">
-            <span>🔍 R, G, B 채널 행렬</span>
+            <span>🔍 R / G / B 독립 채널 분리 (성분 값 표기)</span>
         </div>
         
         <div class="channels-container">
             <div class="channel-card">
-                <div class="grid-box-container">
-                    <h4>Red 채널</h4>
-                    <div id="channel-r" class="channel-grid"></div>
-                </div>
+                <h4>Red 채널</h4>
+                <div id="channel-r" class="channel-grid"></div>
             </div>
             <div class="channel-card">
-                <div class="grid-box-container">
-                    <h4>Green 채널</h4>
-                    <div id="channel-g" class="channel-grid"></div>
-                </div>
+                <h4>Green 채널</h4>
+                <div id="channel-g" class="channel-grid"></div>
             </div>
             <div class="channel-card">
-                <div class="grid-box-container">
-                    <h4>Blue 채널</h4>
-                    <div id="channel-b" class="channel-grid"></div>
-                </div>
+                <h4>Blue 채널</h4>
+                <div id="channel-b" class="channel-grid"></div>
             </div>
         </div>
 
+        <!-- 동일 가로 길이로 통일된 하단 액션 툴바 -->
         <div class="action-toolbar">
             <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
             
             <div class="btn-brightness-group">
                 <button class="btn-brightness-label" onclick="applyBrightness()">☀️ 밝기 조절</button>
-                <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="0" placeholder="-255~255">
+                <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="30" placeholder="-255~255">
             </div>
 
             <button class="btn-action btn-secondary" onclick="restoreOriginal()">🔄 원래대로</button>
@@ -480,20 +445,24 @@
 
 <script>
     const GRID_SIZE = 10;
+    // 픽셀 데이터: 10x10 RGB 데이터 저장 [r, g, b]
     let pixelData = Array.from({ length: GRID_SIZE }, () => 
         Array.from({ length: GRID_SIZE }, () => [255, 255, 255])
     );
+    // 원래 데이터 복원용 백업
     let originalPixelData = JSON.parse(JSON.stringify(pixelData));
 
     let selectedRow = 0;
     let selectedCol = 0;
 
+    // 초기화
     document.addEventListener('DOMContentLoaded', () => {
         initGrids();
         selectPixel(0, 0);
         renderAll();
     });
 
+    // 그리드 생성
     function initGrids() {
         const mainGrid = document.getElementById('pixel-grid');
         const gridR = document.getElementById('channel-r');
@@ -507,6 +476,7 @@
 
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
+                // 메인 픽셀
                 const cell = document.createElement('div');
                 cell.className = 'pixel-cell';
                 cell.dataset.row = r;
@@ -514,6 +484,7 @@
                 cell.addEventListener('click', () => selectPixel(r, c));
                 mainGrid.appendChild(cell);
 
+                // RGB 채널 픽셀들 (숫자 수치 표시)
                 const cellR = document.createElement('div');
                 cellR.className = 'channel-cell';
                 cellR.id = `r-${r}-${c}`;
@@ -532,6 +503,7 @@
         }
     }
 
+    // 픽셀 선택 이벤트
     function selectPixel(r, c) {
         selectedRow = r;
         selectedCol = c;
@@ -540,48 +512,43 @@
         const target = document.querySelector(`.pixel-cell[data-row="${r}"][data-col="${c}"]`);
         if (target) target.classList.add('selected');
 
-        document.getElementById('pos-display').innerText = `선택: ${r + 1}행, ${c + 1}열`;
+        // 위치 표시 업데이트 (0행, 0열 형태)
+        document.getElementById('pos-display').innerText = `선택: ${r}행, ${c}열`;
 
+        // 선택한 픽셀의 RGB 값으로 슬라이더 세팅
         const [rgbR, rgbG, rgbB] = pixelData[r][c];
-
         document.getElementById('slider-r').value = rgbR;
-        document.getElementById('num-r').value = rgbR;
-
         document.getElementById('slider-g').value = rgbG;
-        document.getElementById('num-g').value = rgbG;
-
         document.getElementById('slider-b').value = rgbB;
-        document.getElementById('num-b').value = rgbB;
+
+        document.getElementById('val-r').innerText = rgbR;
+        document.getElementById('val-g').innerText = rgbG;
+        document.getElementById('val-b').innerText = rgbB;
     }
 
-    function syncColorInput(channel, value) {
-        let val = Math.max(0, Math.min(255, parseInt(value) || 0));
-        document.getElementById(`num-${channel}`).value = val;
-        applyColorUpdate();
-    }
-
-    function syncColorSlider(channel, value) {
-        let val = Math.max(0, Math.min(255, parseInt(value) || 0));
-        document.getElementById(`slider-${channel}`).value = val;
-        applyColorUpdate();
-    }
-
-    function applyColorUpdate() {
+    // 슬라이더 변경 시 색상 업데이트
+    function updatePixelColor() {
         const rVal = parseInt(document.getElementById('slider-r').value);
         const gVal = parseInt(document.getElementById('slider-g').value);
         const bVal = parseInt(document.getElementById('slider-b').value);
 
+        document.getElementById('val-r').innerText = rVal;
+        document.getElementById('val-g').innerText = gVal;
+        document.getElementById('val-b').innerText = bVal;
+
         pixelData[selectedRow][selectedCol] = [rVal, gVal, bVal];
-        originalPixelData[selectedRow][selectedCol] = [rVal, gVal, bVal];
+        originalPixelData[selectedRow][selectedCol] = [rVal, gVal, bVal]; // 사용자 직접 편집 시 원본 데이터 업데이트
 
         renderAll();
     }
 
+    // 명암 대비에 따른 가독성 글자색 산출 (가중 평균 명암 수치 기준)
     function getContrastColor(r, g, b) {
         const lum = (r * 299 + g * 587 + b * 114) / 1000;
         return lum > 120 ? '#000000' : '#FFFFFF';
     }
 
+    // 전체 화면 렌더링
     function renderAll() {
         const cells = document.querySelectorAll('.pixel-cell');
         cells.forEach(cell => {
@@ -589,18 +556,22 @@
             const c = parseInt(cell.dataset.col);
             const [red, green, blue] = pixelData[r][c];
 
+            // 메인 아트 렌더링
             cell.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
 
+            // Red 채널
             const cellR = document.getElementById(`r-${r}-${c}`);
             cellR.style.backgroundColor = `rgb(${red}, 0, 0)`;
             cellR.style.color = getContrastColor(red, 0, 0);
             cellR.innerText = red;
 
+            // Green 채널
             const cellG = document.getElementById(`g-${r}-${c}`);
             cellG.style.backgroundColor = `rgb(0, ${green}, 0)`;
             cellG.style.color = getContrastColor(0, green, 0);
             cellG.innerText = green;
 
+            // Blue 채널
             const cellB = document.getElementById(`b-${r}-${c}`);
             cellB.style.backgroundColor = `rgb(0, 0, ${blue})`;
             cellB.style.color = getContrastColor(0, 0, blue);
@@ -608,6 +579,7 @@
         });
     }
 
+    // 흑백 변환: R, G, B 성분 평균값의 반올림 적용
     function applyGrayscale() {
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
@@ -620,6 +592,7 @@
         renderAll();
     }
 
+    // 밝기 조절: 각 R, G, B 성분에 동일 값 덧셈/뺄셈 (범위: 0~255)
     function applyBrightness() {
         const delta = parseInt(document.getElementById('brightness-val').value) || 0;
 
@@ -637,34 +610,36 @@
         renderAll();
     }
 
+    // 원래대로 복원
     function restoreOriginal() {
         pixelData = JSON.parse(JSON.stringify(originalPixelData));
         selectPixel(selectedRow, selectedCol);
         renderAll();
     }
 
-    async function downloadImage() {
+    // PNG 내보내기 (성분 수치 포함 합성 캔버스)
+    function downloadImage() {
         const exportCanvas = document.createElement('canvas');
         const ctx = exportCanvas.getContext('2d');
 
-        const scale = 30; 
-        const padding = 25;
+        const scale = 24; // 픽셀당 확대 배율
+        const padding = 20;
         const channelWidth = GRID_SIZE * scale;
         
+        // 가로 구성: [ 메인 픽셀 아트 ] [ R 채널 ] [ G 채널 ] [ B 채널 ]
         exportCanvas.width = (channelWidth * 4) + (padding * 5);
         exportCanvas.height = channelWidth + (padding * 2) + 30;
 
+        // 배경 채우기
         ctx.fillStyle = '#FBF9F4';
         ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-        const titles = ['Canvas', 'Red Channel', 'Green Channel', 'Blue Channel'];
+        const titles = ['Original Art', 'Red Channel', 'Green Channel', 'Blue Channel'];
 
         function drawGridAt(startX, startY, getRgbFn, getValueFn, title) {
             ctx.fillStyle = '#1B4332';
-            ctx.font = 'bold 15px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillText(title, startX, startY - 10);
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText(title, startX, startY - 8);
 
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
@@ -674,10 +649,11 @@
                     ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
                     ctx.strokeRect(startX + c * scale, startY + r * scale, scale, scale);
 
+                    // 채널별 수치 텍스트 렌더링
                     if (getValueFn) {
                         const val = getValueFn(r, c);
                         ctx.fillStyle = getContrastColor(red, green, blue);
-                        ctx.font = 'bold 11px Consolas, monospace';
+                        ctx.font = 'bold 9px Consolas, monospace';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(val, startX + c * scale + scale / 2, startY + r * scale + scale / 2);
@@ -686,41 +662,22 @@
             }
         }
 
-        const topY = padding + 25;
+        const topY = padding + 20;
 
+        // 1. 메인 아트
         drawGridAt(padding, topY, (r, c) => pixelData[r][c], null, titles[0]);
+        // 2. R 채널
         drawGridAt(padding * 2 + channelWidth, topY, (r, c) => [pixelData[r][c][0], 0, 0], (r, c) => pixelData[r][c][0], titles[1]);
+        // 3. G 채널
         drawGridAt(padding * 3 + channelWidth * 2, topY, (r, c) => [0, pixelData[r][c][1], 0], (r, c) => pixelData[r][c][1], titles[2]);
+        // 4. B 채널
         drawGridAt(padding * 4 + channelWidth * 3, topY, (r, c) => [0, 0, pixelData[r][c][2]], (r, c) => pixelData[r][c][2], titles[3]);
 
-        exportCanvas.toBlob(async (blob) => {
-            if (!blob) return;
-
-            if ('showSaveFilePicker' in window) {
-                try {
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: 'pixel_art_rgb_matrix.png',
-                        types: [{
-                            description: 'PNG Image',
-                            accept: { 'image/png': ['.png'] },
-                        }],
-                    });
-                    const writable = await handle.createWritable();
-                    await writable.write(blob);
-                    await writable.close();
-                    return;
-                } catch (err) {
-                    if (err.name === 'AbortError') return;
-                }
-            }
-
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = 'pixel_art_rgb_matrix.png';
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-        });
+        // 파일 다운로드 연동
+        const link = document.createElement('a');
+        link.download = 'pixel_art_rgb_matrix.png';
+        link.href = exportCanvas.toDataURL('image/png');
+        link.click();
     }
 
     /* 배경 신경망 인터랙티브 효과 */
