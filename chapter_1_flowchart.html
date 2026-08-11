@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한국 교육용 순서도 에디터</title>
+    <title>픽셀 아트 & 이미지 처리 스튜디오</title>
     <style>
         :root {
             --c-bg-main: #FBF9F4; 
@@ -12,15 +12,14 @@
             --c-text-muted: #7D7569;
             --c-border: rgba(44, 42, 41, 0.1);
             --c-accent: #2383E2;
-            --c-accent-hover: #1A6CB8;
             --c-brand-green: #1B4332;
             --c-tag-bg: #E8F5E9;
-            --c-tag-text: #2E7D32;
+            --c-tab-bg: #F4F1EA;
             --c-removed-bg: #FFEBEE;
             --c-removed-text: #C62828;
-            --c-tab-bg: #F4F1EA;
         }
 
+        /* 참조 코드의 body 화면 비율 방식 적용 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
@@ -38,7 +37,7 @@
             overflow: hidden;
         }
 
-        /* 배경 신경망 애니메이션 Canvas */
+        /* 배경 신경망 Canvas */
         #neural-canvas {
             position: fixed;
             top: 0;
@@ -92,7 +91,7 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (3컬럼 구조) */
+        /* 참조 코드의 main-layout 비율 방식 적용 (calc(100vh - 110px)) */
         .main-layout {
             display: flex;
             width: 100%; 
@@ -115,200 +114,280 @@
             flex-direction: column;
         }
 
-        /* 1. 좌측 패널 (도형 기호 및 설명) */
-        .left-panel {
-            flex: 0.8; 
-            min-width: 200px;
-            max-width: 230px;
-            height: 100%;
-            gap: 16px;
-        }
-
         .section-title {
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
             margin-bottom: 12px;
             letter-spacing: 0.05em;
-        }
-
-        .symbol-btn {
-            width: 100%;
-            padding: 11px;
-            margin-bottom: 8px;
-            border: 1px solid rgba(27, 67, 50, 0.2);
-            background: var(--c-tag-bg);
-            color: var(--c-brand-green);
-            font-weight: bold;
-            font-size: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-        }
-        .symbol-btn:hover {
-            background: #d8f3dc;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(27, 67, 50, 0.08);
-        }
-
-        .info-box {
-            font-size: 11px;
-            color: var(--c-text-muted);
-            line-height: 1.6;
-            background-color: rgba(244, 241, 234, 0.6);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--c-border);
-        }
-
-        /* 2. 중앙 패널 (순서도 캔버스) */
-        .center-panel {
-            flex: 2.2;
-            height: 100%;
-            overflow: hidden;
-            gap: 10px;
-            position: relative;
-        }
-
-        #toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--c-border);
+            flex-shrink: 0;
+            height: 20px;
         }
 
-        .tool-group {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            letter-spacing: 0.03em;
-        }
-        .btn-primary { background: var(--c-brand-green); color: white; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-secondary { background: var(--c-tab-bg); color: var(--c-text-main); border: 1px solid var(--c-border); }
-        .btn-secondary:hover { background: #e8e4d9; }
-        .btn-danger { background: var(--c-removed-bg); color: var(--c-removed-text); border: 1px solid rgba(198, 40, 40, 0.2); }
-        .btn-danger:hover { background: #ffcdd2; }
-
-        #canvas-container {
-            flex: 1;
-            position: relative;
-            overflow: auto; /* 세로 스크롤 지원 */
-            background-color: rgba(255, 255, 255, 0.6);
-            border-radius: 8px;
-            border: 1px solid var(--c-border);
-            background-size: 20px 20px;
-            background-image: radial-gradient(circle, rgba(44, 42, 41, 0.1) 1px, transparent 1px);
-        }
-
-        svg#connections {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        /* 3. 우측 패널 (의조코드 상단 / 모니터링 하단) */
-        .right-panel {
-            flex: 1.2;
-            min-width: 280px;
+        /* 좌측 패널 비율 구조 */
+        .left-panel {
+            flex: 0.85;
+            min-width: 320px;
             height: 100%;
             display: flex;
             flex-direction: column;
             gap: 14px;
         }
 
-        .panel-box {
+        .grid-container {
             flex: 1;
             display: flex;
-            flex-direction: column;
-            background: rgba(244, 241, 234, 0.5);
-            border: 1px solid var(--c-border);
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
+            border: 1px solid var(--c-border);
             padding: 12px;
             box-sizing: border-box;
             overflow: hidden;
         }
 
-        .panel-box h4 {
-            margin: 0 0 8px 2px;
-            color: var(--c-brand-green);
-            font-size: 12px;
-            font-weight: bold;
+        #pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+            max-width: 48vh;
+            max-height: 48vh;
+            aspect-ratio: 1;
+            background-color: #DDD;
+            border: 2px solid var(--c-brand-green);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .pixel-cell {
+            background-color: #FFFFFF;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .pixel-cell:hover {
+            opacity: 0.85;
+        }
+        .pixel-cell.selected {
+            outline: 3px solid var(--c-accent);
+            outline-offset: -3px;
+            z-index: 2;
+        }
+
+        /* 좌측 슬라이더 컨트롤 박스 */
+        .control-box {
+            background: rgba(244, 241, 234, 0.6);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 140px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .slider-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: bold;
         }
 
-        .panel-content {
+        .slider-row label {
+            width: 15px;
+        }
+
+        .slider-row input[type="range"] {
             flex: 1;
-            background: #FFFFFF;
-            border: 1px solid var(--c-border);
-            padding: 10px;
-            border-radius: 6px;
-            overflow-y: auto;
-            font-size: 12px;
-            white-space: pre-wrap;
-            line-height: 1.5;
-            color: var(--c-text-main);
-            font-family: 'Consolas', monospace;
+            accent-color: var(--c-brand-green);
         }
 
-        /* 노드 디자인 */
-        .node {
-            position: absolute;
-            width: 130px;
-            height: 50px;
+        .val-input {
+            width: 42px;
+            height: 22px;
+            text-align: center;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: var(--c-text-main);
+        }
+
+        .pos-indicator {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--c-brand-green);
+            text-align: right;
+            padding-left: 6px;
+            white-space: nowrap;
+            border-left: 1px solid var(--c-border);
+        }
+
+        /* 우측 패널 비율 구조 */
+        .right-panel {
+            flex: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .channels-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            min-height: 0;
+        }
+
+        .channel-card {
+            background: rgba(244, 241, 234, 0.4);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .grid-box-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            max-width: 48vh;
+            max-height: 48vh;
+            aspect-ratio: 1;
+        }
+
+        .grid-box-container h4 {
+            margin: 0 0 6px 0;
+            font-size: 13px;
+            color: var(--c-brand-green);
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 1.5px;
+            width: 100%;
+            height: 100%;
+            background-color: #DDD;
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            cursor: move;
-            user-select: none;
-            box-shadow: 0 4px 12px rgba(44, 42, 41, 0.06);
-            transition: box-shadow 0.2s, border-color 0.2s, background-color 0.2s;
-            background: white;
-            border: 2px solid var(--c-brand-green);
-            color: var(--c-text-main);
-            text-align: center;
             font-size: 12px;
-            padding: 4px;
-            box-sizing: border-box;
-        }
-        .node.selected {
-            border-color: var(--c-accent);
-            box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.25);
-        }
-        .node.active-exec {
-            border-color: #2E7D32;
-            background-color: #E8F5E9;
-            box-shadow: 0 0 15px rgba(46, 125, 50, 0.4);
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            user-select: none;
+            overflow: hidden;
         }
 
-        /* 도형 종류별 스타일 */
-        .type-start, .type-end { border-radius: 25px; background: #FFF9C4; border-color: #F57F17; color: #F57F17; }
-        .type-process { border-radius: 6px; background: #E1F5FE; border-color: #0288D1; color: #0288D1; }
-        .type-io { transform: skewX(-15deg); background: #F3E5F5; border-color: #7B1FA2; color: #7B1FA2; }
-        .type-io span { transform: skewX(15deg); }
-        .type-decision { width: 90px; height: 90px; transform: rotate(45deg); background: #FFEBEE; border-color: #C62828; color: #C62828; margin: 10px; }
-        .type-decision span { transform: rotate(-45deg); display: block; }
+        /* 하단 툴바 */
+        .action-toolbar {
+            background: rgba(244, 241, 234, 0.6);
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            height: 140px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .btn-action, .btn-brightness-group {
+            width: 160px;
+            height: 56px;
+            box-sizing: border-box;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.03em;
+        }
+
+        .btn-primary { 
+            background: var(--c-brand-green); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.15); 
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-secondary { 
+            background: var(--c-tab-bg); 
+            color: var(--c-text-main); 
+            border: 1px solid var(--c-border); 
+        }
+        .btn-secondary:hover { background: #e8e4d9; }
+
+        .btn-brightness-group {
+            background: var(--c-tab-bg);
+            border: 1px solid var(--c-border);
+            padding: 4px 8px;
+            justify-content: space-between;
+        }
+
+        .btn-brightness-label {
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--c-text-main);
+            cursor: pointer;
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-brightness-label:hover {
+            color: var(--c-brand-green);
+        }
+
+        .num-input-inline {
+            width: 52px;
+            height: 32px;
+            border: 1px solid var(--c-border);
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+            font-family: 'Consolas', monospace;
+            background: #FFFFFF;
+            color: var(--c-text-main);
+        }
     </style>
 </head>
 <body>
@@ -321,300 +400,331 @@
         ← BACK
     </button>
     <div class="navbar-brand-text">
-        FLOWCHART
+        PIXEL ART
     </div>
 </nav>
 
 <div class="main-layout">
-    <!-- 1. 좌측 사이드바: 교과서 표준 기호 -->
+    <!-- 좌측 패널: 10x10 픽셀 아트 캔버스 및 RGB 팔레트 -->
     <div class="card left-panel">
-        <div>
-            <div class="section-title">교육과정 표준 기호</div>
-            <button class="symbol-btn" onclick="createNode('start', '시작')">🟡 단말 (시작)</button>
-            <button class="symbol-btn" onclick="createNode('io', '입력: X')">▱ 입출력 (입/출력)</button>
-            <button class="symbol-btn" onclick="createNode('process', 'X = X + 1')">▭ 처리 (연산/대입)</button>
-            <button class="symbol-btn" onclick="createNode('decision', 'X > 5 ?')">◇ 판단 (조건문)</button>
-            <button class="symbol-btn" onclick="createNode('end', '끝')">🔴 단말 (끝)</button>
+        <div class="section-title">
+            <span>🎨 캔버스 (10 × 10)</span>
+        </div>
+        <div class="grid-container">
+            <div id="pixel-grid"></div>
         </div>
         
-        <div class="info-box">
-            💡 <strong>도움말</strong><br>
-            • 노드를 순서대로 클릭하면 <strong>화살표로 연결</strong>됩니다.<br>
-            • 노드 더블클릭 시 <strong>텍스트 수정</strong> 가능.
+        <div class="control-box">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: bold; color: var(--c-brand-green);">RGB 색상 조절</span>
+                <span id="pos-display" class="pos-indicator">선택: 1행, 1열</span>
+            </div>
+            
+            <div class="slider-row" style="color: #C62828;">
+                <label>R</label>
+                <input type="range" id="slider-r" min="0" max="255" value="255" oninput="syncColorInput('r', this.value)">
+                <input type="number" id="num-r" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('r', this.value)">
+            </div>
+            <div class="slider-row" style="color: #2E7D32;">
+                <label>G</label>
+                <input type="range" id="slider-g" min="0" max="255" value="255" oninput="syncColorInput('g', this.value)">
+                <input type="number" id="num-g" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('g', this.value)">
+            </div>
+            <div class="slider-row" style="color: #1565C0;">
+                <label>B</label>
+                <input type="range" id="slider-b" min="0" max="255" value="255" oninput="syncColorInput('b', this.value)">
+                <input type="number" id="num-b" class="val-input" min="0" max="255" value="255" oninput="syncColorSlider('b', this.value)">
+            </div>
         </div>
     </div>
 
-    <!-- 2. 중앙 메인: 순서도 캔버스 (세로형) -->
-    <div class="card center-panel">
-        <div id="toolbar">
-            <div class="tool-group">
-                <button class="btn btn-primary" onclick="runSimulation()">▶ 실행 시뮬레이션</button>
-                <button class="btn btn-secondary" onclick="resetCanvas()">🔄 새로고침</button>
-            </div>
-            <div class="tool-group">
-                <button class="btn btn-secondary" onclick="exportImage()">📷 내보내기</button>
-                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
-            </div>
-        </div>
-
-        <div id="canvas-container">
-            <svg id="connections">
-                <defs>
-                    <marker id="arrow" viewBox="0 0 10 10" refX="20" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#1B4332"/>
-                    </marker>
-                </defs>
-            </svg>
-        </div>
-    </div>
-
-    <!-- 3. 우측 패널: 위(의조코드), 아래(모니터링) -->
+    <!-- 우측 패널: R, G, B 채널 행렬 및 툴바 -->
     <div class="card right-panel">
-        <!-- 상단: 한국어 의조코드 -->
-        <div class="panel-box">
-            <h4>📄 한국어 의조코드 (Pseudocode)</h4>
-            <div id="pseudocode" class="panel-content">// 순서도를 작성하면 한국어 코드가 실시간 자동 생성됩니다.</div>
+        <div class="section-title">
+            <span>🔍 R, G, B 채널 행렬</span>
+        </div>
+        
+        <div class="channels-container">
+            <div class="channel-card">
+                <div class="grid-box-container">
+                    <h4>Red 채널</h4>
+                    <div id="channel-r" class="channel-grid"></div>
+                </div>
+            </div>
+            <div class="channel-card">
+                <div class="grid-box-container">
+                    <h4>Green 채널</h4>
+                    <div id="channel-g" class="channel-grid"></div>
+                </div>
+            </div>
+            <div class="channel-card">
+                <div class="grid-box-container">
+                    <h4>Blue 채널</h4>
+                    <div id="channel-b" class="channel-grid"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- 하단: 실행 모니터링 콘솔 -->
-        <div class="panel-box">
-            <h4>💻 실행 콘솔 & 변수 상태</h4>
-            <div id="console-output" class="panel-content">시뮬레이션을 실행하면 흐름과 상태가 여기에 표시됩니다.</div>
+        <div class="action-toolbar">
+            <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
+            
+            <div class="btn-brightness-group">
+                <button class="btn-brightness-label" onclick="applyBrightness()">☀️ 밝기 조절</button>
+                <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="0" placeholder="-255~255">
+            </div>
+
+            <button class="btn-action btn-secondary" onclick="restoreOriginal()">🔄 원래대로</button>
+            <button class="btn-action btn-primary" onclick="downloadImage()">💾 다운로드</button>
         </div>
     </div>
 </div>
 
 <script>
-    let nodes = [];
-    let connections = [];
-    let selectedNode = null;
-    let connectSourceNode = null;
-    let nodeIdCounter = 1;
+    const GRID_SIZE = 10;
+    let pixelData = Array.from({ length: GRID_SIZE }, () => 
+        Array.from({ length: GRID_SIZE }, () => [255, 255, 255])
+    );
+    let originalPixelData = JSON.parse(JSON.stringify(pixelData));
 
-    const canvas = document.getElementById('canvas-container');
-    const svg = document.getElementById('connections');
+    let selectedRow = 0;
+    let selectedCol = 0;
 
-    // 노드 생성 (세로 정렬 가이드)
-    function createNode(type, defaultText) {
-        const id = 'node_' + nodeIdCounter++;
-        const nodeEl = document.createElement('div');
-        nodeEl.className = `node type-${type}`;
-        nodeEl.id = id;
-        
-        const textSpan = document.createElement('span');
-        textSpan.innerText = defaultText;
-        nodeEl.appendChild(textSpan);
-
-        // 중앙 세로 배치를 위한 기본 좌표 계산
-        const canvasWidth = canvas.clientWidth || 400;
-        const x = (canvasWidth / 2) - 65; // 중앙 정렬
-        const y = 40 + (nodes.length * 80); // 위에서 아래로 세로 정렬
-
-        nodeEl.style.left = x + 'px';
-        nodeEl.style.top = y + 'px';
-
-        const nodeData = { id, type, text: defaultText, x, y, el: nodeEl };
-        nodes.push(nodeData);
-        canvas.appendChild(nodeEl);
-
-        initNodeEvents(nodeData);
-        updatePseudocode();
-    }
-
-    function initNodeEvents(node) {
-        let isDragging = false;
-        let offsetX, offsetY;
-
-        node.el.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            
-            if (connectSourceNode && connectSourceNode !== node) {
-                addConnection(connectSourceNode, node);
-                connectSourceNode = null;
-                clearSelection();
-                return;
-            }
-
-            selectNode(node);
-            isDragging = true;
-            offsetX = e.clientX - node.x;
-            offsetY = e.clientY - node.y;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            node.x = e.clientX - offsetX;
-            node.y = e.clientY - offsetY;
-            node.el.style.left = node.x + 'px';
-            node.el.style.top = node.y + 'px';
-            drawConnections();
-        });
-
-        window.addEventListener('mouseup', () => { isDragging = false; });
-
-        node.el.addEventListener('dblclick', () => {
-            const newText = prompt('노드 텍스트를 입력하세요:', node.text);
-            if (newText !== null) {
-                node.text = newText;
-                node.el.querySelector('span').innerText = newText;
-                updatePseudocode();
-            }
-        });
-    }
-
-    function selectNode(node) {
-        clearSelection();
-        selectedNode = node;
-        connectSourceNode = node;
-        node.el.classList.add('selected');
-    }
-
-    function clearSelection() {
-        nodes.forEach(n => n.el.classList.remove('selected'));
-        selectedNode = null;
-    }
-
-    canvas.addEventListener('click', () => {
-        clearSelection();
-        connectSourceNode = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        initGrids();
+        selectPixel(0, 0);
+        renderAll();
     });
 
-    function addConnection(source, target) {
-        if (connections.some(c => c.source.id === source.id && c.target.id === target.id)) return;
+    function initGrids() {
+        const mainGrid = document.getElementById('pixel-grid');
+        const gridR = document.getElementById('channel-r');
+        const gridG = document.getElementById('channel-g');
+        const gridB = document.getElementById('channel-b');
+
+        mainGrid.innerHTML = '';
+        gridR.innerHTML = '';
+        gridG.innerHTML = '';
+        gridB.innerHTML = '';
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'pixel-cell';
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.addEventListener('click', () => selectPixel(r, c));
+                mainGrid.appendChild(cell);
+
+                const cellR = document.createElement('div');
+                cellR.className = 'channel-cell';
+                cellR.id = `r-${r}-${c}`;
+                gridR.appendChild(cellR);
+
+                const cellG = document.createElement('div');
+                cellG.className = 'channel-cell';
+                cellG.id = `g-${r}-${c}`;
+                gridG.appendChild(cellG);
+
+                const cellB = document.createElement('div');
+                cellB.className = 'channel-cell';
+                cellB.id = `b-${r}-${c}`;
+                gridB.appendChild(cellB);
+            }
+        }
+    }
+
+    function selectPixel(r, c) {
+        selectedRow = r;
+        selectedCol = c;
+
+        document.querySelectorAll('.pixel-cell').forEach(cell => cell.classList.remove('selected'));
+        const target = document.querySelector(`.pixel-cell[data-row="${r}"][data-col="${c}"]`);
+        if (target) target.classList.add('selected');
+
+        document.getElementById('pos-display').innerText = `선택: ${r + 1}행, ${c + 1}열`;
+
+        const [rgbR, rgbG, rgbB] = pixelData[r][c];
+
+        document.getElementById('slider-r').value = rgbR;
+        document.getElementById('num-r').value = rgbR;
+
+        document.getElementById('slider-g').value = rgbG;
+        document.getElementById('num-g').value = rgbG;
+
+        document.getElementById('slider-b').value = rgbB;
+        document.getElementById('num-b').value = rgbB;
+    }
+
+    function syncColorInput(channel, value) {
+        let val = Math.max(0, Math.min(255, parseInt(value) || 0));
+        document.getElementById(`num-${channel}`).value = val;
+        applyColorUpdate();
+    }
+
+    function syncColorSlider(channel, value) {
+        let val = Math.max(0, Math.min(255, parseInt(value) || 0));
+        document.getElementById(`slider-${channel}`).value = val;
+        applyColorUpdate();
+    }
+
+    function applyColorUpdate() {
+        const rVal = parseInt(document.getElementById('slider-r').value);
+        const gVal = parseInt(document.getElementById('slider-g').value);
+        const bVal = parseInt(document.getElementById('slider-b').value);
+
+        pixelData[selectedRow][selectedCol] = [rVal, gVal, bVal];
+        originalPixelData[selectedRow][selectedCol] = [rVal, gVal, bVal];
+
+        renderAll();
+    }
+
+    function getContrastColor(r, g, b) {
+        const lum = (r * 299 + g * 587 + b * 114) / 1000;
+        return lum > 120 ? '#000000' : '#FFFFFF';
+    }
+
+    function renderAll() {
+        const cells = document.querySelectorAll('.pixel-cell');
+        cells.forEach(cell => {
+            const r = parseInt(cell.dataset.row);
+            const c = parseInt(cell.dataset.col);
+            const [red, green, blue] = pixelData[r][c];
+
+            cell.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+
+            const cellR = document.getElementById(`r-${r}-${c}`);
+            cellR.style.backgroundColor = `rgb(${red}, 0, 0)`;
+            cellR.style.color = getContrastColor(red, 0, 0);
+            cellR.innerText = red;
+
+            const cellG = document.getElementById(`g-${r}-${c}`);
+            cellG.style.backgroundColor = `rgb(0, ${green}, 0)`;
+            cellG.style.color = getContrastColor(0, green, 0);
+            cellG.innerText = green;
+
+            const cellB = document.getElementById(`b-${r}-${c}`);
+            cellB.style.backgroundColor = `rgb(0, 0, ${blue})`;
+            cellB.style.color = getContrastColor(0, 0, blue);
+            cellB.innerText = blue;
+        });
+    }
+
+    function applyGrayscale() {
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const [red, green, blue] = pixelData[r][c];
+                const avg = Math.round((red + green + blue) / 3);
+                pixelData[r][c] = [avg, avg, avg];
+            }
+        }
+        selectPixel(selectedRow, selectedCol);
+        renderAll();
+    }
+
+    function applyBrightness() {
+        const delta = parseInt(document.getElementById('brightness-val').value) || 0;
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const [red, green, blue] = pixelData[r][c];
+                pixelData[r][c] = [
+                    Math.max(0, Math.min(255, red + delta)),
+                    Math.max(0, Math.min(255, green + delta)),
+                    Math.max(0, Math.min(255, blue + delta))
+                ];
+            }
+        }
+        selectPixel(selectedRow, selectedCol);
+        renderAll();
+    }
+
+    function restoreOriginal() {
+        pixelData = JSON.parse(JSON.stringify(originalPixelData));
+        selectPixel(selectedRow, selectedCol);
+        renderAll();
+    }
+
+    async function downloadImage() {
+        const exportCanvas = document.createElement('canvas');
+        const ctx = exportCanvas.getContext('2d');
+
+        const scale = 30; 
+        const padding = 25;
+        const channelWidth = GRID_SIZE * scale;
         
-        let label = "";
-        if (source.type === 'decision') {
-            label = prompt("'참(Yes)' 연결이면 '참', '거짓(No)' 연결이면 '거짓'을 입력하세요:", "참") || "";
+        exportCanvas.width = (channelWidth * 4) + (padding * 5);
+        exportCanvas.height = channelWidth + (padding * 2) + 30;
+
+        ctx.fillStyle = '#FBF9F4';
+        ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+        const titles = ['Canvas', 'Red Channel', 'Green Channel', 'Blue Channel'];
+
+        function drawGridAt(startX, startY, getRgbFn, getValueFn, title) {
+            ctx.fillStyle = '#1B4332';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText(title, startX, startY - 10);
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const [red, green, blue] = getRgbFn(r, c);
+                    ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+                    ctx.fillRect(startX + c * scale, startY + r * scale, scale, scale);
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                    ctx.strokeRect(startX + c * scale, startY + r * scale, scale, scale);
+
+                    if (getValueFn) {
+                        const val = getValueFn(r, c);
+                        ctx.fillStyle = getContrastColor(red, green, blue);
+                        ctx.font = 'bold 11px Consolas, monospace';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(val, startX + c * scale + scale / 2, startY + r * scale + scale / 2);
+                    }
+                }
+            }
         }
 
-        connections.push({ source, target, label });
-        drawConnections();
-        updatePseudocode();
-    }
+        const topY = padding + 25;
 
-    function drawConnections() {
-        const paths = svg.querySelectorAll('g');
-        paths.forEach(p => p.remove());
+        drawGridAt(padding, topY, (r, c) => pixelData[r][c], null, titles[0]);
+        drawGridAt(padding * 2 + channelWidth, topY, (r, c) => [pixelData[r][c][0], 0, 0], (r, c) => pixelData[r][c][0], titles[1]);
+        drawGridAt(padding * 3 + channelWidth * 2, topY, (r, c) => [0, pixelData[r][c][1], 0], (r, c) => pixelData[r][c][1], titles[2]);
+        drawGridAt(padding * 4 + channelWidth * 3, topY, (r, c) => [0, 0, pixelData[r][c][2]], (r, c) => pixelData[r][c][2], titles[3]);
 
-        connections.forEach(conn => {
-            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            
-            const sx = conn.source.x + 65;
-            const sy = conn.source.y + 25;
-            const tx = conn.target.x + 65;
-            const ty = conn.target.y + 25;
+        exportCanvas.toBlob(async (blob) => {
+            if (!blob) return;
 
-            const d = `M ${sx} ${sy} C ${sx} ${(sy + ty) / 2}, ${tx} ${(sy + ty) / 2}, ${tx} ${ty}`;
-            path.setAttribute('d', d);
-            path.setAttribute('stroke', '#1B4332');
-            path.setAttribute('stroke-width', '2');
-            path.setAttribute('fill', 'none');
-            path.setAttribute('marker-end', 'url(#arrow)');
-
-            g.appendChild(path);
-
-            if (conn.label) {
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', (sx + tx) / 2 + 5);
-                text.setAttribute('y', (sy + ty) / 2 - 5);
-                text.setAttribute('fill', '#C62828');
-                text.setAttribute('font-size', '11');
-                text.setAttribute('font-weight', 'bold');
-                text.textContent = conn.label;
-                g.appendChild(text);
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'pixel_art_rgb_matrix.png',
+                        types: [{
+                            description: 'PNG Image',
+                            accept: { 'image/png': ['.png'] },
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
             }
 
-            svg.appendChild(g);
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'pixel_art_rgb_matrix.png';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
         });
     }
 
-    function updatePseudocode() {
-        const codeBox = document.getElementById('pseudocode');
-        if (nodes.length === 0) {
-            codeBox.innerText = "// 순서도를 작성하면 한국어 코드가 실시간 자동 생성됩니다.";
-            return;
-        }
-
-        let codeStr = "알고리즘 시작:\n";
-        nodes.forEach((n) => {
-            if (n.type === 'start') codeStr += `1. 시작\n`;
-            else if (n.type === 'io') codeStr += `2. [입출력] ${n.text}\n`;
-            else if (n.type === 'process') codeStr += `3. [처리] ${n.text} 실행\n`;
-            else if (n.type === 'decision') codeStr += `4. [조건] 만약 (${n.text}) 검사\n`;
-            else if (n.type === 'end') codeStr += `5. 종료\n`;
-        });
-        codeBox.innerText = codeStr;
-    }
-
-    async function runSimulation() {
-        const consoleBox = document.getElementById('console-output');
-        consoleBox.innerText = "▶ 시뮬레이션 시작...\n";
-
-        const startNode = nodes.find(n => n.type === 'start');
-        if (!startNode) {
-            alert('시작 노드가 없습니다!');
-            return;
-        }
-
-        let currentNode = startNode;
-
-        while (currentNode) {
-            nodes.forEach(n => n.el.classList.remove('active-exec'));
-            currentNode.el.classList.add('active-exec');
-
-            consoleBox.innerText += `[실행 중] -> ${currentNode.text}\n`;
-            await new Promise(r => setTimeout(r, 900));
-
-            if (currentNode.type === 'end') {
-                consoleBox.innerText += "✅ 성공적으로 종료되었습니다.\n";
-                break;
-            }
-
-            const nextConns = connections.filter(c => c.source.id === currentNode.id);
-            if (nextConns.length === 0) {
-                consoleBox.innerText += "⚠️ 연결된 다음 흐름선이 없습니다.\n";
-                break;
-            }
-
-            if (currentNode.type === 'decision') {
-                const yesConn = nextConns.find(c => c.label === '참') || nextConns[0];
-                currentNode = yesConn.target;
-            } else {
-                currentNode = nextConns[0].target;
-            }
-        }
-
-        setTimeout(() => {
-            nodes.forEach(n => n.el.classList.remove('active-exec'));
-        }, 1000);
-    }
-
-    function deleteSelected() {
-        if (!selectedNode) return;
-        nodes = nodes.filter(n => n.id !== selectedNode.id);
-        connections = connections.filter(c => c.source.id !== selectedNode.id && c.target.id !== selectedNode.id);
-        selectedNode.el.remove();
-        clearSelection();
-        drawConnections();
-        updatePseudocode();
-    }
-
-    function resetCanvas() {
-        nodes.forEach(n => n.el.remove());
-        nodes = [];
-        connections = [];
-        nodeIdCounter = 1;
-        drawConnections();
-        updatePseudocode();
-        document.getElementById('console-output').innerText = "초기화되었습니다.";
-    }
-
-    function exportImage() {
-        alert("화면 캡처나 브라우저 인쇄(Ctrl+P)를 이용하여 보관할 수 있습니다.");
-    }
-
-    /* 신경망 인터랙티브 배경 스크립트 */
+    /* 배경 신경망 인터랙티브 효과 */
     const bgCanvas = document.getElementById('neural-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -662,7 +772,8 @@
         for (let i = 0; i < particles.length; i++) {
             particles[i].update(); particles[i].draw();
             for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+                const dx = particles[i].x - particles[j].x; 
+                const dy = particles[i].y - particles[j].y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < 110) {
                     bgCtx.beginPath(); bgCtx.moveTo(particles[i].x, particles[i].y); bgCtx.lineTo(particles[j].x, particles[j].y);
