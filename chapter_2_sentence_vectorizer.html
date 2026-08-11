@@ -321,6 +321,50 @@
             border-radius: 4px; border: 1px solid rgba(44, 42, 41, 0.05); color: var(--c-vector-text); word-break: break-all;
         }
 
+        /* 유사도 행렬 스타일 */
+        .sim-container { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .sim-block {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--c-border);
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+        .sim-block-title { font-size: 12px; font-weight: bold; color: var(--c-brand-green); margin-bottom: 2px; }
+        .sim-formula {
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            color: var(--c-text-muted);
+            margin-bottom: 8px;
+        }
+        .sim-table-wrap { width: 100%; overflow-x: auto; }
+        table.sim-table {
+            border-collapse: collapse;
+            background: #fff;
+            font-size: 12px;
+        }
+        .sim-table th, .sim-table td {
+            border: 1px solid var(--c-border);
+            padding: 6px 12px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .sim-table th {
+            background: var(--c-tab-bg);
+            color: var(--c-brand-green);
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .sim-table td {
+            font-family: 'Consolas', monospace;
+            color: var(--c-vector-text);
+        }
+        .sim-table td.diag { font-weight: bold; color: var(--c-brand-green); }
+        .sim-hint {
+            font-size: 11px;
+            color: var(--c-text-muted);
+            margin-top: 6px;
+        }
+
         .right-panel-content::-webkit-scrollbar, .textarea-list::-webkit-scrollbar { width: 6px; }
         .right-panel-content::-webkit-scrollbar-track, .textarea-list::-webkit-scrollbar-track { background: transparent; }
         .right-panel-content::-webkit-scrollbar-thumb, .textarea-list::-webkit-scrollbar-thumb { background: rgba(44, 42, 41, 0.15); border-radius: 3px; }
@@ -456,6 +500,7 @@
             <button id="tab_1" class="nav-btn" onclick="switchTab('1')">1. 전체 단어집합</button>
             <button id="tab_2" class="nav-btn" onclick="switchTab('2')">2. 원-핫 벡터</button>
             <button id="tab_3" class="nav-btn" onclick="switchTab('3')">3. 빈도수 벡터</button>
+            <button id="tab_4" class="nav-btn" onclick="switchTab('4')">4. 유사도 분석</button>
         </div>
 
         <div class="right-panel-content">
@@ -477,6 +522,13 @@
                     <div class="vector-container" id="freqContainer"></div>
                 </div>
             </div>
+
+            <div id="sec_4" class="result-section">
+                <h3>4. 유사도 분석 (Similarity Analysis)</h3>
+                <div class="result-box" style="display:block;">
+                    <div class="sim-container" id="simContainer"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -493,6 +545,10 @@ let currentSentences = [];
 let sentenceVocabMap = {}; // 각 문장별 단어가방 (중복 허용)
 let oneHotMatrix = [];
 let frequencyMatrix = [];
+let activeSentenceIndices = []; // 벡터/행렬 행 순서에 대응하는 실제 문장 번호
+let euclideanSimMatrix = [];
+let cosineSimMatrix = [];
+let jaccardSimMatrix = [];
 
 function updateCharCount(index) {
     const textarea = document.getElementById(`input_${index}`);
@@ -547,7 +603,7 @@ function updateControlButtons() {
 }
 
 function switchTab(tabId) {
-    const tabs = ['all', '1', '2', '3'];
+    const tabs = ['all', '1', '2', '3', '4'];
     tabs.forEach(t => {
         document.getElementById(`tab_${t}`).classList.remove('active');
         if(t !== 'all') document.getElementById(`sec_${t}`).classList.add('hidden');
@@ -638,9 +694,14 @@ function clearAllInputs() {
     currentSentences = [];
     oneHotMatrix = [];
     frequencyMatrix = [];
+    activeSentenceIndices = [];
+    euclideanSimMatrix = [];
+    cosineSimMatrix = [];
+    jaccardSimMatrix = [];
 
     renderReadonlyVocab();
     renderVectorDisplays();
+    renderSimilarityMatrices();
 }
 
 function addWordToSentence(sentenceIdx) {
@@ -725,13 +786,16 @@ function recalculateUnionAndVectors(shouldSort = false) {
     }
 
     computeMatrixes();
+    computeSimilarityMatrices();
     renderReadonlyVocab();
     renderVectorDisplays();
+    renderSimilarityMatrices();
 }
 
 function computeMatrixes() {
     oneHotMatrix = [];
     frequencyMatrix = [];
+    activeSentenceIndices = [];
 
     for (let i = 0; i < inputCount; i++) {
         const inputVal = document.getElementById(`input_${i}`)?.value.trim();
@@ -750,7 +814,124 @@ function computeMatrixes() {
 
         frequencyMatrix.push(fVec);
         oneHotMatrix.push(ohVec);
+        activeSentenceIndices.push(i);
     }
+}
+
+// 💡 유사도 행렬 계산
+// - 유클리드 / 코사인 : 빈도수 벡터 사용
+// - 자카드 : 각 문장의 단어가방(중복 제거) 사용
+function computeSimilarityMatrices() {
+    euclideanSimMatrix = [];
+    cosineSimMatrix = [];
+    jaccardSimMatrix = [];
+
+    const n = activeSentenceIndices.length;
+    if (n === 0) return;
+
+    const wordSets = activeSentenceIndices.map(i => new Set(sentenceVocabMap[i] || []));
+
+    for (let a = 0; a < n; a++) {
+        const eRow = [], cRow = [], jRow = [];
+
+        for (let b = 0; b < n; b++) {
+            const v1 = frequencyMatrix[a] || [];
+            const v2 = frequencyMatrix[b] || [];
+
+            let sumSq = 0, dot = 0, norm1 = 0, norm2 = 0;
+            for (let k = 0; k < vocabulary.length; k++) {
+                const x = v1[k] || 0;
+                const y = v2[k] || 0;
+                sumSq += (x - y) * (x - y);
+                dot += x * y;
+                norm1 += x * x;
+                norm2 += y * y;
+            }
+
+            // 유클리드 유사도 = 1 / (1 + 유클리드 거리)
+            const distance = Math.sqrt(sumSq);
+            eRow.push(1 / (1 + distance));
+
+            // 코사인 유사도 = (A·B) / (|A||B|)
+            const denom = Math.sqrt(norm1) * Math.sqrt(norm2);
+            cRow.push(denom === 0 ? 0 : dot / denom);
+
+            // 자카드 유사도 = |A∩B| / |A∪B|
+            const setA = wordSets[a], setB = wordSets[b];
+            let interCount = 0;
+            setA.forEach(w => { if (setB.has(w)) interCount++; });
+            const unionCount = setA.size + setB.size - interCount;
+            jRow.push(unionCount === 0 ? 0 : interCount / unionCount);
+        }
+
+        euclideanSimMatrix.push(eRow);
+        cosineSimMatrix.push(cRow);
+        jaccardSimMatrix.push(jRow);
+    }
+}
+
+function buildSimTable(matrix) {
+    const labels = activeSentenceIndices.map(i => `문장 ${i + 1}`);
+
+    let html = '<div class="sim-table-wrap"><table class="sim-table"><thead><tr><th></th>';
+    labels.forEach(l => { html += `<th>${l}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    matrix.forEach((row, rIdx) => {
+        html += `<tr><th>${labels[rIdx]}</th>`;
+        row.forEach((val, cIdx) => {
+            const bg = `rgba(27, 67, 50, ${(val * 0.18).toFixed(3)})`;
+            const cls = (rIdx === cIdx) ? ' class="diag"' : '';
+            html += `<td${cls} style="background-color:${bg}">${val.toFixed(3)}</td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    return html;
+}
+
+function renderSimilarityMatrices() {
+    const container = document.getElementById("simContainer");
+    container.innerHTML = "";
+
+    if (activeSentenceIndices.length === 0 || vocabulary.length === 0) {
+        return;
+    }
+
+    const blocks = [
+        {
+            title: "① 유클리드 유사도 행렬 (Euclidean Similarity)",
+            formula: "sim = 1 / (1 + √Σ(Aᵢ - Bᵢ)²)  ·  빈도수 벡터 기준",
+            matrix: euclideanSimMatrix
+        },
+        {
+            title: "② 코사인 유사도 행렬 (Cosine Similarity)",
+            formula: "sim = (A · B) / (|A| × |B|)  ·  빈도수 벡터 기준",
+            matrix: cosineSimMatrix
+        },
+        {
+            title: "③ 자카드 유사도 행렬 (Jaccard Similarity)",
+            formula: "sim = |A ∩ B| / |A ∪ B|  ·  단어가방(중복 제외) 기준",
+            matrix: jaccardSimMatrix
+        }
+    ];
+
+    blocks.forEach(b => {
+        const block = document.createElement("div");
+        block.className = "sim-block";
+        block.innerHTML = `
+            <div class="sim-block-title">${b.title}</div>
+            <div class="sim-formula">${b.formula}</div>
+            ${buildSimTable(b.matrix)}
+        `;
+        container.appendChild(block);
+    });
+
+    const hint = document.createElement("div");
+    hint.className = "sim-hint";
+    hint.innerText = "m행 n열 값은 문장 m과 문장 n의 유사도입니다. 값이 1에 가까울수록 두 문장이 비슷합니다.";
+    container.appendChild(hint);
 }
 
 function renderReadonlyVocab() {
@@ -799,8 +980,10 @@ function handleDrop(e) {
         vocabulary.splice(targetIndex, 0, movedWord);
 
         computeMatrixes();
+        computeSimilarityMatrices();
         renderReadonlyVocab();
         renderVectorDisplays();
+        renderSimilarityMatrices();
     }
 }
 
