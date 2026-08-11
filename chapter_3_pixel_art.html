@@ -123,7 +123,7 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
-            height: 20px; /* 타이틀 높이 완전 동일화 */
+            height: 20px;
         }
 
         /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
@@ -136,7 +136,6 @@
             gap: 10px;
         }
 
-        /* 좌/우 컨테이너 패딩 및 높이 기준 일치화 */
         .grid-container {
             flex: 1;
             display: flex;
@@ -180,7 +179,7 @@
             z-index: 2;
         }
 
-        /* 좌측 슬라이더 컨트롤 박스 (높이 115px 고정) */
+        /* 좌측 슬라이더 컨트롤 박스 */
         .control-box {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
@@ -265,29 +264,27 @@
             height: 100%;
             box-sizing: border-box;
             overflow: hidden;
-            position: relative;
         }
 
-        /* 소제목 위치를 상단 absolute로 빼서 그리드가 카드 상단부터 정밀 배치되도록 변경 */
-        .channel-card h4 {
-            position: absolute;
-            top: 10px;
-            margin: 0;
-            font-size: 12px;
-            color: var(--c-brand-green);
-            text-align: center;
-            width: 100%;
-            z-index: 5;
-        }
-
-        .channel-grid-wrapper {
-            flex: 1;
-            width: 100%;
+        /* 행렬 박스 바로 위에 소제목이 바짝 정렬되도록 포함하는 랩퍼 */
+        .grid-box-container {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            margin-top: 15px; /* 상단 제목 공간 확보 후 캔버스와 높이 완전 정렬 */
+            width: 100%;
+            height: 100%;
+            max-width: 45vh;
+            max-height: 45vh;
+            aspect-ratio: 1;
+        }
+
+        .grid-box-container h4 {
+            margin: 0 0 6px 0;
+            font-size: 13px;
+            color: var(--c-brand-green);
+            text-align: center;
+            flex-shrink: 0;
         }
 
         .channel-grid {
@@ -297,9 +294,6 @@
             gap: 1.5px;
             width: 100%;
             height: 100%;
-            max-width: 45vh;
-            max-height: 45vh;
-            aspect-ratio: 1;
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
@@ -317,7 +311,7 @@
             overflow: hidden;
         }
 
-        /* 하단 툴바 (높이 115px) */
+        /* 하단 툴바 */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
@@ -454,20 +448,20 @@
         
         <div class="channels-container">
             <div class="channel-card">
-                <h4>Red 채널</h4>
-                <div class="channel-grid-wrapper">
+                <div class="grid-box-container">
+                    <h4>Red 채널</h4>
                     <div id="channel-r" class="channel-grid"></div>
                 </div>
             </div>
             <div class="channel-card">
-                <h4>Green 채널</h4>
-                <div class="channel-grid-wrapper">
+                <div class="grid-box-container">
+                    <h4>Green 채널</h4>
                     <div id="channel-g" class="channel-grid"></div>
                 </div>
             </div>
             <div class="channel-card">
-                <h4>Blue 채널</h4>
-                <div class="channel-grid-wrapper">
+                <div class="grid-box-container">
+                    <h4>Blue 채널</h4>
                     <div id="channel-b" class="channel-grid"></div>
                 </div>
             </div>
