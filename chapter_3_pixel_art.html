@@ -25,6 +25,8 @@
             --preview-size: 110px;
             /* ★ 채널 카드의 'Red 채널' 제목 높이만큼 캔버스를 내려 정렬 (JS가 갱신) */
             --canvas-offset: 25px;
+            /* ★ 툴바 입력 요소 공통 높이: RGB 표시(24px)와 밝기 입력칸(32px)의 평균 */
+            --field-h: 28px;
         }
 
         /* 화면 크기에 맞춰 가득 차도록 반응형 바디 설정 */
@@ -417,7 +419,8 @@
 
         .num-input-inline {
             width: 50px;
-            height: 32px;
+            height: var(--field-h);   /* ★ 스포이드 RGB 표시와 동일 */
+            box-sizing: border-box;
             border: 1px solid var(--c-border);
             border-radius: 4px;
             font-size: 14px;
@@ -441,7 +444,9 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            padding: 3px 6px;
+            height: var(--field-h);   /* ★ 밝기 입력칸과 동일 */
+            box-sizing: border-box;
+            padding: 0 6px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
             background: #FFFFFF;
@@ -666,8 +671,6 @@
                     <span id="ed-value">---,---,---</span>
                 </span>
             </button>
-            <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
-            
             <div class="btn-brightness-group" onclick="applyBrightness()" title="입력한 값만큼 모든 셀의 R, G, B를 더합니다 (-255 ~ 255)">
                 <span class="btn-brightness-label">☀️ 밝기 조절</span>
                 <input type="number" id="brightness-val" class="num-input-inline"
@@ -675,6 +678,8 @@
                        onclick="event.stopPropagation()"
                        onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyBrightness(); }">
             </div>
+
+            <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
 
             <button class="btn-action btn-secondary" onclick="restoreOriginal()">🔄 원래대로</button>
             <button class="btn-action btn-primary" onclick="downloadImage()">💾 다운로드</button>
