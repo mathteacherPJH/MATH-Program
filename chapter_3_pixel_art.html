@@ -19,23 +19,24 @@
             --c-removed-text: #C62828;
         }
 
-        /* 화면 창 크기가 작아지면 자동으로 가로/세로 스크롤바 생성 */
+        /* 화면 크기에 맞춰 가득 차도록 반응형 바디 설정 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
             padding: 16px;
-            padding-top: 75px; 
+            padding-top: 70px; 
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             letter-spacing: 0.03em;
             position: relative;
-            min-width: 1400px;
-            min-height: 700px;
+            width: 100vw;
+            height: 100vh;
             box-sizing: border-box;
-            overflow: auto;
+            overflow: hidden; /* 화면 크기에 딱 맞춤 */
         }
 
         /* 배경 신경망 Canvas */
@@ -43,6 +44,8 @@
             position: fixed;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
             pointer-events: none;
         }
@@ -53,7 +56,6 @@
             top: 0;
             left: 0;
             width: 100%;
-            min-width: 1400px;
             background-color: rgba(251, 249, 244, 0.85);
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
@@ -63,6 +65,7 @@
             align-items: center;
             justify-content: space-between;
             box-sizing: border-box;
+            height: 55px;
         }
 
         .back-btn {
@@ -93,16 +96,16 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (크기 고정) */
+        /* 메인 레이아웃 (유연한 비례 크기 설정) */
         .main-layout {
             display: flex;
-            width: 1360px; 
-            height: 600px; 
+            width: 100%;
+            max-width: 1600px;
+            height: calc(100vh - 90px); /* 화면 높이에 맞춰 반응 */
             gap: 14px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
-            flex-shrink: 0;
         }
 
         .card {
@@ -115,7 +118,6 @@
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
             display: flex;
             flex-direction: column;
-            flex-shrink: 0;
         }
 
         .section-title {
@@ -131,9 +133,10 @@
             height: 20px;
         }
 
-        /* 좌측 영역 (10x10 픽셀 아트 캔버스 고정 크기) */
+        /* 좌측 영역 (비율 할당) */
         .left-panel {
-            width: 380px;
+            flex: 1;
+            min-width: 300px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -142,7 +145,7 @@
 
         .grid-container {
             width: 100%;
-            height: 380px;
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -151,7 +154,7 @@
             border: 1px solid var(--c-border);
             padding: 12px;
             box-sizing: border-box;
-            flex-shrink: 0;
+            overflow: hidden;
         }
 
         #pixel-grid {
@@ -159,13 +162,16 @@
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 2px;
-            width: 350px;
-            height: 350px;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
             overflow: hidden;
-            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         .pixel-cell {
@@ -192,7 +198,7 @@
             flex-direction: column;
             justify-content: center;
             gap: 6px;
-            height: 115px;
+            height: 120px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -237,9 +243,9 @@
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (R, G, B 채널 그리드) */
+        /* 우측 영역 (비율 할당) */
         .right-panel {
-            width: 966px;
+            flex: 2.5;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -248,11 +254,11 @@
 
         .channels-container {
             width: 100%;
-            height: 380px;
+            flex: 1;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            flex-shrink: 0;
+            min-height: 0; /* flex 자식 overflow 방지 */
         }
 
         .channel-card {
@@ -266,6 +272,7 @@
             justify-content: center;
             height: 100%;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .grid-box-container {
@@ -273,8 +280,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 280px;
-            height: 350px;
+            width: 100%;
+            height: 100%;
         }
 
         .grid-box-container h4 {
@@ -290,20 +297,23 @@
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 1.5px;
-            width: 280px;
-            height: 280px;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: calc(100% - 25px);
+            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
             overflow: hidden;
-            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: clamp(8px, 0.8vw, 11px); /* 화면 크기 따라 폰트 가변 */
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
@@ -320,16 +330,17 @@
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            height: 115px;
+            height: 120px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
 
         .btn-action, .btn-brightness-group {
-            width: 160px;
-            height: 56px;
+            flex: 1;
+            max-width: 180px;
+            height: 50px;
             box-sizing: border-box;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -365,7 +376,7 @@
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -379,11 +390,11 @@
         }
 
         .num-input-inline {
-            width: 52px;
-            height: 32px;
+            width: 48px;
+            height: 28px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 12px;
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
@@ -471,7 +482,6 @@
             
             <div class="btn-brightness-group">
                 <button class="btn-brightness-label" onclick="applyBrightness()">☀️ 밝기 조절</button>
-                <!-- 기본값 0으로 수정된 부분 -->
                 <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="0" placeholder="-255~255">
             </div>
 
@@ -543,7 +553,6 @@
         const target = document.querySelector(`.pixel-cell[data-row="${r}"][data-col="${c}"]`);
         if (target) target.classList.add('selected');
 
-        // 1행 1열 시작으로 수정된 부분
         document.getElementById('pos-display').innerText = `선택: ${r + 1}행, ${c + 1}열`;
 
         const [rgbR, rgbG, rgbB] = pixelData[r][c];
@@ -734,8 +743,8 @@
     const mouse = { x: null, y: null, radius: 150 };
 
     function resizeBgCanvas() {
-        bgCanvas.width = Math.max(window.innerWidth, 1400);
-        bgCanvas.height = Math.max(window.innerHeight, 700);
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
         initParticles();
     }
 
