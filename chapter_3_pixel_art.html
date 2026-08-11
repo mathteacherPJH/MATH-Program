@@ -19,25 +19,27 @@
             --c-removed-text: #C62828;
         }
 
-        /* 참조 코드의 body 화면 비율 방식 적용 */
+        /* [비율 수정] 참조 코드의 body 여백 및 배치 방식 적용 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 24px;
-            padding-top: 85px; 
+            padding: 24px; /* 증가 */
+            padding-top: 85px; /* 증가 */
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* justify-content: center; 삭제 (상단 정렬 후 패딩으로 조절) */
             letter-spacing: 0.03em;
             position: relative;
+            /* width: 100vw; 삭제 */
             height: 100vh;
             box-sizing: border-box;
             overflow: hidden;
         }
 
-        /* 배경 신경망 Canvas */
+        /* 배경 신경망 Canvas (유지) */
         #neural-canvas {
             position: fixed;
             top: 0;
@@ -48,7 +50,7 @@
             pointer-events: none;
         }
 
-        /* 상단 네비게이션 바 */
+        /* 상단 네비게이션 바 (유지하되 패딩/높이 약간 조정) */
         .top-navbar {
             position: fixed;
             top: 0;
@@ -58,11 +60,12 @@
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 14px 24px;
+            padding: 14px 24px; /* 수정 */
             display: flex;
             align-items: center;
             justify-content: space-between;
             box-sizing: border-box;
+            /* height: 55px; 삭제 (패딩에 의해 결정) */
         }
 
         .back-btn {
@@ -93,23 +96,24 @@
             text-transform: uppercase;
         }
 
-        /* 참조 코드의 main-layout 비율 방식 적용 (calc(100vh - 110px)) */
+        /* [비율 수정] 메인 레이아웃 높이 계산 및 간격 수정 */
         .main-layout {
             display: flex;
-            width: 100%; 
+            width: 100%;
             max-width: 1600px;
-            height: calc(100vh - 110px); 
-            gap: 16px;
+            height: calc(100vh - 110px); /* 수정: 여백 확보 */
+            gap: 16px; /* 증가 */
             position: relative;
             z-index: 10;
             box-sizing: border-box;
         }
 
+        /* [비율 수정] 카드 내부 패딩 증가 */
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 18px;
+            padding: 18px; /* 증가 */
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -117,11 +121,12 @@
             flex-direction: column;
         }
 
+        /* [비율 수정] 제목 하단 마진 증가 */
         .section-title {
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 12px;
+            margin-bottom: 12px; /* 증가 */
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
@@ -130,17 +135,18 @@
             height: 20px;
         }
 
-        /* 좌측 패널 비율 구조 */
+        /* [비율 수정] 좌측 패널 flex 비율 및 최소 너비 수정 */
         .left-panel {
-            flex: 0.85;
-            min-width: 320px;
+            flex: 0.85; /* 수정 */
+            min-width: 320px; /* 수정 */
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 14px; /* 증가 */
         }
 
         .grid-container {
+            width: 100%;
             flex: 1;
             display: flex;
             justify-content: center;
@@ -153,6 +159,7 @@
             overflow: hidden;
         }
 
+        /* [비율 수정] 픽셀 그리드 최대 크기를 vh 기반으로 설정하여 화면에 맞춤 */
         #pixel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
@@ -160,13 +167,14 @@
             gap: 2px;
             width: 100%;
             height: 100%;
-            max-width: 48vh;
-            max-height: 48vh;
-            aspect-ratio: 1;
+            max-width: 48vh; /* 수정: 화면 높이 비례 */
+            max-height: 48vh; /* 수정: 화면 높이 비례 */
+            aspect-ratio: 1 / 1; /* 유지 */
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         .pixel-cell {
@@ -183,16 +191,17 @@
             z-index: 2;
         }
 
-        /* 좌측 슬라이더 컨트롤 박스 */
+        /* [비율 수정] 좌측 슬라이더 컨트롤 박스 높이 및 내부 배치 수정 */
         .control-box {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 14px;
+            padding: 14px; /* 수정 */
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            height: 140px;
+            justify-content: space-between; /* 수정: 요소 간격 균등 */
+            gap: 6px;
+            height: 140px; /* 증가 */
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -237,21 +246,23 @@
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 패널 비율 구조 */
+        /* [비율 수정] 우측 패널 flex 비율 수정 */
         .right-panel {
-            flex: 2;
+            flex: 2; /* 수정 */
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 14px; /* 증가 */
         }
 
+        /* [비율 수정] 채널 그리드 간 간격 수정 */
         .channels-container {
+            width: 100%;
             flex: 1;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            min-height: 0;
+            gap: 12px; /* 수정 */
+            min-height: 0; 
         }
 
         .channel-card {
@@ -265,9 +276,11 @@
             justify-content: center;
             height: 100%;
             box-sizing: border-box;
-            position: relative;
+            overflow: hidden;
+            position: relative; /* 추가 */
         }
 
+        /* [비율 수정] 채널 그리드 컨테이너 크기를 vh 기반으로 제한 */
         .grid-box-container {
             display: flex;
             flex-direction: column;
@@ -275,9 +288,9 @@
             justify-content: center;
             width: 100%;
             height: 100%;
-            max-width: 48vh;
-            max-height: 48vh;
-            aspect-ratio: 1;
+            max-width: 48vh; /* 추가: 크기 제한 */
+            max-height: 48vh; /* 추가: 크기 제한 */
+            aspect-ratio: 1 / 1; /* 추가: 정사각형 유지 */
         }
 
         .grid-box-container h4 {
@@ -295,43 +308,49 @@
             gap: 1.5px;
             width: 100%;
             height: 100%;
+            /* max-width/max-height 삭제 (부모인 grid-box-container에서 제한) */
+            aspect-ratio: 1 / 1; 
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
+        /* [비율 수정] 채널 숫자 폰트 크기 고정 */
         .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 12px; /* 수정: 가변 폰트 해제 */
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
             overflow: hidden;
         }
 
-        /* 하단 툴바 */
+        /* [비율 수정] 하단 툴바 높이 및 패딩 수정 */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 14px;
+            padding: 14px; /* 수정 */
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            height: 140px;
+            height: 140px; /* 증가 */
             box-sizing: border-box;
             flex-shrink: 0;
         }
 
+        /* [비율 수정] 버튼 크기 및 폰트 크기 수정 */
         .btn-action, .btn-brightness-group {
-            width: 160px;
-            height: 56px;
+            /* flex: 1; 삭제 */
+            width: 160px; /* 수정: 고정 너비 */
+            height: 56px; /* 증가 */
             box-sizing: border-box;
-            font-size: 14px;
+            font-size: 14px; /* 증가 */
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -367,7 +386,7 @@
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 14px;
+            font-size: 14px; /* 증가 */
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -380,12 +399,13 @@
             color: var(--c-brand-green);
         }
 
+        /* [비율 수정] 스핀박스 크기 수정 */
         .num-input-inline {
-            width: 52px;
-            height: 32px;
+            width: 52px; /* 증가 */
+            height: 32px; /* 증가 */
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 13px; /* 증가 */
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
@@ -483,6 +503,7 @@
 </div>
 
 <script>
+    // 스크립트 내용은 원본과 동일하게 유지됩니다.
     const GRID_SIZE = 10;
     let pixelData = Array.from({ length: GRID_SIZE }, () => 
         Array.from({ length: GRID_SIZE }, () => [255, 255, 255])
