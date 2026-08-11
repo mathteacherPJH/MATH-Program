@@ -17,29 +17,26 @@
             --c-tab-bg: #F4F1EA;
             --c-removed-bg: #FFEBEE;
             --c-removed-text: #C62828;
-
-            /* [수정] 메인 격자의 크기를 화면 높이 기준으로 계산하여 변수로 저장 (반응형의 핵심) */
-            /* 화면 높이의 60%에서 여백(컨트롤박스 등)을 뺀 값을 너비로 사용 */
-            --main-grid-width: calc(60vh - 120px); 
         }
 
+        /* 화면 크기에 맞춰 가득 차도록 반응형 바디 설정 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
             padding: 16px;
-            padding-top: 70px; /* navbar 높이 고려 */
+            padding-top: 70px; 
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* [수정] 중앙 정렬 대신 상단 정렬 */
+            justify-content: center;
             letter-spacing: 0.03em;
             position: relative;
             width: 100vw;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; 
+            overflow: hidden; /* 화면 크기에 딱 맞춤 */
         }
 
         /* 배경 신경망 Canvas */
@@ -99,25 +96,23 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (정사각형 유지를 위한 구조 변경) */
+        /* 메인 레이아웃 (유연한 비례 크기 설정) */
         .main-layout {
             display: flex;
             width: 100%;
-            max-width: 1800px; /* [수정] 최대 너비 확장 */
-            height: calc(100vh - 90px); /* [수정] 하단 여백 확보 */
-            gap: 20px; /* [수정] 간격 확대 */
+            max-width: 1600px;
+            height: calc(100vh - 90px); /* 화면 높이에 맞춰 반응 */
+            gap: 14px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
-            justify-content: center; /* [수정] 전체 레이아웃 중앙 정렬 */
-            overflow: hidden; /* [추가] 내부 스크롤 방지 */
         }
 
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 16px; /* [수정] 패딩 확대 */
+            padding: 14px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -129,7 +124,7 @@
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 12px; /* [수정] 마진 확대 */
+            margin-bottom: 8px;
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
@@ -138,34 +133,28 @@
             height: 20px;
         }
 
-        /* 좌측 영역: 고정 너비 및 화면 높이 기반 반응형 크기 */
+        /* 좌측 영역 (비율 할당) */
         .left-panel {
-            /* [수정] flex: 1 대신 고정 너비 설정. min/max 값을 주어 화면 높이에 따라 반응하게 함 */
-            width: var(--main-grid-width); 
-            min-width: 320px; /* [추가] 화면이 아주 작아져도 최소 크기 보장 */
-            max-width: 500px; /* [추가] 너무 커지는 것 방지 */
+            flex: 1;
+            min-width: 300px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            flex-shrink: 0; /* [추가] 우측 패널에 의해 줄어들지 않도록 설정 */
+            gap: 10px;
         }
 
-        /* [수정] 격자를 감싸는 컨테이너: 정사각형 비율 강제 */
         .grid-container {
             width: 100%;
-            aspect-ratio: 1 / 1; /* [추가] 절대적인 정사각형 비율 */
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
-            padding: 10px;
+            padding: 12px;
             box-sizing: border-box;
             overflow: hidden;
-            flex-shrink: 0; /* [추가] 비율 유지하며 쪼그라들지 않게 함 */
-            max-height: 60vh; /* [추가] 화면 높이 벗어남 방지 안전장치 */
         }
 
         #pixel-grid {
@@ -175,6 +164,9 @@
             gap: 2px;
             width: 100%;
             height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
@@ -201,12 +193,12 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px 16px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 8px;
-            /* height: 120px; [수정] 고정 높이 제거, 내용에 맞게 */
+            gap: 6px;
+            height: 120px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -214,7 +206,7 @@
         .slider-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-size: 11px;
             font-weight: bold;
         }
@@ -229,8 +221,8 @@
         }
 
         .val-input {
-            width: 45px;
-            height: 24px;
+            width: 42px;
+            height: 22px;
             text-align: center;
             font-family: 'Consolas', monospace;
             font-size: 11px;
@@ -246,49 +238,41 @@
             font-weight: bold;
             color: var(--c-brand-green);
             text-align: right;
-            padding-left: 8px;
+            padding-left: 6px;
             white-space: nowrap;
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (비율 할당 해제, 유연한 구조) */
+        /* 우측 영역 (비율 할당) */
         .right-panel {
-            flex: 1; /* [수정] 고정 비율(2.5) 제거, 남은 공간 모두 사용 */
+            flex: 2.5;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            min-width: 0; /* [추가] flex 자식 overflow 방지 */
+            gap: 10px;
         }
 
-        /* [수정] 3개 채널 격자가 좌측 캔버스와 동일한 크기의 정사각형이 되도록 설정 */
         .channels-container {
             width: 100%;
-            /* [수정] 높이를 좌측 캔버스 너비와 동일하게 설정하여 정사각형 비율 유도 */
-            height: var(--main-grid-width); 
-            min-height: 320px; /* [추가] 최소 크기 보장 */
-            max-height: 500px; /* [추가] 최대 크기 제한 */
+            flex: 1;
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* [수정] 3열 고정 */
-            gap: 12px;
-            flex-shrink: 0;
-            overflow: hidden;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            min-height: 0; /* flex 자식 overflow 방지 */
         }
 
         .channel-card {
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100%;
-            width: 100%; /* [추가] 너비 가득 채움 */
             box-sizing: border-box;
             overflow: hidden;
-            aspect-ratio: 1 / 1; /* [추가] 개별 채널 카드도 정사각형 강제 */
         }
 
         .grid-box-container {
@@ -301,7 +285,7 @@
         }
 
         .grid-box-container h4 {
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             font-size: 13px;
             color: var(--c-brand-green);
             text-align: center;
@@ -315,7 +299,9 @@
             gap: 1.5px;
             width: 100%;
             height: 100%;
-            /* [수정] aspect-ratio 제거 (부모 card에서 제어) */
+            max-width: 100%;
+            max-height: calc(100% - 25px);
+            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
@@ -327,8 +313,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* [수정] 폰트 크기를 격자 너비(vw)가 아닌 화면 높이(vh)에 맞게 조절 */
-            font-size: clamp(8px, 1.2vh, 11px); 
+            font-size: clamp(8px, 0.8vw, 11px); /* 화면 크기 따라 폰트 가변 */
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
@@ -340,22 +325,20 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px 16px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            /* height: 120px; [수정] 고정 높이 제거, 내용에 맞게 */
+            height: 120px;
             box-sizing: border-box;
-            flex: 1; /* [수정] 남은 하단 공간 모두 차지 */
-            min-height: 80px; /* [추가] 최소 높이 */
-            max-height: 120px; /* [추가] 너무 커지는 것 방지 */
+            flex-shrink: 0;
         }
 
         .btn-action, .btn-brightness-group {
             flex: 1;
-            max-width: 160px; /* [수정] 버튼 최대 너비 축소 */
-            height: 48px; /* [수정] 높이 약간 축소 */
+            max-width: 180px;
+            height: 50px;
             box-sizing: border-box;
             font-size: 13px;
             font-weight: bold;
@@ -386,7 +369,7 @@
         .btn-brightness-group {
             background: var(--c-tab-bg);
             border: 1px solid var(--c-border);
-            padding: 4px 10px;
+            padding: 4px 8px;
             justify-content: space-between;
         }
 
@@ -400,7 +383,7 @@
             padding: 4px 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
         .btn-brightness-label:hover {
             color: var(--c-brand-green);
