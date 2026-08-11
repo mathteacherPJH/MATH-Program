@@ -19,24 +19,22 @@
             --c-removed-text: #C62828;
         }
 
-        /* 화면 크기에 맞춰 가득 차도록 반응형 바디 설정 */
+        /* 참조 코드의 body 화면 비율 방식 적용 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 16px;
-            padding-top: 70px; 
+            padding: 24px;
+            padding-top: 85px; 
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             letter-spacing: 0.03em;
             position: relative;
-            width: 100vw;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* 화면 크기에 딱 맞춤 */
+            overflow: hidden;
         }
 
         /* 배경 신경망 Canvas */
@@ -60,12 +58,11 @@
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 12px 24px;
+            padding: 14px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             box-sizing: border-box;
-            height: 55px;
         }
 
         .back-btn {
@@ -96,13 +93,13 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (유연한 비례 크기 설정) */
+        /* 참조 코드의 main-layout 비율 방식 적용 (calc(100vh - 110px)) */
         .main-layout {
             display: flex;
-            width: 100%;
+            width: 100%; 
             max-width: 1600px;
-            height: calc(100vh - 90px); /* 화면 높이에 맞춰 반응 */
-            gap: 14px;
+            height: calc(100vh - 110px); 
+            gap: 16px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
@@ -112,7 +109,7 @@
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 14px;
+            padding: 18px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
@@ -124,7 +121,7 @@
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
@@ -133,18 +130,17 @@
             height: 20px;
         }
 
-        /* 좌측 영역 (비율 할당) */
+        /* 좌측 패널 비율 구조 */
         .left-panel {
-            flex: 1;
-            min-width: 300px;
+            flex: 0.85;
+            min-width: 320px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
 
         .grid-container {
-            width: 100%;
             flex: 1;
             display: flex;
             justify-content: center;
@@ -164,14 +160,13 @@
             gap: 2px;
             width: 100%;
             height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
+            max-width: 48vh;
+            max-height: 48vh;
+            aspect-ratio: 1;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
             overflow: hidden;
-            box-sizing: border-box;
         }
 
         .pixel-cell {
@@ -193,12 +188,11 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            gap: 6px;
-            height: 120px;
+            justify-content: space-between;
+            height: 140px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -243,22 +237,21 @@
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (비율 할당) */
+        /* 우측 패널 비율 구조 */
         .right-panel {
-            flex: 2.5;
+            flex: 2;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
 
         .channels-container {
-            width: 100%;
             flex: 1;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            min-height: 0; /* flex 자식 overflow 방지 */
+            gap: 12px;
+            min-height: 0;
         }
 
         .channel-card {
@@ -272,7 +265,7 @@
             justify-content: center;
             height: 100%;
             box-sizing: border-box;
-            overflow: hidden;
+            position: relative;
         }
 
         .grid-box-container {
@@ -282,6 +275,9 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+            max-width: 48vh;
+            max-height: 48vh;
+            aspect-ratio: 1;
         }
 
         .grid-box-container h4 {
@@ -299,21 +295,17 @@
             gap: 1.5px;
             width: 100%;
             height: 100%;
-            max-width: 100%;
-            max-height: calc(100% - 25px);
-            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
             overflow: hidden;
-            box-sizing: border-box;
         }
 
         .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(8px, 0.8vw, 11px); /* 화면 크기 따라 폰트 가변 */
+            font-size: 12px;
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
@@ -325,22 +317,21 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 14px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            height: 120px;
+            height: 140px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
 
         .btn-action, .btn-brightness-group {
-            flex: 1;
-            max-width: 180px;
-            height: 50px;
+            width: 160px;
+            height: 56px;
             box-sizing: border-box;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -376,7 +367,7 @@
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -390,11 +381,11 @@
         }
 
         .num-input-inline {
-            width: 48px;
-            height: 28px;
+            width: 52px;
+            height: 32px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 13px;
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
