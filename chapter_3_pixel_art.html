@@ -19,14 +19,14 @@
             --c-removed-text: #C62828;
         }
 
-        /* 화면 크기에 맞춰 가득 차도록 반응형 바디 설정 */
+        /* 화면 전체를 가득 채우도록 여백 제거 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 16px;
-            padding-top: 70px; 
+            padding: 12px;
+            padding-top: 65px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -36,7 +36,7 @@
             width: 100vw;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* 화면 크기에 딱 맞춤 */
+            overflow: hidden;
         }
 
         /* 배경 신경망 Canvas */
@@ -60,12 +60,12 @@
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 12px 24px;
+            padding: 10px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             box-sizing: border-box;
-            height: 55px;
+            height: 50px;
         }
 
         .back-btn {
@@ -96,13 +96,12 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (유연한 비례 크기 설정) */
+        /* 메인 레이아웃 (좌우 여백 없이 100% 사용) */
         .main-layout {
             display: flex;
             width: 100%;
-            max-width: 1600px;
-            height: calc(100vh - 90px); /* 화면 높이에 맞춰 반응 */
-            gap: 14px;
+            height: calc(100vh - 75px);
+            gap: 12px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
@@ -112,12 +111,13 @@
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 14px;
+            padding: 12px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
             display: flex;
             flex-direction: column;
+            min-height: 0; /* Flex 자식 크기 수축 허용 */
         }
 
         .section-title {
@@ -133,14 +133,14 @@
             height: 20px;
         }
 
-        /* 좌측 영역 (비율 할당) */
+        /* 좌측 영역 (1/4 비율) */
         .left-panel {
             flex: 1;
-            min-width: 300px;
             height: 100%;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            min-width: 0;
         }
 
         .grid-container {
@@ -152,21 +152,22 @@
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
-            padding: 12px;
+            padding: 10px;
             box-sizing: border-box;
             overflow: hidden;
+            min-height: 0;
         }
 
+        /* 메인 픽셀 그리드 (완벽한 정사각형 유지) */
         #pixel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 2px;
-            width: 100%;
-            height: 100%;
+            aspect-ratio: 1 / 1;
             max-width: 100%;
             max-height: 100%;
-            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
+            margin: auto;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
@@ -198,7 +199,7 @@
             flex-direction: column;
             justify-content: center;
             gap: 6px;
-            height: 120px;
+            height: 110px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -243,13 +244,14 @@
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (비율 할당) */
+        /* 우측 영역 (3/4 비율: 3개 카드가 좌측 1개 카드와 동일 가로 폭을 가짐) */
         .right-panel {
-            flex: 2.5;
+            flex: 3;
             height: 100%;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            min-width: 0;
         }
 
         .channels-container {
@@ -258,14 +260,14 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            min-height: 0; /* flex 자식 overflow 방지 */
+            min-height: 0;
         }
 
         .channel-card {
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -273,6 +275,7 @@
             height: 100%;
             box-sizing: border-box;
             overflow: hidden;
+            min-height: 0;
         }
 
         .grid-box-container {
@@ -282,6 +285,7 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+            min-height: 0;
         }
 
         .grid-box-container h4 {
@@ -292,16 +296,16 @@
             flex-shrink: 0;
         }
 
+        /* RGB 채널 그리드 (완벽한 정사각형 유지) */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 1.5px;
-            width: 100%;
-            height: 100%;
+            aspect-ratio: 1 / 1;
             max-width: 100%;
-            max-height: calc(100% - 25px);
-            aspect-ratio: 1 / 1; /* 정사각형 비율 유지 */
+            max-height: calc(100% - 24px);
+            margin: auto;
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
@@ -313,7 +317,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(8px, 0.8vw, 11px); /* 화면 크기 따라 폰트 가변 */
+            font-size: clamp(8px, 0.8vw, 11px);
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
@@ -330,7 +334,7 @@
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            height: 120px;
+            height: 110px;
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -338,7 +342,7 @@
         .btn-action, .btn-brightness-group {
             flex: 1;
             max-width: 180px;
-            height: 50px;
+            height: 48px;
             box-sizing: border-box;
             font-size: 13px;
             font-weight: bold;
