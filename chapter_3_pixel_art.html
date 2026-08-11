@@ -19,21 +19,23 @@
             --c-removed-text: #C62828;
         }
 
+        /* 화면 창 크기가 작아지면 자동으로 가로/세로 스크롤바 생성 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 24px;
-            padding-top: 85px; 
+            padding: 16px;
+            padding-top: 75px; 
             display: flex;
             flex-direction: column;
             align-items: center;
             letter-spacing: 0.03em;
             position: relative;
-            height: 100vh;
+            min-width: 1400px;
+            min-height: 700px;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: auto;
         }
 
         /* 배경 신경망 Canvas */
@@ -51,11 +53,12 @@
             top: 0;
             left: 0;
             width: 100%;
+            min-width: 1400px;
             background-color: rgba(251, 249, 244, 0.85);
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 14px 24px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -90,74 +93,79 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (2컬럼 구조) */
+        /* 메인 레이아웃 (크기 고정) */
         .main-layout {
             display: flex;
-            width: 100%; 
-            height: calc(100vh - 110px); 
-            gap: 16px;
+            width: 1360px; 
+            height: 600px; 
+            gap: 14px;
             position: relative;
             z-index: 10;
             box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 18px;
+            padding: 14px;
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
 
         .section-title {
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
+            height: 20px;
         }
 
-        /* 좌측 영역 */
+        /* 좌측 영역 (10x10 픽셀 아트 캔버스 고정 크기) */
         .left-panel {
-            flex: 1;
-            min-width: 320px;
-            max-width: 380px;
+            width: 380px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .grid-container {
-            flex: 1;
+            width: 100%;
+            height: 380px;
             display: flex;
             justify-content: center;
             align-items: center;
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
-            padding: 10px;
+            padding: 12px;
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
 
-        /* 캔버스 크기: 230px x 230px 고정 */
         #pixel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
-            gap: 1px;
-            width: 230px;
-            height: 230px;
+            gap: 2px;
+            width: 350px;
+            height: 350px;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .pixel-cell {
@@ -169,20 +177,24 @@
             opacity: 0.85;
         }
         .pixel-cell.selected {
-            outline: 2px solid var(--c-accent);
-            outline-offset: -2px;
+            outline: 3px solid var(--c-accent);
+            outline-offset: -3px;
             z-index: 2;
         }
 
-        /* 슬라이더 컨트롤 박스 */
+        /* 좌측 슬라이더 컨트롤 박스 */
         .control-box {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            justify-content: center;
+            gap: 6px;
+            height: 115px;
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         .slider-row {
@@ -202,9 +214,8 @@
             accent-color: var(--c-brand-green);
         }
 
-        /* 숫자를 직접 입력할 수 있는 연동 칸 */
         .val-input {
-            width: 45px;
+            width: 42px;
             height: 22px;
             text-align: center;
             font-family: 'Consolas', monospace;
@@ -228,26 +239,27 @@
 
         /* 우측 영역 (R, G, B 채널 그리드) */
         .right-panel {
-            flex: 2;
+            width: 966px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .channels-container {
-            flex: 1;
+            width: 100%;
+            height: 380px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         .channel-card {
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -256,61 +268,73 @@
             box-sizing: border-box;
         }
 
-        .channel-card h4 {
-            margin: 0 0 10px 0;
-            font-size: 12px;
-            color: var(--c-brand-green);
+        .grid-box-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 280px;
+            height: 350px;
         }
 
-        /* R, G, B 채널 크기: 캔버스와 동일한 230px x 230px */
+        .grid-box-container h4 {
+            margin: 0 0 6px 0;
+            font-size: 13px;
+            color: var(--c-brand-green);
+            text-align: center;
+            flex-shrink: 0;
+        }
+
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
-            gap: 1px;
-            width: 230px;
-            height: 230px;
+            gap: 1.5px;
+            width: 280px;
+            height: 280px;
             background-color: #DDD;
             border: 1px solid var(--c-border);
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .channel-cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
             overflow: hidden;
         }
 
-        /* 하단 툴바 (오른쪽 정렬) */
+        /* 하단 툴바 */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 12px 14px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
-            justify-content: flex-end; /* 오른쪽에 붙도록 위치 배치 */
-            gap: 10px;
-            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 12px;
+            height: 115px;
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
 
-        /* 버튼 크기 및 디자인 통일 */
         .btn-action, .btn-brightness-group {
-            width: 165px;
-            height: 38px;
+            width: 160px;
+            height: 56px;
             box-sizing: border-box;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
@@ -331,18 +355,17 @@
         }
         .btn-secondary:hover { background: #e8e4d9; }
 
-        /* 밝기 조절 버튼 그룹 */
         .btn-brightness-group {
             background: var(--c-tab-bg);
             border: 1px solid var(--c-border);
-            padding: 2px 8px;
+            padding: 4px 8px;
             justify-content: space-between;
         }
 
         .btn-brightness-label {
             background: none;
             border: none;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
             color: var(--c-text-main);
             cursor: pointer;
@@ -356,11 +379,11 @@
         }
 
         .num-input-inline {
-            width: 48px;
-            height: 24px;
+            width: 52px;
+            height: 32px;
             border: 1px solid var(--c-border);
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 13px;
             text-align: center;
             font-family: 'Consolas', monospace;
             background: #FFFFFF;
@@ -416,7 +439,7 @@
         </div>
     </div>
 
-    <!-- 우측 패널: R, G, B 채널 행렬 및 우측 정렬 툴바 -->
+    <!-- 우측 패널: R, G, B 채널 행렬 및 툴바 -->
     <div class="card right-panel">
         <div class="section-title">
             <span>🔍 R, G, B 채널 행렬</span>
@@ -424,25 +447,31 @@
         
         <div class="channels-container">
             <div class="channel-card">
-                <h4>Red 채널</h4>
-                <div id="channel-r" class="channel-grid"></div>
+                <div class="grid-box-container">
+                    <h4>Red 채널</h4>
+                    <div id="channel-r" class="channel-grid"></div>
+                </div>
             </div>
             <div class="channel-card">
-                <h4>Green 채널</h4>
-                <div id="channel-g" class="channel-grid"></div>
+                <div class="grid-box-container">
+                    <h4>Green 채널</h4>
+                    <div id="channel-g" class="channel-grid"></div>
+                </div>
             </div>
             <div class="channel-card">
-                <h4>Blue 채널</h4>
-                <div id="channel-b" class="channel-grid"></div>
+                <div class="grid-box-container">
+                    <h4>Blue 채널</h4>
+                    <div id="channel-b" class="channel-grid"></div>
+                </div>
             </div>
         </div>
 
-        <!-- 오른쪽에 붙어 있는 하단 버튼 툴바 -->
         <div class="action-toolbar">
             <button class="btn-action btn-secondary" onclick="applyGrayscale()">◐ 흑백 변환</button>
             
             <div class="btn-brightness-group">
                 <button class="btn-brightness-label" onclick="applyBrightness()">☀️ 밝기 조절</button>
+                <!-- 기본값 0으로 수정된 부분 -->
                 <input type="number" id="brightness-val" class="num-input-inline" min="-255" max="255" value="0" placeholder="-255~255">
             </div>
 
@@ -514,7 +543,7 @@
         const target = document.querySelector(`.pixel-cell[data-row="${r}"][data-col="${c}"]`);
         if (target) target.classList.add('selected');
 
-        // 1행 1열 시작 표기
+        // 1행 1열 시작으로 수정된 부분
         document.getElementById('pos-display').innerText = `선택: ${r + 1}행, ${c + 1}열`;
 
         const [rgbR, rgbG, rgbB] = pixelData[r][c];
@@ -529,14 +558,12 @@
         document.getElementById('num-b').value = rgbB;
     }
 
-    // 슬라이더 변경 시 숫자 칸 동기화
     function syncColorInput(channel, value) {
         let val = Math.max(0, Math.min(255, parseInt(value) || 0));
         document.getElementById(`num-${channel}`).value = val;
         applyColorUpdate();
     }
 
-    // 숫자 입력 칸 변경 시 슬라이더 동기화
     function syncColorSlider(channel, value) {
         let val = Math.max(0, Math.min(255, parseInt(value) || 0));
         document.getElementById(`slider-${channel}`).value = val;
@@ -624,8 +651,8 @@
         const exportCanvas = document.createElement('canvas');
         const ctx = exportCanvas.getContext('2d');
 
-        const scale = 23; 
-        const padding = 20;
+        const scale = 30; 
+        const padding = 25;
         const channelWidth = GRID_SIZE * scale;
         
         exportCanvas.width = (channelWidth * 4) + (padding * 5);
@@ -638,7 +665,7 @@
 
         function drawGridAt(startX, startY, getRgbFn, getValueFn, title) {
             ctx.fillStyle = '#1B4332';
-            ctx.font = 'bold 14px sans-serif';
+            ctx.font = 'bold 15px sans-serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
             ctx.fillText(title, startX, startY - 10);
@@ -654,7 +681,7 @@
                     if (getValueFn) {
                         const val = getValueFn(r, c);
                         ctx.fillStyle = getContrastColor(red, green, blue);
-                        ctx.font = 'bold 9px Consolas, monospace';
+                        ctx.font = 'bold 11px Consolas, monospace';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(val, startX + c * scale + scale / 2, startY + r * scale + scale / 2);
@@ -707,8 +734,8 @@
     const mouse = { x: null, y: null, radius: 150 };
 
     function resizeBgCanvas() {
-        bgCanvas.width = window.innerWidth;
-        bgCanvas.height = window.innerHeight;
+        bgCanvas.width = Math.max(window.innerWidth, 1400);
+        bgCanvas.height = Math.max(window.innerHeight, 700);
         initParticles();
     }
 
