@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" class="scroll-smooth">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,29 +7,34 @@
     <!-- Tailwind CSS 최신 CDN 매칭 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 💡 부드러운 스크롤 이동 애니메이션 강제 적용 */
-        html { scroll-behavior: smooth !important; }
+        /* ⚠️ 중요: 브라우저 네이티브 smooth 스크롤은 끕니다.
+           JS의 requestAnimationFrame 애니메이션과 서로 싸우면서 뚝뚝 끊기는 원인이 됩니다. */
+        html { scroll-behavior: auto !important; }
 
         /* 글로벌 모던 자간 및 가독성 최적화 */
-        .premium-text { tracking: 0.03em; font-feature-settings: "ss01", "ss02"; }
+        .premium-text { letter-spacing: 0.01em; font-feature-settings: "ss01", "ss02"; }
         .smooth-motion { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
-        
+
         /* 가로 스크롤바 숨김 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+
         /* 레이어 우선순위 강제 설정 (캔버스를 가장 아래로, 컨텐츠는 위로) */
         canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
         nav, section, footer, div, aside { position: relative; z-index: 10; }
-        .bg-white { background-color: rgba(255, 255, 255, 0.85) !important; backdrop-blur-md: 8px; }
+        .bg-white { background-color: rgba(255, 255, 255, 0.9) !important; }
 
         /* 🧭 우측 고정형 플로팅 메뉴 상시 노출 스타일 */
         #floating-sidebar {
             position: fixed;
             top: 50%;
             transform: translateY(-50%);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100; /* 최상단 배치 레이어 */
+        }
+
+        /* 접근성: OS에서 '동작 줄이기'를 켠 사용자는 즉시 이동 */
+        @media (prefers-reduced-motion: reduce) {
+            .smooth-motion { transition: none !important; }
         }
     </style>
 </head>
@@ -39,11 +44,11 @@
     <canvas id="neural-canvas"></canvas>
 
     <!-- [상단 프리미엄 미니멀리즘 내비게이션 바] -->
-    <nav class="fixed top-0 left-0 w-full bg-[#FBF9F4]/80 backdrop-blur-xl border-b border-[#2C2A29]/10 z-50 px-6 py-4 flex items-center justify-between transition-all duration-300">
-        <div class="flex items-center gap-2 select-none cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+    <nav class="fixed top-0 left-0 w-full bg-[#FBF9F4]/95 backdrop-blur-sm border-b border-[#2C2A29]/10 z-50 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 select-none cursor-pointer" onclick="scrollToTop()">
             <span class="text-sm tracking-[0.3em] font-black text-[#1B4332] font-mono">MATHMATICS FOR AI</span>
         </div>
-        
+
         <div class="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar structural-tabs">
             <button onclick="scrollToSection('hero')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]">ABOUT US</button>
             <button onclick="scrollToSection('services')" class="px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors">OUR SERVICES</button>
@@ -53,12 +58,12 @@
     </nav>
 
     <!-- 🧭 [우측 고정형 5단 프리미엄 플로팅 퀵 바 시스템] -->
-    <aside id="floating-sidebar" class="right-4 md:right-8 flex flex-col items-end gap-3 bg-white/95 backdrop-blur-xl border border-[#1B4332]/25 p-4 rounded-2xl shadow-2xl pt-6">
+    <aside id="floating-sidebar" class="right-4 md:right-8 flex flex-col items-end gap-3 bg-white/95 border border-[#1B4332]/25 p-4 rounded-2xl shadow-2xl pt-6">
         <button onclick="scrollToSection('hero')" id="q-hero" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
             <span class="text-[11px] font-bold tracking-wider text-[#1B4332] transition-all">ABOUT US</span>
             <div class="w-2 h-2 rounded-full bg-[#1B4332] scale-125 shadow-[0_0_6px_#1B4332] transition-all"></div>
         </button>
-        
+
         <button onclick="scrollToSection('services')" id="q-services" class="group flex items-center gap-3 cursor-pointer transition-transform hover:-translate-x-1">
             <span class="text-[11px] font-bold tracking-wider text-gray-400 group-hover:text-[#1B4332] transition-colors">OUR SERVICES</span>
             <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
@@ -74,7 +79,7 @@
             <div class="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all"></div>
         </button>
 
-        <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="group flex items-center gap-3 mt-2 pt-3 border-t border-[#1B4332]/10 cursor-pointer w-full justify-end">
+        <button onclick="scrollToTop()" class="group flex items-center gap-3 mt-2 pt-3 border-t border-[#1B4332]/10 cursor-pointer w-full justify-end">
             <span class="text-[11px] font-black tracking-widest text-[#1B4332] group-hover:scale-110 transition-transform">TOP ↑</span>
             <div class="w-2 h-2 rounded-full bg-[#1B4332]"></div>
         </button>
@@ -83,7 +88,7 @@
     <!-- ================= [SECTION 1: HERO 비주얼 메인 배너] ================= -->
     <section id="hero" class="relative w-full h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#2C2A29]/10 pt-16 bg-[#F4F1EA]/50">
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#FBF9F4]/30 to-[#FBF9F4] z-10"></div>
-        
+
         <!-- 교실 풍경 이미지 투명도 조절 -->
         <img src="home_image.png" alt="인공지능 수학 교실 풍경" class="absolute inset-0 w-full h-full object-cover opacity-15 filter sepia-10 contrast-95 brightness-105">
 
@@ -286,7 +291,7 @@
                     <a href="chapter_3_handwritten_digit_analysis.html" class="px-5 py-2 border border-[#2C2A29]/20 bg-white rounded-xs text-xs font-bold text-[#5C564F] tracking-wider group-hover:text-black group-hover:border-[#3A0CA3] transition-all whitespace-nowrap">LAUNCH →</a>
                 </div>
 
-                <!-- 💡 [업데이트 반영] 3단원 픽셀 아트 (chapter_3_pixel_art.html 연동 / 인디고 스킴 적용) -->
+                <!-- 💡 3단원 픽셀 아트 (chapter_3_pixel_art.html 연동 / 인디고 스킴 적용) -->
                 <div class="program-node ch3 group bg-white border border-[#2C2A29]/10 rounded-xs p-4 flex justify-between items-center gap-4 hover:border-[#3A0CA3]/40 hover:shadow-lg hover:shadow-[#2C2A29]/[0.02] transition-all duration-300">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-mono font-bold tracking-wider text-[#3A0CA3] bg-[#EEF0FC] border border-[#C7CCF4] px-2.5 py-0.5 rounded-xs">Chapter 03</span>
@@ -334,13 +339,86 @@
     <!-- ========================================================================= -->
     <!-- 인터랙션, 필터링 및 애니메이션 스크립트 핵심 코어 엔진 -->
     <script>
-        /* 🌐 1. 인공지능 신경망(Neural Network) & 보정형 유성 기믹 애니메이션 엔진 */
+    (function () {
+        'use strict';
+
+        /* =====================================================================
+           🚀 1. 부드러운 스크롤 엔진 (requestAnimationFrame + 이징 곡선)
+           - 브라우저 기본 smooth 대신 직접 프레임 단위로 위치를 보간합니다.
+           - OS의 '동작 줄이기' 설정이나 브라우저 차이의 영향을 받지 않습니다.
+        ===================================================================== */
+        let scrollRAF = null;          // 진행 중인 스크롤 애니메이션 핸들
+        let isAutoScrolling = false;   // 프로그램 스크롤 진행 여부
+
+        // 시작은 천천히, 중간은 빠르게, 끝은 부드럽게 감속
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function stopAutoScroll() {
+            if (scrollRAF !== null) cancelAnimationFrame(scrollRAF);
+            scrollRAF = null;
+            isAutoScrolling = false;
+        }
+
+        function animateScrollTo(targetY, duration) {
+            stopAutoScroll();
+
+            const startY = window.pageYOffset;
+            const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+            const endY = Math.min(Math.max(targetY, 0), maxY);
+            const distance = endY - startY;
+
+            if (Math.abs(distance) < 2) return;
+
+            // 이동 거리에 따라 시간을 조절 (짧으면 빠르게, 멀면 여유 있게)
+            const time = duration || Math.min(1100, Math.max(450, Math.abs(distance) * 0.5));
+            const startTime = performance.now();
+            isAutoScrolling = true;
+
+            function step(now) {
+                const progress = Math.min(1, (now - startTime) / time);
+                window.scrollTo(0, startY + distance * easeInOutCubic(progress));
+
+                if (progress < 1) {
+                    scrollRAF = requestAnimationFrame(step);
+                } else {
+                    scrollRAF = null;
+                    isAutoScrolling = false;
+                    updateActiveSection();
+                }
+            }
+            scrollRAF = requestAnimationFrame(step);
+        }
+
+        // 사용자가 직접 스크롤하면 자동 이동을 즉시 중단 (조작감 우선)
+        ['wheel', 'touchstart', 'keydown'].forEach(function (evt) {
+            window.addEventListener(evt, stopAutoScroll, { passive: true });
+        });
+
+        window.scrollToSection = function (sectionId) {
+            const el = document.getElementById(sectionId);
+            if (!el) return;
+            const navOffset = 70;
+            const targetY = el.getBoundingClientRect().top + window.pageYOffset - navOffset;
+            animateScrollTo(targetY);
+        };
+
+        window.scrollToTop = function () {
+            animateScrollTo(0);
+        };
+
+
+        /* =====================================================================
+           🌐 2. 신경망 배경 애니메이션 (부하 최소화 버전)
+        ===================================================================== */
         const canvas = document.getElementById('neural-canvas');
         const ctx = canvas.getContext('2d');
 
         let particles = [];
-        let shootingStars = []; 
+        let shootingStars = [];
         const mouse = { x: null, y: null, radius: 150 };
+        const LINK_DIST = 110;
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -363,9 +441,10 @@
                 if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
                 if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
 
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (mouse.x === null) return;
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < mouse.radius) {
                     const force = (mouse.radius - distance) / mouse.radius;
                     this.x -= dx * force * 0.03;
@@ -373,18 +452,13 @@
                 }
             }
             draw() {
-                ctx.beginPath();
+                ctx.moveTo(this.x + this.radius, this.y);
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
-                ctx.fill();
             }
         }
 
-        // 정밀 주기로 보정된 5초 간격 유성(별똥별) 클래스
         class ShootingStar {
-            constructor() {
-                this.reset();
-            }
+            constructor() { this.reset(); }
             reset() {
                 if (Math.random() > 0.4) {
                     this.x = Math.random() * canvas.width * 0.7;
@@ -393,115 +467,127 @@
                     this.x = -30;
                     this.y = Math.random() * canvas.height * 0.6;
                 }
-                this.speed = Math.random() * 4 + 5; 
-                this.length = Math.random() * 100 + 60; 
+                this.speed = Math.random() * 4 + 5;
+                this.length = Math.random() * 100 + 60;
                 this.opacity = Math.random() * 0.35 + 0.25;
             }
             update() {
                 this.x += this.speed;
                 this.y += this.speed * 0.75;
-                
-                if (this.x > canvas.width + 120 || this.y > canvas.height + 120) {
-                    return false;
-                }
-                return true;
+                return !(this.x > canvas.width + 120 || this.y > canvas.height + 120);
             }
             draw() {
-                ctx.save();
-                let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.75);
-                grad.addColorStop(0, `rgba(27, 67, 50, ${this.opacity})`);
-                grad.addColorStop(0.3, `rgba(27, 67, 50, ${this.opacity * 0.4})`);
+                const grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length * 0.75);
+                grad.addColorStop(0, 'rgba(27, 67, 50, ' + this.opacity + ')');
+                grad.addColorStop(0.3, 'rgba(27, 67, 50, ' + (this.opacity * 0.4) + ')');
                 grad.addColorStop(1, 'rgba(27, 67, 50, 0)');
-                
+
                 ctx.beginPath();
                 ctx.moveTo(this.x, this.y);
                 ctx.lineTo(this.x - this.length, this.y - this.length * 0.75);
                 ctx.strokeStyle = grad;
-                ctx.lineWidth = 2.2; 
+                ctx.lineWidth = 2.2;
                 ctx.stroke();
-                ctx.restore();
             }
         }
 
         function initParticles() {
             particles = [];
-            const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
+            // 입자 수 상한을 두어 연결선 계산량(제곱 비례)을 억제
+            const count = Math.min(90, Math.floor((canvas.width * canvas.height) / 12000));
+            for (let i = 0; i < count; i++) particles.push(new Particle());
         }
 
+        // 연결선을 3단계 농도로 묶어 stroke 호출을 수백 번 → 3번으로 축소
+        const buckets = [[], [], []];
+        const bucketAlpha = [0.045, 0.028, 0.012];
+
         function animate() {
+            requestAnimationFrame(animate);
+
+            // 자동 스크롤 중에는 배경 연산을 잠시 멈춰 프레임을 스크롤에 양보
+            // (배경을 계속 움직이고 싶다면 아래 두 줄을 지우세요)
+            if (isAutoScrolling || document.hidden) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 1. 인공지능 연결 인력망 연산 루프
+
+            buckets[0].length = 0; buckets[1].length = 0; buckets[2].length = 0;
+
+            // 입자 이동 + 점 렌더링 (하나의 path로 일괄 처리)
+            ctx.beginPath();
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update();
                 particles[i].draw();
+            }
+            ctx.fillStyle = 'rgba(27, 67, 50, 0.10)';
+            ctx.fill();
 
+            // 연결선 후보 수집
+            for (let i = 0; i < particles.length; i++) {
+                const pi = particles[i];
                 for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const pj = particles[j];
+                    const dx = pi.x - pj.x;
+                    if (dx > LINK_DIST || dx < -LINK_DIST) continue;
+                    const dy = pi.y - pj.y;
+                    if (dy > LINK_DIST || dy < -LINK_DIST) continue;
 
-                    if (dist < 110) {
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(27, 67, 50, ${0.04 * (1 - dist / 110)})`;
-                        ctx.lineWidth = 0.8;
-                        ctx.stroke();
-                    }
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq >= LINK_DIST * LINK_DIST) continue;
+
+                    const ratio = Math.sqrt(distSq) / LINK_DIST;
+                    const b = ratio < 0.35 ? 0 : (ratio < 0.7 ? 1 : 2);
+                    buckets[b].push(pi.x, pi.y, pj.x, pj.y);
                 }
             }
 
-            // 2. 평균 5초에 1번 꼴로 스폰되도록 조율된 무작위 연산
+            ctx.lineWidth = 0.8;
+            for (let b = 0; b < 3; b++) {
+                const arr = buckets[b];
+                if (!arr.length) continue;
+                ctx.beginPath();
+                for (let k = 0; k < arr.length; k += 4) {
+                    ctx.moveTo(arr[k], arr[k + 1]);
+                    ctx.lineTo(arr[k + 2], arr[k + 3]);
+                }
+                ctx.strokeStyle = 'rgba(27, 67, 50, ' + bucketAlpha[b] + ')';
+                ctx.stroke();
+            }
+
+            // 평균 5초에 1번 꼴로 유성 생성
             if (Math.random() < 0.0035 && shootingStars.length < 2) {
                 shootingStars.push(new ShootingStar());
             }
-
-            // 3. 유성 업데이트 및 렌더링 스택 제어
-            shootingStars = shootingStars.filter(star => {
-                let alive = star.update();
+            shootingStars = shootingStars.filter(function (star) {
+                const alive = star.update();
                 if (alive) star.draw();
                 return alive;
             });
-
-            requestAnimationFrame(animate);
         }
 
-        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+        window.addEventListener('mouseout', function () { mouse.x = null; mouse.y = null; });
+
+        let resizeTimer = null;
+        window.addEventListener('resize', function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 150);
+        });
+
         resizeCanvas();
         animate();
 
 
-        /* 🗂️ 2. 부드러운 스크롤 이동 연산 커널 스크립트 */
-        function scrollToSection(sectionId) {
-            const element = document.getElementById(sectionId);
-            if (element) {
-                const offset = 70;
-                const elementPosition = element.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - offset;
-                
-                // 크로스 브라우징 지원 부드러운 스크롤 워프
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
-                });
-            }
-        }
-
-
-        /* 🎛️ 3. 중첩 내부 아카이브 프로그램 단원 필터링 함수 */
-        function filterPrograms(filterTag) {
+        /* =====================================================================
+           🎛️ 3. 단원별 프로그램 필터
+        ===================================================================== */
+        window.filterPrograms = function (filterTag) {
             const nodes = document.querySelectorAll('.program-node');
             let visibleCount = 0;
 
-            nodes.forEach(node => {
+            nodes.forEach(function (node) {
                 if (filterTag === 'all') {
-                    if(node.classList.contains('download')) {
+                    if (node.classList.contains('download')) {
                         node.style.display = 'none';
                     } else {
                         node.style.display = 'flex';
@@ -515,57 +601,57 @@
                 }
             });
 
-            const innerButtons = document.querySelectorAll('.inner-tabs-container button');
-            innerButtons.forEach(btn => {
+            document.querySelectorAll('.inner-tabs-container button').forEach(function (btn) {
                 btn.className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all text-gray-400 hover:text-[#1B4332]";
             });
-            document.getElementById(`inner-${filterTag}`).className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm";
+            document.getElementById('inner-' + filterTag).className = "px-4 py-2 rounded-sm text-xs md:text-sm font-bold tracking-wider uppercase cursor-pointer transition-all bg-[#1B4332] text-white shadow-sm";
 
             document.getElementById('inner-empty-notice').style.display = (visibleCount === 0) ? 'block' : 'none';
-        }
+        };
 
 
-        /* 🧭 4. 헤더 탭 바 & 5단 우측 플로팅 퀵바 하이브리드 제어 커널 */
+        /* =====================================================================
+           🧭 4. 현재 섹션 하이라이팅 (rAF 스로틀 + 변경될 때만 DOM 갱신)
+           - 예전 코드는 스크롤 이벤트마다 모든 버튼의 class를 다시 써서
+             레이아웃 재계산이 반복되고 스크롤이 끊겼습니다.
+        ===================================================================== */
         const sections = ['hero', 'services', 'programs', 'tools'];
         const navButtons = document.querySelectorAll('.structural-tabs button');
+        const indexMap = { hero: 0, services: 1, programs: 2, tools: 3 };
 
-        filterPrograms('all');
+        let ticking = false;
+        let lastSection = null;
 
-        window.addEventListener('scroll', () => {
+        function updateActiveSection() {
+            ticking = false;
+
             let currentSection = 'hero';
-            
-            // 스크롤 최하단 인식 보정 버퍼
             const isBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 50;
 
             if (isBottom) {
                 currentSection = 'tools';
             } else {
-                sections.forEach(id => {
-                    const sec = document.getElementById(id);
-                    if (sec) {
-                        const rect = sec.getBoundingClientRect();
-                        if (rect.top <= 140) currentSection = id;
-                    }
-                });
+                for (let i = 0; i < sections.length; i++) {
+                    const sec = document.getElementById(sections[i]);
+                    if (sec && sec.getBoundingClientRect().top <= 140) currentSection = sections[i];
+                }
             }
 
-            // 상단 메뉴 텍스트 언더바 하이라이팅 제어
-            const indexMap = { 'hero': 0, 'services': 1, 'programs': 2, 'tools': 3 };
-            const activeIdx = indexMap[currentSection];
+            if (currentSection === lastSection) return; // 바뀔 때만 DOM 수정
+            lastSection = currentSection;
 
-            navButtons.forEach((btn, idx) => {
-                if (idx === activeIdx) {
-                    btn.className = "px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]";
-                } else {
-                    btn.className = "px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors";
-                }
+            const activeIdx = indexMap[currentSection];
+            navButtons.forEach(function (btn, idx) {
+                btn.className = (idx === activeIdx)
+                    ? "px-3 py-1.5 text-xs md:text-sm font-bold text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-[#1B4332]"
+                    : "px-3 py-1.5 text-xs md:text-sm font-bold text-gray-400 hover:text-[#1B4332] tracking-widest uppercase cursor-pointer border-b border-transparent transition-colors";
             });
 
-            // 우측 퀵바 점형 도트 하이라이팅 연동 제어
-            sections.forEach(id => {
-                const btnText = document.querySelector(`#q-${id} span`);
-                const btnDot = document.querySelector(`#q-${id} div`);
-                
+            sections.forEach(function (id) {
+                const btnText = document.querySelector('#q-' + id + ' span');
+                const btnDot = document.querySelector('#q-' + id + ' div');
+                if (!btnText || !btnDot) return;
+
                 if (id === currentSection) {
                     btnText.className = "text-[11px] font-bold tracking-wider text-[#1B4332] scale-105 transition-all";
                     btnDot.className = "w-2 h-2 rounded-full bg-[#1B4332] scale-125 shadow-[0_0_6px_#1B4332] transition-all";
@@ -574,7 +660,18 @@
                     btnDot.className = "w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#1B4332] group-hover:scale-125 transition-all";
                 }
             });
-        });
+        }
+
+        window.addEventListener('scroll', function () {
+            if (!ticking) {
+                requestAnimationFrame(updateActiveSection);
+                ticking = true;
+            }
+        }, { passive: true });
+
+        filterPrograms('all');
+        updateActiveSection();
+    })();
     </script>
 </body>
 </html>
