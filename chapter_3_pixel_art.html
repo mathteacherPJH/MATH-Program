@@ -17,26 +17,29 @@
             --c-tab-bg: #F4F1EA;
             --c-removed-bg: #FFEBEE;
             --c-removed-text: #C62828;
+
+            /* [수정] 메인 격자의 크기를 화면 높이 기준으로 계산하여 변수로 저장 (반응형의 핵심) */
+            /* 화면 높이의 60%에서 여백(컨트롤박스 등)을 뺀 값을 너비로 사용 */
+            --main-grid-width: calc(60vh - 120px); 
         }
 
-        /* 화면 전체를 가득 채우도록 여백 제거 */
         body {
             font-family: 'Malgun Gothic', -apple-system, sans-serif;
             background-color: var(--c-bg-main);
             color: var(--c-text-main);
             margin: 0;
-            padding: 12px;
-            padding-top: 65px; 
+            padding: 16px;
+            padding-top: 70px; /* navbar 높이 고려 */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* [수정] 중앙 정렬 대신 상단 정렬 */
             letter-spacing: 0.03em;
             position: relative;
             width: 100vw;
             height: 100vh;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: hidden; 
         }
 
         /* 배경 신경망 Canvas */
@@ -60,12 +63,12 @@
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--c-border);
             z-index: 1000;
-            padding: 10px 20px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             box-sizing: border-box;
-            height: 50px;
+            height: 55px;
         }
 
         .back-btn {
@@ -96,35 +99,37 @@
             text-transform: uppercase;
         }
 
-        /* 메인 레이아웃 (좌우 여백 없이 100% 사용) */
+        /* 메인 레이아웃 (정사각형 유지를 위한 구조 변경) */
         .main-layout {
             display: flex;
             width: 100%;
-            height: calc(100vh - 75px);
-            gap: 12px;
+            max-width: 1800px; /* [수정] 최대 너비 확장 */
+            height: calc(100vh - 90px); /* [수정] 하단 여백 확보 */
+            gap: 20px; /* [수정] 간격 확대 */
             position: relative;
             z-index: 10;
             box-sizing: border-box;
+            justify-content: center; /* [수정] 전체 레이아웃 중앙 정렬 */
+            overflow: hidden; /* [추가] 내부 스크롤 방지 */
         }
 
         .card {
             background-color: var(--c-bg-card);
             border: 1px solid var(--c-border);
             border-radius: 12px;
-            padding: 12px;
+            padding: 16px; /* [수정] 패딩 확대 */
             box-sizing: border-box;
             backdrop-filter: blur(6px);
             box-shadow: 0 10px 30px rgba(44, 42, 41, 0.03);
             display: flex;
             flex-direction: column;
-            min-height: 0; /* Flex 자식 크기 수축 허용 */
         }
 
         .section-title {
             font-size: 13px;
             font-weight: bold;
             color: var(--c-brand-green);
-            margin-bottom: 8px;
+            margin-bottom: 12px; /* [수정] 마진 확대 */
             letter-spacing: 0.05em;
             display: flex;
             justify-content: space-between;
@@ -133,19 +138,23 @@
             height: 20px;
         }
 
-        /* 좌측 영역 (1/4 비율) */
+        /* 좌측 영역: 고정 너비 및 화면 높이 기반 반응형 크기 */
         .left-panel {
-            flex: 1;
+            /* [수정] flex: 1 대신 고정 너비 설정. min/max 값을 주어 화면 높이에 따라 반응하게 함 */
+            width: var(--main-grid-width); 
+            min-width: 320px; /* [추가] 화면이 아주 작아져도 최소 크기 보장 */
+            max-width: 500px; /* [추가] 너무 커지는 것 방지 */
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-width: 0;
+            gap: 12px;
+            flex-shrink: 0; /* [추가] 우측 패널에 의해 줄어들지 않도록 설정 */
         }
 
+        /* [수정] 격자를 감싸는 컨테이너: 정사각형 비율 강제 */
         .grid-container {
             width: 100%;
-            flex: 1;
+            aspect-ratio: 1 / 1; /* [추가] 절대적인 정사각형 비율 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -155,19 +164,17 @@
             padding: 10px;
             box-sizing: border-box;
             overflow: hidden;
-            min-height: 0;
+            flex-shrink: 0; /* [추가] 비율 유지하며 쪼그라들지 않게 함 */
+            max-height: 60vh; /* [추가] 화면 높이 벗어남 방지 안전장치 */
         }
 
-        /* 메인 픽셀 그리드 (완벽한 정사각형 유지) */
         #pixel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 2px;
-            aspect-ratio: 1 / 1;
-            max-width: 100%;
-            max-height: 100%;
-            margin: auto;
+            width: 100%;
+            height: 100%;
             background-color: #DDD;
             border: 2px solid var(--c-brand-green);
             border-radius: 6px;
@@ -194,12 +201,12 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 12px 16px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 6px;
-            height: 110px;
+            gap: 8px;
+            /* height: 120px; [수정] 고정 높이 제거, 내용에 맞게 */
             box-sizing: border-box;
             flex-shrink: 0;
         }
@@ -207,7 +214,7 @@
         .slider-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             font-size: 11px;
             font-weight: bold;
         }
@@ -222,8 +229,8 @@
         }
 
         .val-input {
-            width: 42px;
-            height: 22px;
+            width: 45px;
+            height: 24px;
             text-align: center;
             font-family: 'Consolas', monospace;
             font-size: 11px;
@@ -239,28 +246,33 @@
             font-weight: bold;
             color: var(--c-brand-green);
             text-align: right;
-            padding-left: 6px;
+            padding-left: 8px;
             white-space: nowrap;
             border-left: 1px solid var(--c-border);
         }
 
-        /* 우측 영역 (3/4 비율: 3개 카드가 좌측 1개 카드와 동일 가로 폭을 가짐) */
+        /* 우측 영역 (비율 할당 해제, 유연한 구조) */
         .right-panel {
-            flex: 3;
+            flex: 1; /* [수정] 고정 비율(2.5) 제거, 남은 공간 모두 사용 */
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-width: 0;
+            gap: 12px;
+            min-width: 0; /* [추가] flex 자식 overflow 방지 */
         }
 
+        /* [수정] 3개 채널 격자가 좌측 캔버스와 동일한 크기의 정사각형이 되도록 설정 */
         .channels-container {
             width: 100%;
-            flex: 1;
+            /* [수정] 높이를 좌측 캔버스 너비와 동일하게 설정하여 정사각형 비율 유도 */
+            height: var(--main-grid-width); 
+            min-height: 320px; /* [추가] 최소 크기 보장 */
+            max-height: 500px; /* [추가] 최대 크기 제한 */
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            min-height: 0;
+            grid-template-columns: repeat(3, 1fr); /* [수정] 3열 고정 */
+            gap: 12px;
+            flex-shrink: 0;
+            overflow: hidden;
         }
 
         .channel-card {
@@ -273,9 +285,10 @@
             align-items: center;
             justify-content: center;
             height: 100%;
+            width: 100%; /* [추가] 너비 가득 채움 */
             box-sizing: border-box;
             overflow: hidden;
-            min-height: 0;
+            aspect-ratio: 1 / 1; /* [추가] 개별 채널 카드도 정사각형 강제 */
         }
 
         .grid-box-container {
@@ -285,27 +298,24 @@
             justify-content: center;
             width: 100%;
             height: 100%;
-            min-height: 0;
         }
 
         .grid-box-container h4 {
-            margin: 0 0 6px 0;
+            margin: 0 0 8px 0;
             font-size: 13px;
             color: var(--c-brand-green);
             text-align: center;
             flex-shrink: 0;
         }
 
-        /* RGB 채널 그리드 (완벽한 정사각형 유지) */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr);
             grid-template-rows: repeat(10, 1fr);
             gap: 1.5px;
-            aspect-ratio: 1 / 1;
-            max-width: 100%;
-            max-height: calc(100% - 24px);
-            margin: auto;
+            width: 100%;
+            height: 100%;
+            /* [수정] aspect-ratio 제거 (부모 card에서 제어) */
             background-color: #DDD;
             border: 1px solid var(--c-border);
             border-radius: 6px;
@@ -317,7 +327,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(8px, 0.8vw, 11px);
+            /* [수정] 폰트 크기를 격자 너비(vw)가 아닌 화면 높이(vh)에 맞게 조절 */
+            font-size: clamp(8px, 1.2vh, 11px); 
             font-weight: bold;
             font-family: 'Consolas', monospace;
             user-select: none;
@@ -329,20 +340,22 @@
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 12px;
-            height: 110px;
+            /* height: 120px; [수정] 고정 높이 제거, 내용에 맞게 */
             box-sizing: border-box;
-            flex-shrink: 0;
+            flex: 1; /* [수정] 남은 하단 공간 모두 차지 */
+            min-height: 80px; /* [추가] 최소 높이 */
+            max-height: 120px; /* [추가] 너무 커지는 것 방지 */
         }
 
         .btn-action, .btn-brightness-group {
             flex: 1;
-            max-width: 180px;
-            height: 48px;
+            max-width: 160px; /* [수정] 버튼 최대 너비 축소 */
+            height: 48px; /* [수정] 높이 약간 축소 */
             box-sizing: border-box;
             font-size: 13px;
             font-weight: bold;
@@ -373,7 +386,7 @@
         .btn-brightness-group {
             background: var(--c-tab-bg);
             border: 1px solid var(--c-border);
-            padding: 4px 8px;
+            padding: 4px 10px;
             justify-content: space-between;
         }
 
@@ -387,7 +400,7 @@
             padding: 4px 0;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
         }
         .btn-brightness-label:hover {
             color: var(--c-brand-green);
