@@ -123,7 +123,7 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
-            height: 20px; /* 제목 높이 정밀 상단 맞춤 고정 */
+            height: 20px; /* 타이틀 높이 완전 동일화 */
         }
 
         /* 좌측 영역 (10x10 픽셀 아트 캔버스) */
@@ -136,6 +136,7 @@
             gap: 10px;
         }
 
+        /* 좌/우 컨테이너 패딩 및 높이 기준 일치화 */
         .grid-container {
             flex: 1;
             display: flex;
@@ -144,8 +145,9 @@
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
             border: 1px solid var(--c-border);
-            padding: 10px;
+            padding: 12px;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         #pixel-grid {
@@ -178,7 +180,7 @@
             z-index: 2;
         }
 
-        /* 좌측 슬라이더 컨트롤 박스 */
+        /* 좌측 슬라이더 컨트롤 박스 (높이 115px 고정) */
         .control-box {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
@@ -210,7 +212,6 @@
             accent-color: var(--c-brand-green);
         }
 
-        /* 연동되는 숫자 입력 칸 스타일 */
         .val-input {
             width: 42px;
             height: 22px;
@@ -256,7 +257,7 @@
             background: rgba(244, 241, 234, 0.4);
             border: 1px solid var(--c-border);
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -264,17 +265,19 @@
             height: 100%;
             box-sizing: border-box;
             overflow: hidden;
-            position: relative; /* 제목 절대 위치 조정을 위한 상위 기준 설정 */
+            position: relative;
         }
 
-        /* 1행 수평 위치를 캔버스와 정밀하게 조절 */
+        /* 소제목 위치를 상단 absolute로 빼서 그리드가 카드 상단부터 정밀 배치되도록 변경 */
         .channel-card h4 {
+            position: absolute;
+            top: 10px;
             margin: 0;
-            padding-bottom: 6px;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--c-brand-green);
-            flex-shrink: 0;
             text-align: center;
+            width: 100%;
+            z-index: 5;
         }
 
         .channel-grid-wrapper {
@@ -284,6 +287,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            margin-top: 15px; /* 상단 제목 공간 확보 후 캔버스와 높이 완전 정렬 */
         }
 
         .channel-grid {
@@ -313,7 +317,7 @@
             overflow: hidden;
         }
 
-        /* 하단 툴바 */
+        /* 하단 툴바 (높이 115px) */
         .action-toolbar {
             background: rgba(244, 241, 234, 0.6);
             border: 1px solid var(--c-border);
@@ -549,7 +553,6 @@
 
         const [rgbR, rgbG, rgbB] = pixelData[r][c];
 
-        // 슬라이더 및 수치 입력창 둘 다 동기화
         document.getElementById('slider-r').value = rgbR;
         document.getElementById('num-r').value = rgbR;
 
@@ -560,21 +563,18 @@
         document.getElementById('num-b').value = rgbB;
     }
 
-    // 슬라이더 조작 시 숫자 입력 칸으로 동기화
     function syncColorInput(channel, value) {
         let val = Math.max(0, Math.min(255, parseInt(value) || 0));
         document.getElementById(`num-${channel}`).value = val;
         applyColorUpdate();
     }
 
-    // 숫자 입력 칸 수정 시 슬라이더로 동기화
     function syncColorSlider(channel, value) {
         let val = Math.max(0, Math.min(255, parseInt(value) || 0));
         document.getElementById(`slider-${channel}`).value = val;
         applyColorUpdate();
     }
 
-    // 색상 데이터 반영
     function applyColorUpdate() {
         const rVal = parseInt(document.getElementById('slider-r').value);
         const gVal = parseInt(document.getElementById('slider-g').value);
